@@ -1,0 +1,104 @@
+---
+- name: Clone the blank profile from stash and remove git
+  block:
+    - name: Clone from stash the myd8site profile (blank profile)
+      environment:
+        TMPDIR: "/data/tenant_onboarding/tmp"
+        PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+        LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+      git:
+        accept_hostkey: yes
+        executable: "{{ git_binary_path }}"
+        repo: "{{ base_repo_url }}"
+        dest: "{{ working_dir }}/initial_repos/{{ gov_repo }}/"
+        version: "master"
+        force: yes
+        depth: 1
+        umask: "007"
+      become_user: awx
+
+    - name: Find all .git items
+      find:
+        paths: "{{ working_dir }}/initial_repos/{{ gov_repo }}/"
+        hidden: yes
+        patterns: "*.git"
+        file_type: directory
+        recurse: yes
+      register: git_to_delete
+
+    - name: Delete the .git stuff
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ git_to_delete.files }}"
+      become: yes
+
+- name: Replace all d8 content with tenant
+  block:
+    - name: Get Any files with d8 content
+      command: "grep -ri -l myd8site {{ working_dir }}/initial_repos/{{ gov_repo }}/"
+      register: d8_site_content
+      ignore_errors: yes
+
+    - name: Show Any files with d8 content
+      debug:
+        msg: "{{ d8_site_content.stdout_lines }}"
+      when: d8_site_content.rc == 0
+
+    - name: Replace myd8site in content
+      replace:
+        path: "{{ item }}"
+        regexp: "myd8site"
+        replace: "{{ tenant }}"
+      with_items: "{{ d8_site_content.stdout_lines }}"
+      when: d8_site_content.rc == 0
+
+    - name: Find any file with myd8site in name
+      find:
+        paths: "{{ working_dir }}/initial_repos/{{ gov_repo }}/"
+        hidden: yes
+        patterns: "myd8site*"
+        file_type: file
+        recurse: yes
+      register: d8_file
+
+    - name: Show the files that had myd8site content
+      debug:
+        msg: "{{ item.path }}"
+      with_items: "{{ d8_file.files }}"
+      ignore_errors: yes
+
+    - name: Rename files with mydd8site
+      command: "mv {{ item.path }} {{ item.path | regex_replace('myd8site', tenant) }}"
+      with_items: "{{ d8_file.files }}"
+    
+    - name: Find Directories myd8site
+      find:
+        paths: "{{ working_dir }}/initial_repos/{{ gov_repo }}/"
+        hidden: yes
+        patterns: "myd8site*"
+        file_type: directory
+        recurse: yes
+      register: d8_dirs_2
+
+    - name: Show Any directories with myd8site
+      debug:
+        msg: "{{ item.path }}"
+      with_items: "{{ d8_dirs_2.files }}"
+      ignore_errors: yes
+
+    - name: Rename directories with myd8site
+      command: "mv {{ item.path }} {{ item.path | regex_replace('myd8site', tenant) }}"
+      with_items: "{{ d8_dirs_2.files }}"
+
+    - name: Files to Ansible_Tower
+      file:
+        path: "{{ working_dir }}/initial_repos/{{ gov_repo }}/"
+        owner: awx
+        group: awx
+        mode: 0700
+        recurse: yes
+
+
+

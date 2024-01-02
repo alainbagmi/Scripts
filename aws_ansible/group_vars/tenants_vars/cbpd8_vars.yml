@@ -1,0 +1,29 @@
+cbpd8:
+  project_name: CBP
+  alias: cbpd8
+  drupal_version: 8
+  akamai_group: 24976
+  akamai_path: /183946/cbp
+  newrelic_id: 140456411
+  daily_db: test
+  testint:
+    site_urls:
+      edit: edit-preview.cbp.gov
+      public: preview.cbp.gov
+    akamai_cpcode:
+      edit: 225351
+      public: 225156
+  staging:
+    site_urls:
+      edit: CBPD8_EDIT_STAGE_URL
+      public: CBPD8_PUBLIC_STAGE_URL
+    akamai_cpcode:
+      edit: 225351
+      public: 225156
+  prod:
+    site_urls:
+      edit: CBPD8_EDIT_PROD_URL
+      public: CBPD8_PUBLIC_PROD_URL
+    akamai_cpcode:
+      edit: 225352
+      public: 225158

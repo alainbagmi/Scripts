@@ -1,0 +1,27 @@
+---
+- name: Run the script inside of production (we use command instead of script because its already on the server and script copies)
+  shell: "/bin/bash /var/www/sites-files/caadi_rsync.sh 7001 prod"
+  become: yes
+  become_user: apache
+  delegate_to: "{{ production_server }}"
+
+- name: Run caadi error_check script
+  shell: "/bin/bash /var/www/sites-files/caadi_errorcheck.sh 7001 prod"
+  become: yes
+  become_user: root
+  delegate_to: "{{ production_server }}"
+
+
+- name: Run the script inside of staging (we use command instead of script because its already on the server and script copies)
+  shell: "/bin/bash /var/www/sites-files/caadi_rsync.sh 7001 staging"
+  become: yes
+  become_user: apache
+  delegate_to: "{{ staging_server }}"
+
+- name: Run the script inside of testint (we use command instead of script because its already on the server and script copies)
+  shell: "/bin/bash /var/www/sites-files/caadi_rsync.sh 7001 testint"
+  become: yes
+  become_user: apache
+  delegate_to: "{{ testint_server }}"
+
+

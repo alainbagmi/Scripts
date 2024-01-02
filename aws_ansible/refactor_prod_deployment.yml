@@ -1,0 +1,42 @@
+---
+#- hosts: "all_{{ hostgroup }}_webheads:all_{{ hostgroup }}_database_servers[0]"
+
+- hosts: "prod_web:philly_web:prod_database[0]"
+  become: yes
+  become_method: sudo
+  remote_user: bamboo
+
+  roles:
+    - refactored_deployment
+
+  vars:
+    hostgroup: prod
+    webhosts: 'prod_web'
+    dbhosts: 'prod_database'
+    refactored_deployment: true
+    docroot_path_suffix: ''
+
+  vars_files:
+    - group_vars/mysql_user_creds.yml
+
+  handlers:
+    - include: roles/common/handlers/main.yml
+
+  pre_tasks:
+    - include: roles/common/tasks/validate_symlink.yml
+#      when: "'prod_web' or 'philly_web' in group_names"
+      when: inventory_hostname in groups['prod_web'] or inventory_hostname in groups['philly_web']
+     
+    - include: roles/common/tasks/database_backup.yml
+      when: 
+        - initial_deployment == "no" or initial_deployment == "No"
+#        - inventory_hostname in groups['prod_database']
+
+    - include: roles/common/tasks/application_status.yml
+
+  post_tasks:
+    - name: Clean up Facts
+      meta: clear_facts
+
+    - name: Reenable sevices (Zenoss, Masscale, cron)
+      include: roles/common/tasks/application_status.yml

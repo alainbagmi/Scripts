@@ -1,0 +1,48 @@
+---
+
+- name: Set paths as Fact
+  set_fact:
+    latest_path: "/var/www/html/wwwroot/{{ tenant }}_gov_build/latest"
+    rollback_path: "/var/www/html/wwwroot/{{ tenant }}_gov_build/rollback"
+  
+- name: Get latest symlink Stat
+  stat:
+    path: "{{ latest_path }}"
+  register: sym_latest
+  
+- name: Get rollback symlink Stat
+  stat:
+    path: "{{ rollback_path }}"
+  register: sym_rollback
+
+
+- name: Show PreRollback latest RelNum
+  debug:
+    msg: "latest -> {{ sym_latest.stat.lnk_source }}"
+  
+- name: Show PreRollback rollback RelNum
+  debug:
+    msg: "rollback -> {{ sym_rollback.stat.lnk_source }}"
+  
+- name: Set latest -> rollback RelNum (PreDeploy Release)
+  file:
+    dest: "{{ sym_latest.stat.path }}"
+    src: "{{ sym_rollback.stat.lnk_source }}"
+    state: link
+  notify:
+    - "drush update database"
+    - "drush cache registry {{ drupal_version }}"
+    
+- name: Register latest PostRollback
+  stat:
+    path: "{{ latest_path }}"
+  register: post_sym_latest
+  
+- name: Show latest RelNum PostRollback
+  debug:
+    msg: "PostRollback latest -> {{ post_sym_latest.stat.lnk_source }}"
+ 
+- name: Flush Handlers to run Drush Commands
+  meta: flush_handlers
+
+

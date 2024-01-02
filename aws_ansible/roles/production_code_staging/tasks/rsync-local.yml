@@ -1,0 +1,8 @@
+---
+
+- name: Copy cbp_gov_build to cbp_gov_build_pre with Rsync
+  #delegate_to: 172.22.58.22
+  synchronize:
+    src: "/home/bamboo/quan/cbp_gov_build/"
+    dest: "/home/bamboo/quan/cbp_gov_build_pre"
+  become: no

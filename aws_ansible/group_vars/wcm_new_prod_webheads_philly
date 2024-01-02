@@ -1,0 +1,127 @@
+proxy_env:
+  http_proxy: http://172.23.58.11:80
+  https_proxy: http://172.23.58.11:80
+
+drupal_sites_prod_philly:
+
+  - site_name: bsi 
+    site_url: buildsecurityin.us-cert.gov
+    site_alias: buildsecurityin.us-cert.gov
+    edit_url: edit.buildsecurityin.us-cert.gov
+    edit_alias: edit.buildsecurityin.us-cert.gov
+
+
+  - site_name: cbp 
+    site_url: cbp.gov
+    site_alias: cbp.gov
+    edit_url: edit.cbp.gov
+    edit_alias: edit.cbp.gov
+
+  - site_name: cfema
+    site_url: careers.fema.gov
+    site_alias: careers.fema.gov
+    edit_url: edit.careers.fema.gov
+    edit_alias: edit.careers.fema.gov
+
+
+  - site_name: daip
+    site_url: disasterassistance.gov
+    site_alias: disasterassistance.gov
+    edit_url: edit.disasterassistance.gov
+    edit_alias: edit.disasterassistance.gov
+
+
+  - site_name: dhs 
+    site_url: dhs.gov
+    site_alias: dhs.gov
+    edit_url: edit.dhs.gov
+    edit_alias: edit.dhs.gov
+
+
+  - site_name: fema
+    site_url: fema.gov
+    site_alias: fema.gov
+    edit_url: edit.fema.gov
+    edit_alias: edit.fema.gov
+
+
+  - site_name: fleta
+    site_url: fleta.gov
+    site_alias: fleta.gov
+    edit_url: edit.fleta.gov
+    edit_alias: edit.fleta.gov
+
+  - site_name: fletc
+    site_url: fletc.gov
+    site_alias: fletc.gov
+    edit_url: edit.fletc.gov
+    edit_alias: edit.fletc.gov
+
+
+  - site_name: ice 
+    site_url: ice.gov
+    site_alias: ice.gov
+    edit_url: edit.ice.gov
+    edit_alias: edit.ice.gov
+
+
+  - site_name: ics 
+    site_url: ics-cert.us-cert.gov
+    site_alias: ics-cert.us-cert.gov
+    edit_url: edit.ics-cert.us-cert.gov
+    edit_alias: edit.ics-cert.us-cert.gov
+
+
+  - site_name: niccs
+    site_url: niccs.us-cert.gov
+    site_alias: niccs.us-cert.gov
+    edit_url: edit.niccs.us-cert.gov
+    edit_alias: edit.niccs.us-cert.gov
+
+
+  - site_name: precheck
+    site_url: dhsprecheck.dhs.gov
+    site_alias: dhsprecheck.dhs.gov
+    edit_url: edit-dhsprecheck.dhs.gov
+    edit_alias: edit-dhsprecheck.dhs.gov
+
+
+  - site_name: ready
+    site_url: ready.gov
+    site_alias: beta.ready.gov
+    edit_url: edit.ready.gov
+    edit_alias: edit-beta.ready.gov
+
+
+  - site_name: sits
+    site_url: studyinthestates.dhs.gov
+    site_alias: studyinthestates.dhs.gov
+    edit_url: edit-studyinthestates.dhs.gov
+    edit_alias: edit-studyinthestates.dhs.gov
+
+  - site_name: tsa2
+    site_url: tsa.gov
+    site_alias: tsa.gov
+    edit_url: edit.tsa.gov
+    edit_alias: edit.tsa.gov
+
+  - site_name: tsanews
+    site_url: mobile.tsa.gov
+    site_alias: mobile.tsa.gov
+    edit_url: edit-mobile.tsa.gov
+    edit_alias: edit-mobile.tsa.gov
+
+  - site_name: uscert
+    site_url: us-cert.gov
+    site_alias: us-cert.gov
+    edit_url: edit.us-cert.gov
+    edit_alias: edit.us-cert.gov
+
+
+
+  - site_name: uscis
+    site_url: uscis.gov
+    site_alias: beta.uscis.gov
+    edit_url: edit.uscis.gov
+    edit_alias: edit-beta.uscis.gov
+

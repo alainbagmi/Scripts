@@ -1,0 +1,235 @@
+---
+- name: get user
+  shell: whoami
+  register: who_raw
+  
+- set_fact:
+    who: "{{who_raw.stdout_lines}}"
+
+- debug:
+    var: who
+  
+- name: get aws binary
+  shell: echo $PATH
+  register: aws_raw
+
+- set_fact:
+    aws_bin: "{{aws_raw.stdout_lines}}"
+
+# - debug:
+#     var: aws_bin
+
+#==============TESTINT==============#
+
+- name: get testint launch template data
+  shell: aws ec2 describe-launch-template-versions --launch-template-name "testint-asg-template" --versions "\$Default"
+  register: testint_lt_raw
+  become: no
+
+- set_fact:
+    testint_lt: '{{ testint_lt_raw.stdout|from_json }}'
+
+- debug:
+    var: testint_lt
+
+- set_fact:
+    testint_default_snapshot: '{{ testint_lt.LaunchTemplateVersions[0].LaunchTemplateData.BlockDeviceMappings[0].Ebs.SnapshotId }}'
+
+- name: get testint snapshot 
+  shell: aws ec2 describe-snapshots --snapshot-ids {{ testint_lt.LaunchTemplateVersions[0].LaunchTemplateData.BlockDeviceMappings[0].Ebs.SnapshotId }}
+  register: testint_describe_snapshot_raw
+  become: no
+
+- set_fact:
+    testint_describe_snapshot: '{{ testint_describe_snapshot_raw.stdout|from_json }}'
+
+- set_fact:
+    testint_default_snapshot_date_raw: '{{ testint_describe_snapshot.Snapshots[0].StartTime }}'
+
+- shell: "echo {{ ( testint_default_snapshot_date_raw | replace('Z','') | to_datetime('%Y-%m-%dT%H:%M:%S.%f')).strftime('Y-%m-%dT%H:%M:%S') }}"
+  register: testint_default_snapshot_date
+
+- name: get snapshots for testint encrypted newer than lt snapshot
+  shell: aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-testint-wwwroot Name=tag:environment,Values=testint Name=encrypted,Values=true
+  register: testint_newest_snapshot_raw
+  become: no
+
+- set_fact:
+    testint_newest_snapshot_json: '{{ testint_newest_snapshot_raw.stdout|from_json }}'
+
+- set_fact:
+    testint_newest_snapshot: '{{ testint_newest_snapshot_json.Snapshots[0].SnapshotId }}'
+
+- set_fact:
+    testint_newest_snapshot_date_raw: '{{ testint_newest_snapshot_json.Snapshots[0].StartTime }}'
+
+- shell: "echo {{ ( testint_newest_snapshot_date_raw | replace('Z','') | to_datetime('%Y-%m-%dT%H:%M:%S.%f')).strftime('Y-%m-%dT%H:%M:%S') }}"
+  register: testint_newest_snapshot_date
+
+#==============STAGING==============#
+
+- name: get staging launch template data
+  shell: aws ec2 describe-launch-template-versions --launch-template-name "staging-asg-template" --versions "\$Default"
+  register: staging_lt_raw
+  become: no
+
+- set_fact:
+    staging_lt: '{{ staging_lt_raw.stdout|from_json }}'
+
+- set_fact:
+    staging_default_snapshot: '{{ staging_lt.LaunchTemplateVersions[0].LaunchTemplateData.BlockDeviceMappings[0].Ebs.SnapshotId }}'
+
+- name: get staging snapshot 
+  shell: aws ec2 describe-snapshots --snapshot-ids {{ staging_lt.LaunchTemplateVersions[0].LaunchTemplateData.BlockDeviceMappings[0].Ebs.SnapshotId }}
+  register: staging_describe_snapshot_raw
+  become: no
+
+- set_fact:
+    staging_describe_snapshot: '{{ staging_describe_snapshot_raw.stdout|from_json }}'
+
+- set_fact:
+    staging_default_snapshot_date_raw: '{{ staging_describe_snapshot.Snapshots[0].StartTime }}'
+
+- shell: "echo {{ ( staging_default_snapshot_date_raw | replace('Z','') | to_datetime('%Y-%m-%dT%H:%M:%S.%f')).strftime('Y-%m-%dT%H:%M:%S') }}"
+  register: staging_default_snapshot_date
+
+- name: get snapshots for staging encrypted newer than lt snapshot
+  shell: aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-staging-wwwroot Name=tag:environment,Values=staging Name=encrypted,Values=true
+  register: staging_newest_snapshot_raw
+  become: no
+
+- set_fact:
+    staging_newest_snapshot_json: '{{ staging_newest_snapshot_raw.stdout|from_json }}'
+
+- set_fact:
+    staging_newest_snapshot: '{{ staging_newest_snapshot_json.Snapshots[0].SnapshotId }}'
+
+- set_fact:
+    staging_newest_snapshot_date_raw: '{{ staging_newest_snapshot_json.Snapshots[0].StartTime }}'
+
+- shell: "echo {{ ( staging_newest_snapshot_date_raw | replace('Z','') | to_datetime('%Y-%m-%dT%H:%M:%S.%f')).strftime('Y-%m-%dT%H:%M:%S') }}"
+  register: staging_newest_snapshot_date
+
+#==============PRODUCTION================#
+- name: get production launch template data
+  shell: aws ec2 describe-launch-template-versions --launch-template-name "production-asg-template" --versions "\$Default"
+  register: production_lt_raw
+  become: no
+
+- set_fact:
+    production_lt: '{{ production_lt_raw.stdout|from_json }}'
+
+- set_fact:
+    production_default_snapshot: '{{ production_lt.LaunchTemplateVersions[0].LaunchTemplateData.BlockDeviceMappings[0].Ebs.SnapshotId }}'
+
+- name: get production snapshot 
+  shell: aws ec2 describe-snapshots --snapshot-ids {{ production_lt.LaunchTemplateVersions[0].LaunchTemplateData.BlockDeviceMappings[0].Ebs.SnapshotId }}
+  register: production_describe_snapshot_raw
+  become: no
+
+- set_fact:
+    production_describe_snapshot: '{{ production_describe_snapshot_raw.stdout|from_json }}'
+
+- set_fact:
+    production_default_snapshot_date_raw: '{{ production_describe_snapshot.Snapshots[0].StartTime }}'
+
+- shell: "echo {{ ( production_default_snapshot_date_raw | replace('Z','') | to_datetime('%Y-%m-%dT%H:%M:%S.%f')).strftime('Y-%m-%dT%H:%M:%S') }}"
+  register: production_default_snapshot_date
+
+#'aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-production-wwwroot Name=tag:environment,Values=production Name=encrypted,Values=true --query="Snapshots[0]"'
+- name: get snapshots for production encrypted newer than lt snapshot
+  shell: aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-production-wwwroot Name=tag:environment,Values=production Name=encrypted,Values=true
+  register: production_newest_snapshot_raw
+  become: no
+
+
+- set_fact:
+    production_newest_snapshot_json: '{{ production_newest_snapshot_raw.stdout|from_json }}'
+
+- name: Production Newest Snapshot 
+  set_fact:
+    production_newest_snapshot: '{{ production_newest_snapshot_json.Snapshots[0].SnapshotId }}'
+
+- name: Production Newest Snapshot Start Time
+  set_fact:
+    production_newest_snapshot_date_raw: '{{ production_newest_snapshot_json.Snapshots[0].StartTime }}'
+
+- shell: "echo {{ ( production_newest_snapshot_date_raw | replace('Z','') | to_datetime('%Y-%m-%dT%H:%M:%S.%f')).strftime('Y-%m-%dT%H:%M:%S') }}"
+  register: production_newest_snapshot_date
+
+#==============FINAL DATA==============#
+
+
+
+#==============UPDATE LT==============#
+#===TESTINT===#
+- name: Update the test launch template but dont set it as default
+  command: aws ec2 create-launch-template-version --launch-template-name testint-asg-template --source-version $Default --launch-template-data '{{ lookup('template', 'roles/aws_update_launch_template/templates/testint_mappings.json.j2') | to_json }}'
+  register: new_testint_lt_raw 
+  when: testint_newest_snapshot_date.stdout > testint_default_snapshot_date.stdout
+
+- set_fact:
+    new_testint_lt: "{{ new_testint_lt_raw.stdout }}"
+  when: testint_newest_snapshot_date.stdout > testint_default_snapshot_date.stdout
+
+- name: Update the Default version
+  command: aws ec2 modify-launch-template --launch-template-name testint-asg-template --default-version {{ new_testint_lt.LaunchTemplateVersion.VersionNumber }}
+  when: testint_newest_snapshot_date.stdout > testint_default_snapshot_date.stdout
+
+#===STAGING===#
+- name: Update the staging launch template but dont set it as default
+  command: aws ec2 create-launch-template-version --launch-template-name staging-asg-template --source-version $Default --launch-template-data '{{ lookup('template', 'roles/aws_update_launch_template/templates/staging_mappings.json.j2') | to_json }}'
+  register: new_staging_lt_raw
+  when: staging_newest_snapshot_date.stdout > staging_default_snapshot_date.stdout
+
+- set_fact:
+    new_staging_lt: "{{ new_staging_lt_raw.stdout }}"
+  when: staging_newest_snapshot_date.stdout > staging_default_snapshot_date.stdout
+
+- name: Update the Default version
+  command: aws ec2 modify-launch-template --launch-template-name staging-asg-template --default-version {{ new_staging_lt.LaunchTemplateVersion.VersionNumber }}
+  when: staging_newest_snapshot_date.stdout > staging_default_snapshot_date.stdout
+
+#===PRODUCTION===#
+- name: Update the production launch template but dont set it as default
+  command: aws ec2 create-launch-template-version --launch-template-name production-asg-template --source-version $Default --launch-template-data '{{ lookup('template', 'roles/aws_update_launch_template/templates/production_mappings.json.j2') | to_json }}'
+  register: new_production_lt_raw
+  when: production_newest_snapshot_date.stdout > production_default_snapshot_date.stdout
+
+- set_fact:
+    new_production_lt: "{{ new_production_lt_raw.stdout }}"
+  when: production_newest_snapshot_date.stdout > production_default_snapshot_date.stdout
+
+- name: Update the Default version
+  command: aws ec2 modify-launch-template --launch-template-name production-asg-template --default-version {{ new_production_lt.LaunchTemplateVersion.VersionNumber }}
+  when: production_newest_snapshot_date.stdout > production_default_snapshot_date.stdout
+
+
+
+
+
+
+
+
+### Follow this bug https://github.com/ansible-collections/community.aws/issues/230 
+# - name: Update the ansible_development launch template but dont set it as default
+#   ec2_launch_template:
+#     name: "ansible-development"
+#     default_version: 1
+#     instance_type: c4.large
+    # block_device_mappings:
+    #   - device_name: "/dev/sdc"
+    #     ebs:
+    #       delete_on_termination: yes
+    #       iops: 3000
+    #       snapshot_id: "{{ testint_newest_snapshot }}"
+    #       volume_type: gp3
+
+# 1. aws ec2 describe-snapshots --snapshot-ids {{ production_lt.LaunchTemplateVersions[0].LaunchTemplateData.BlockDeviceMappings[0].Ebs.SnapshotId }}
+# 2. aws ec2 describe-snapshots --snapshot-ids snap-001a53a26feb4ca8d --query 'Snapshots[].StartTime' --output text
+# 2021-07-12T05:19:40.406Z
+# 3. aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-production-wwwroot Name=tag:environment,Values=production Name=encrypted,Values=true
+# 4. aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-production-wwwroot Name=tag:environment,Values=production Name=encrypted,Values=true --query "Snapshots[?StartTime >= '2021-07-12T05:19:40.406Z'].StartTime"
+# or
+# 4.2. aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-production-wwwroot Name=tag:environment,Values=production Name=encrypted,Values=true --query "Snapshots[?StartTime >= '2021-07-12T05:19:40.406Z'].StartTime" --output text
+# 5. aws ec2 describe-snapshots --filters Name=tag:Name,Values=base-production-wwwroot Name=tag:environment,Values=production Name=encrypted,Values=true --query "Snapshots[?StartTime >= '2021-07-12T05:19:40.406Z'].SnapshotId" --output text

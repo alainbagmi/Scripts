@@ -1,0 +1,373 @@
+---
+- name: Install Newrelic repo
+  shell: "{{ item }}"
+  args:
+    warn: false
+  become: true
+  become_method: sudo
+  with_items:
+    - curl -o /etc/yum.repos.d/newrelic-infra.repo https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64/newrelic-infra.repo
+    - rpm -Uvh --force http://yum.newrelic.com/pub/newrelic/el5/x86_64/newrelic-repo-5-3.noarch.rpm
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Check if mysql is running
+  package_facts:
+    manager: auto
+
+- name: Install Mysql
+  package:
+    name: mysql
+    state: latest
+    update_cache: yes
+    disable_gpg_check: yes
+  become: true
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+  when: "'mariadb' not in ansible_facts.packages"
+
+- name: Copy RPM Package
+  copy:
+    src: "{{ item }}"
+    dest: /tmp/
+    directory_mode: yes
+    mode: 0755
+    force: yes
+  with_items:
+    - ius-release-el7.rpm
+    - epel-release-latest-7.noarch.rpm
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Install RPM packages
+  shell: "{{ item }}"
+  args:
+    warn: false
+  become: true
+  become_method: sudo
+  with_items:
+    - rpm -ivh --force /tmp/epel-release-latest-7.noarch.rpm
+    - rpm -ivh --force  /tmp/ius-release-el7.rpm
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: print the output
+  yum:
+    list: "installed"
+  register: "installed_packages"
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name:
+  debug:
+    var: item
+  with_items:
+    - "{{ yum_packages  | difference(installed_packages | json_query('results[*].name')) }}"
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+  register: echo
+
+- name: Print details
+  debug:
+    msg: "{{ echo.results | map(attribute='item') | list }}"
+
+- name: Install Pkgs
+  package:
+    name: "{{ item }}"
+    state: latest
+    update_cache: yes
+    disable_gpg_check: yes
+  become: true
+  become_method: sudo
+  with_items:
+    - "{{ echo.results | map(attribute='item') | list }}"
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Yum Clear Cache
+  shell: yum clean all
+  become: yes
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Install Newrelic
+  shell: "{{ item }}"
+  args: 
+    warn: false
+  become: true
+  become_method: sudo
+  with_items:
+    - "NR_INSTALL_SILENT=1 NR_INSTALL_KEY=33efd339013cca8ef9d0b9ca05e96a64be6aaee3 /usr/bin/newrelic-install install"
+    - setsebool -P httpd_use_nfs=1
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Change apache permission
+  command: chown apache:apache /var/www/
+  become: true
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Install drush
+  command: "{{ item }}"
+  become: true
+  become_method: sudo 
+  with_items:
+    - wget -P /usr/local/bin https://github.com/drush-ops/drush/releases/download/8.4.5/drush.phar
+    - chmod +x /usr/local/bin/drush.phar
+    - mv /usr/local/bin/drush.phar /usr/local/bin/drush
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: James's Drush scripts for aliases
+  command: "{{ item }}"
+  become: true
+  become_method: sudo 
+  with_items: 
+    - cp /home/ansible_tower/web_script/drush_scripts/drush.sh /usr/local/bin/drush.sh
+    - cp /home/ansible_tower/web_script/drush_scripts/drush_detect.sh /usr/local/bin/drush_detect.sh
+    - chmod +x /usr/local/bin/drush.sh
+    - chmod +x /usr/local/bin/drush_detect.sh
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Check if .Netrc file exist
+  stat: 
+    path: "/root/.netrc"
+  become: true
+  become_method: sudo
+  register: result
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Create Netrc file if it doesnt exist
+  file:
+    path: "{{ item }}"
+    mode: 0644
+    state: touch 
+  become: true
+  become_method: sudo
+  with_items:
+    - "/root/.netrc"
+    - "/usr/share/httpd/.netrc"
+  when: result.stat.exists == false
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Update Netrc Config File
+  blockinfile:
+    path: "{{ item }}"
+    block: |
+      machine sharedservices.dhs.gov login bamboo password BamB00i%5622
+      machine maestro.dhs.gov login bamboo password BamB00i%5622
+  become: true
+  become_method: sudo
+  with_items:
+    - "/root/.netrc"
+    - "/usr/share/httpd/.netrc"
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Change Mount permissions
+  shell: "{{ item }}"
+  become: true
+  become_method: sudo
+  with_items:
+    - mkdir -p /var/www/sites-files
+    - chown apache:apache /var/www/sites-files
+    - chmod 770 /var/www/sites-files
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Copy files anD Update Permissions
+  command: "{{ item }}"
+  become: true
+  become_method: sudo
+  with_items:
+    - cp -rp /home/ansible_tower/web_script/web_server_configs/newrelic-infra.yml /etc/
+    - chown -R root:root /etc/newrelic-infra.yml
+    - cp -rp /home/ansible_tower/web_script/web_server_configs/php.ini /etc/
+    - chown -R root:root /etc/php.ini
+    - cp -rp /home/ansible_tower/web_script/web_server_configs/httpd.conf /etc/httpd/conf/httpd.conf
+    - chown root:root /etc/httpd/conf/httpd.conf
+    - chmod 644 /etc/httpd/conf/httpd.conf
+    - cp /home/ansible_tower/web_script/wcm_vars/wcm_vars.sh /etc/profile.d/wcm_vars.sh
+    - chmod +x /etc/profile.d/wcm_vars.sh
+    - chown root:root /etc/profile.d/wcm_vars.sh
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Configure Cloudwatch agent
+  command: "{{ item }}"
+  become: true
+  become_method: sudo
+  with_items:
+    - cp -rp /home/ansible_tower/web_script/scripts_and_configs/mount_efs/mount_efs.sh /usr/local/bin
+    - chmod 775 /usr/local/bin/mount_efs.sh
+    - cp -rp /home/ansible_tower/web_script/scripts_and_configs/mount_efs/lambda_agent_config.json /etc/aws/
+    - chmod 666 /etc/aws/lambda_agent_config.json
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Create /etc/php.d/newrelic.ini
+  become: true
+  become_method: sudo
+  lineinfile:
+    path: /etc/php.d/newrelic.ini
+    create: yes
+    line: "{{ item }}"
+  with_items:
+    - "extension=newrelic.so"
+    - "newrelic.appname = PHP Applications"
+    - "newrelic.enabled = 1"
+    - "newrelic.logfile = /var/log/newrelic/php_agent.log"
+    - "newrelic.license = 33efd339013cca8ef9d0b9ca05e96a64be6aaee3"
+    - "newrelic.loglevel = info"
+    - "newrelic.browser_monitoring.auto_instrument = 1"
+    - "newrelic.daemon.port=@newrelic-daemon"
+    - "newrelic.high_security = true"
+    - "newrelic.daemon.collector_host = gov-collector.newrelic.com"
+    - "newrelic.daemon.utilization.detect_aws = true"
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: updating opcache
+  become: true
+  become_method: sudo
+  blockinfile:
+    path: /etc/php.d/10-opcache.ini
+    block: |
+      zend_extension=opcache.so
+      opcache.enable=1
+      opcache.memory_consumption=500
+      opcache.interned_strings_buffer=16
+      opcache.max_accelerated_files=8500
+      opcache.file_cache="/home/ansible_tower//tmp/opcache"
+      opcache.fast_shutdown=1
+      opcache.validate_timestamps=0
+      opcache.blacklist_filename=/etc/php.d/opcache*.blacklist
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Update the hosts file 
+  become: true
+  become_method: sudo
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      10.0.4.97      tsa-tie-dtaas
+      10.0.4.97      tsa-tie-prod
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Update Rsyslog configs
+  shell: "{{ item }}"
+  become: true
+  become_method: sudo
+  with_items:
+    - echo $FileCreateMode 0640 >> /etc/rsyslog.conf
+    - echo *.info @@10.0.10.42:514 >> /etc/rsyslog.conf
+    - mkdir -p /usr/share/httpd/.ssh
+    #- cp /home/ansible_tower/id_rsa /usr/share/httpd/.ssh
+    #- chmod 600 /usr/share/httpd/.ssh/id_rsa
+    - chmod 700 /usr/share/httpd/.ssh
+    - chown -R apache:apache /usr/share/httpd/
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Apache User Updates and Ansible user inclusion
+  shell: "{{ item }}"
+  become: true
+  become_method: sudo
+  with_items:
+    - usermod -s /bin/bash apache
+    - usermod -a -G apache ansible_tower
+    - chmod 770 /var/log/httpd
+    - chown apache:apache /usr/share/httpd
+    - chown -R apache:apache /usr/share/httpd/*
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Setup Cron for Email
+  shell: "{{ item }}"
+  become: true
+  become_method: sudo
+  with_items:
+    - "crontab -l > mailcron"
+    - echo "*/5 * * * * /sbin/sendmail -v -q" >> mailcron
+    - crontab mailcron
+    - rm mailcron
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+- name: Update the Host file 
+  become: true
+  become_method: sudo
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      10.0.4.97      tsa-tie-dtaas
+      10.0.4.97      tsa-tie-prod
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Get Exif Version
+  shell: curl -k https://exiftool.org/ver.txt
+  register: exif_version_raw
+
+- debug:
+    var: exif_version_raw
+
+- set_fact:
+    exif_version: "{{exif_version_raw.stdout}}"
+
+- name: Build EXIF tool for Emerald
+  command: "{{ item }}"
+  args:
+    warn: false
+  become: true
+  become_method: sudo
+  with_items:
+    - wget https://exiftool.org/Image-ExifTool-{{ exif_version }}.tar.gz
+    - tar -zxf Image-ExifTool-{{ exif_version }}.tar.gz
+    - cd Image-ExifTool-{{ exif_version }} && perl Makefile.PL && make && make install 
+    - cp -p /home/ansible_tower/Image-ExifTool-{{ exif_version }}/exiftool /usr/bin/
+    - chown root:root /usr/bin/exiftool
+    - chmod 755 /usr/bin/exiftool
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Start Apache Service
+  shell: "{{ item }}"
+  become: true
+  become_method: sudo
+  with_items:
+    - restorecon -R /var/www/html
+    - setsebool -P httpd_can_network_connect_db 1
+    - service newrelic-daemon restart
+    - service httpd start
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+
+#- name: Configure webserver
+#  shell: "{{ item }}"
+#  become: true
+#  become_method: sudo
+#  with_items:
+#    - export AWS_CONFIG_FILE="/etc/aws/config"
+#    - service cachefilesd start
+#    - service nfs start
+#  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Remove pid file b/c of perms
+  become: true
+  become_method: sudo
+  file:
+    path: /var/run/newrelic-daemon.pid
+    state: absent
+
+- name: Restart apache gracefully
+  become: true
+  become_method: sudo
+  command: service httpd graceful
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Cleanup working directory 
+  become: true
+  become_method: sudo
+  file:
+    path: /home/ansible_tower/web_script
+    state: absent
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"

@@ -1,0 +1,24 @@
+---
+#Only lets you specify one health check type.  Add in other one.
+- name: Create prod ASG
+  ec2_asg:
+    name: production-as-group
+    state: present
+    availability_zones: [ 'us-gov-west-1a', 'us-gov-west-1b', 'us-gov-west-1c' ]
+    launch_template:
+      launch_template_name: 'production-asg-template'
+    min_size: 2
+    max_size: 8
+    desired_capacity: 4
+    vpc_zone_identifier: [ 'subnet-53f7a525', 'subnet-d59ccfb1', 'subnet-bf7cc8e6' ]
+    health_check_type: ELB
+    health_check_period: 480
+    metrics_collection: yes
+    tags:
+     - Purpose: webApp
+       component: WCMaaS
+       environment: production
+       fisma_id: HQ-06630-MAJ-06630
+       managed_by: WCMaaS
+       project: WCMaaS
+

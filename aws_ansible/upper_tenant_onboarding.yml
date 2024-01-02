@@ -1,0 +1,44 @@
+---
+- name: Onboard/set up tenants inside of the respective environment
+  hosts: "{{ target_environment }}_web"
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+
+  roles:
+    - TENANT_onboarding
+
+  vars:
+    tenant_alias: "{{ tenant_alias | lower }}"
+    drupal_version: "{{ drupal_version }}"
+    target_environment: "{{ target_env | lower }}"
+    bamboo: 172.22.58.21
+#Determine which environments to run on
+
+  pre_tasks:
+
+  - name: Set testint hosts
+    debug:
+      msg: "testint_web"
+    register: web_server_group
+    when: target_environment == "testint"
+
+
+  - name: Set staging hosts 
+    debug:
+      msg: "staging_web"
+    register: web_server_group
+    when: target_environment == "staging"
+
+
+  - name: set prod hosts
+    debug:
+      msg: "production_web"
+    register: web_server_group
+    when: target_environment == "production" or target_environment == "prod"
+
+  - name: set prod hosts
+    debug:
+      msg: "philly_web"
+    register: web_server_group
+    when: target_environment == "philly"

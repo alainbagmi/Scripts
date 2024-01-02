@@ -1,0 +1,107 @@
+{
+	"agent": {
+		"metrics_collection_interval": 30,
+		"run_as_user": "root"
+	},
+	"logs": {
+		"logs_collected": {
+			"files": {
+				"collect_list": [
+                    {
+						"file_path": "/var/log/commands.log",
+						"log_group_name": "{{ namespace_log }}",
+						"log_stream_name": "{instance_id}/var/log/commands.log"
+					},
+                    {
+                        "file_path": "/var/log/audit/audit.log",
+                        "log_group_name": "{{ namespace_log }}",
+                        "log_stream_name": "{instance_id}/var/log/audit.log"
+                    },
+                    {
+                        "file_path": "/var/log/boot.log",
+                        "log_group_name": "{{ namespace_log }}",
+                        "log_stream_name": "{instance_id}/var/log/boot.log"
+                    },
+					{
+						"file_path": "/var/log/messages",
+						"log_group_name": "{{ namespace_log }}",
+						"log_stream_name": "{instance_id}/var/log/messages"
+					}
+				]
+			}
+		}
+	},
+	"metrics": {
+        "namespace": "{{ name_space }}",
+		"append_dimensions": {
+            "ImageId": "${aws:ImageId}",
+		    "InstanceId": "${aws:InstanceId}",
+		    "InstanceType": "${aws:InstanceType}"
+		},
+		"metrics_collected": {
+            "cpu": {
+                "measurement": [
+                    "cpu_usage_idle",
+					"cpu_usage_iowait",
+					"cpu_usage_user",
+					"cpu_usage_system"
+				],
+				"metrics_collection_interval": 30,
+				"resources": [
+					"*"
+				],
+				"totalcpu": true
+			},
+			"disk": {
+				"measurement": [
+                    "total",
+					"used_percent",
+                    "used",
+					"inodes_free"
+				],
+                "ignore_file_system_types": [
+                    "devtmpfs", "squashfs", "tmpfs"
+                ],
+				"metrics_collection_interval": 30,
+				"resources": [
+					"*"
+				],
+                "drop_device": true
+			},
+			"diskio": {
+				"measurement": [
+					"io_time",
+					"write_bytes",
+					"read_bytes",
+					"writes",
+					"reads"
+				],
+				"metrics_collection_interval": 30,
+				"resources": [
+					"*"
+				]
+			},
+			"mem": {
+				"measurement": [
+					"mem_used_percent",
+                    "mem_used",
+                    "mem_active"
+				],
+				"metrics_collection_interval": 30
+			},
+			"netstat": {
+				"measurement": [
+					"tcp_established",
+					"tcp_time_wait"
+				],
+				"metrics_collection_interval": 30
+			},
+			"swap": {
+				"measurement": [
+					"swap_used_percent"
+				],
+				"metrics_collection_interval": 30
+			}
+		}
+	}
+}

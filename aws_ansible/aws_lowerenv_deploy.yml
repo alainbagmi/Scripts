@@ -1,0 +1,51 @@
+---
+- hosts: "tag_aws_autoscaling_groupName_{{ env }}_as_group"
+  gather_facts: no
+  remote_user: ansible_tower
+  become: yes
+  become_method: sudo
+
+#Still in progress (12-13-2020)
+#Get Multisite configs changed / working
+
+# NOTE: vars to pass:
+#   tenant, env (testint, staging, production)
+#  
+#   
+#  variables pulled from sources, can be overwritten: 
+#    drupal_version: (group_vars/tenants)
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+
+  pre_tasks:
+  - name: Load in tenant vars
+    include_vars:
+      file: group_vars/tenants
+      name: tenants
+
+  vars_files:
+    - group_vars/mysql_user_creds.yml
+
+  vars:
+    release_number: "{{ bamboo_build_number }}"
+    tenant_path: "{{ site_root }}{{ env }}.{{ tenant }}_gov_build/docroot"
+    tenantvars: "{{ tenants[vars['tenant']] }}"
+    drupal_version: "{{ tenantvars.drupal_version }}"
+    local_repo: '{{ local_checkouts }}{{ tenant }}/{{ env }}/'
+    local_settings: '{{ local_checkouts }}{{ tenant }}/settings/'
+    base_stash_project: "https://maestro.dhs.gov/stash/scm/{{ tenantvars.project_name }}/"
+    aws_stash_project: "https://maestro.dhs.gov/stash/scm/WCMAWS/{{ tenant }}_gov_build.git"
+    tenant_repo: "{{ tenant }}_gov_build.git"
+    tenant_settings: "{{ tenant }}_settings.git"
+    sitefiles_link: "{{ tenant_path }}/sites/default/files"
+    submodule_path: "{{ local_repo }}docroot/profiles/{{ tenant }}_gov"
+    git_binary_path: "/opt/rh/rh-git29/root/usr/bin/git"
+    
+  roles:
+    - aws_lowerenv_deploy
+
+  handlers:
+    - include: roles/common/handlers/env_aware_commands.yml

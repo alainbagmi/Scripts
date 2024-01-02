@@ -1,0 +1,60 @@
+---
+# NOTE: Include "deployment: true" in the vars of the playbook that runs these tasks to include a backup to the Jumpbox  
+
+- include: get_database_name.yml
+  when: inventory_hostname in groups['prod_web']
+
+
+- name: Show Database on Database Server
+  debug:
+    msg: "{{ database }}"
+  when: inventory_hostname in groups['prod_database']
+
+- name: Register Timestamp
+  shell: 'date +%m_%d_%Y'
+  register: timestamp
+  when: inventory_hostname in groups['prod_database']
+
+- name: Take a backup of tenant db
+  mysql_db:
+    state: dump
+    name: "{{ database }}"
+    login_user: root
+    login_password: "{{ root_pass }}"
+    login_host: localhost
+    single_transaction: yes
+    target: "/data/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+  tags:
+    - real
+  when: inventory_hostname in groups['prod_database']
+
+
+- name: Identify Backup File Name
+  debug:
+    msg: "/data/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+  when: inventory_hostname in groups['prod_database']
+
+
+- name: Change permissions on backup
+  file:
+    path: "/data/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+    owner: bamboo
+    group: bamboo
+  tags:
+    - real
+  when: inventory_hostname in groups['prod_database']
+
+
+- debug:
+    msg: "{{ timestamp }}"
+
+- name: Copy to Jumpbox - FOR DEPLOYMENTS ONLY
+  synchronize:
+    src: "/data/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+    dest: "/data/bamboo_scripts/deploy/test/autodumps/"
+    mode: pull
+#    rsync_timeout: 20
+  delegate_to: "{{ groups['tower'][0] }}"
+  when: inventory_hostname in groups['prod_database']
+  become: no
+

@@ -1,0 +1,138 @@
+- hosts: 172.23.84.14:172.23.84.15
+  vars:
+    proxy_env:
+      http_proxy: http://172.22.84.11:80
+      https_proxy: http://172.22.84.11:80
+  remote_user: bamboo
+  become: yes 
+  serial: 1
+
+
+  tasks:
+
+
+   - name: Disable Selinux like a filthy savage
+     command: setenforce 0
+
+   - name: Get extra repos
+     yum:
+       name: "{{ item }}"
+       state: present
+     with_items:
+       - https://rhel7.iuscommunity.org/ius-release.rpm
+       - https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+     environment: "{{ proxy_env }}"
+     
+
+   - name: enable ius and epel yum repos
+     command: yum-config-manager --enable "{{ item }}"
+     with_items:
+       - epel
+       - ius
+
+
+   - name: Take backups of php.ini and php.d folder
+     command: cp -r /etc/{{ item }} /tmp/tempbackup
+     with_items:
+       - php.d
+       - php.ini
+     ignore_errors: yes
+
+
+   - name: Stop apache
+     command: service httpd stop
+
+
+   - name: Remove PHP7 Repositories
+     yum:
+       name: "{{ item }}"
+       state: absent
+     with_items:
+       - php72u-gd-7.2.24-1.el7.ius.x86_64
+       - php72u-jsonu-7.2.24-1.el7.ius.x86_64
+       - php72u-tidy-7.2.24-1.el7.ius.x86_64 
+       - php72u-bcmath-7.2.24-1.el7.ius.x86_64
+       - php72u-process-7.2.24-1.el7.ius.x86_64
+       - php72u-soap-7.2.24-1.el7.ius.x86_64
+       - php72u-pecl-memcached-3.0.4-2.ius.el7.x86_64 
+       - php72u-mbstring-7.2.24-1.el7.ius.x86_64
+       - php72u-cli-7.2.24-1.el7.ius.x86_64 
+       - php72u-opcache-7.2.24-1.el7.ius.x86_64 
+       - php72u-pdo-7.2.24-1.el7.ius.x86_64
+       - php72u-dba-7.2.24-1.el7.ius.x86_64 
+       - php72u-pecl-igbinary-2.0.5-2.ius.el7.x86_64
+       - php72u-ldap-7.2.24-1.el7.ius.x86_64
+       - php72u-mysqlnd-7.2.24-1.el7.ius.x86_64 
+       - php72u-xml-7.2.24-1.el7.ius.x86_6  
+       - php72u-xmlrpc-7.2.24-1.el7.ius.x86_64
+       - php72u-common-7.2.24-1.el7.ius.x86_64 
+       - php72u-devel-7.2.24-1.el7.ius.x86_64
+       - php72u-sodium-7.2.24-1.el7.ius.x86_64 
+       - mod_php72u 
+     environment: "{{ proxy_env }}"
+
+
+   - name: Install PHP7 Repositories
+     yum:
+       name: "{{ item }}"
+       state: latest
+       update_cache: yes 
+     with_items:
+       - libargon2
+       - fastlz
+       - php73-gd
+       - php73-json
+       - php73-tidy
+       - php73-bcmath
+       - php73-process
+       - php73-soap
+       - php73-pecl-memcached
+       - php73-mbstring
+       - php73-cli
+       - php73-opcache
+       - php73-pdo
+       - php73-dba
+       - php73
+       - php73-pecl-igbinary
+       - php73-ldap
+       - php73-mysqlnd
+       - php73-xml
+       - php73-xmlrpc
+       - php73-common       
+       - php73-devel                                                                     
+       - php73-sodium
+       - mod_php73
+     environment: "{{ proxy_env }}"
+
+
+   - name: Move the php.ini file back into the proper directory
+     command: mv /tmp/tempbackup/php.ini /etc/php.ini
+     ignore_errors: yes
+
+
+   - name: Change owners/groups of php file
+     file:
+       path: /etc/php.ini
+       owner: root
+       group: root
+       mode: 0644
+
+   - name: Start apache
+     command: service httpd start
+
+
+# Handler showing how to clean yum metadata cache
+   - name: yum-clean-metadata
+     command: yum clean metadata
+     args:
+       warn: no
+
+   - name: wow how did selinux get disabled?
+     command: setenforce 1
+
+   - name: Disable ius and epel yum repos
+     command: yum-config-manager --disable "{{ item }}"
+     with_items:
+       - epel
+       - ius
+

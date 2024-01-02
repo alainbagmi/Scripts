@@ -1,0 +1,96 @@
+---
+- name: Create Splunk group
+  group:
+    name: "{{ splunk_forwarder_group }}"
+    state: present
+  tags: splunk_user
+
+- name: Create Splunk user
+  user:
+    name: "{{ splunk_forwarder_user }}"
+    group: "{{ splunk_forwarder_group }}"
+    state: present
+  tags: splunk_user
+
+- name: adding splunk to group root
+  user:
+    name: "{{ splunk_forwarder_user }}"
+    groups: root
+    append: yes
+
+- name: Install Wget on server 
+  become: yes
+  become_method: sudo
+  package: name=wget state=present
+
+- name: create the Splunk instalation directory
+  file:
+    path: "{{ splunk_working_directory }}"
+    owner: splunk
+    group: splunk
+    mode: 0777
+    state: directory
+
+- name: Download the Splunk package
+  shell:
+    cmd: wget "{{ splunk_package }}"
+    chdir: "{{ splunk_working_directory }}"
+
+- name: Install Splunk 
+  shell:
+    cmd: rpm -ivh --prefix=/opt "{{ splunk_working_directory }}/{{ splunk_release_version }}"
+    creates: /opt/splunkforwarder
+
+- name: change splunk directory permission
+  tags: install
+  become: yes
+  become_method: sudo 
+  shell: chown -R splunk:splunk /opt/splunkforwarder
+
+- name: Copy inputs file
+  template:
+    src: inputs.conf.j2
+    dest: /opt/splunkforwarder/etc/system/local/inputs.conf
+    force: yes
+
+- name: Copy outputs file
+  template:
+    src: outputs.conf.j2
+    dest: /opt/splunkforwarder/etc/system/local/outputs.conf
+    force: yes
+
+- name: Start Splunk
+  tags: install
+  become: yes
+  become_user: splunk
+  shell: /opt/splunkforwarder/bin/splunk start --accept-license  --answer-yes --no-prompt --seed-passwd Password
+
+- name: change permission for the log directory
+  tags: install
+  become: yes
+  become_method: sudo
+  shell: chmod 755 /var/log/
+
+- name: Set the Deployment server
+  tags: install
+  become: yes
+  become_user: splunk
+  shell: /opt/splunkforwarder/bin/splunk set deploy-poll -auth admin:{{splunk_password}} "{{ splunk_index_server }}:{{ splunk_deployment_server_port }}"
+ 
+- name: Enable boot start
+  tags: install
+  become: yes
+  become_method: sudo
+  shell: /opt/splunkforwarder/bin/splunk enable boot-start -user splunk
+
+- name: Clear Instance Specific Information
+  tags: install
+  become: yes
+  become_method: sudo
+  shell: /opt/splunkforwarder/bin/splunk clone-prep-clear-config
+
+- name: Restart Splunk
+  tags: install
+  become: yes
+  become_method: sudo
+  shell: /opt/splunkforwarder/bin/splunk restart

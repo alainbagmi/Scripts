@@ -1,0 +1,128 @@
+---
+- name: Attempt to send Emails
+  block:
+    - name: Show Job ID
+      debug:
+        msg: "{{ tower_job_id }}"
+
+    - name: Email Message For PreTask Status And Job Status
+      set_fact:
+        email_pretask: "{{ pretask_status }}"
+        email_task: "{{ task_status }}"
+        netstorage_file_message: ""
+    
+    - name: Set Exclude Message
+      set_fact:
+          exclude_message:
+            - "css/"
+            - "js/"
+            - "cache/"
+            - "tmp/"
+            - "static-backup/"
+            - "php/twig/"
+      when:
+        - pretask_status == "OK"
+        - exclude_files == "default"
+
+    - name: Set Exclude Message
+      set_fact:
+          exclude_message:
+            - "err/"
+            - "ilink/"
+            - "css/"
+            - "js/"
+            - "cache/"
+            - "tmp/"
+            - "static-backup/"
+            - "php/twig/"
+      when:
+        - pretask_status == "OK"
+        - exclude_files == "uscis"
+
+    - name: Set Exclude Message
+      set_fact:
+          exclude_message:
+            - "cache/"
+            - "tmp/"
+            - "static-backup/"
+            - "php/twig/"
+      when:
+        - pretask_status == "OK"
+        - exclude_files == "migrate"
+
+    - name: Set Exclude Message when Netstorage Source (Nothing to exclude)
+      set_fact:
+        exclude_message:
+          - "Refresh Source Netstorage: No Files/Directories were Excluded"
+      when:
+        - pretask_status == "OK"
+        - source_env == "netstorage"
+
+    - name: Send Error email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <{{ email_address }}>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "Self-Service Asset Refresh Results for Job: {{ tower_job_id }}"
+        body: "{{ lookup('template', 'roles/aws_asset_refresh/templates/email_error.j2') }}"
+      when:
+        - pretask_status == "Ansible Pre-Task Failed" or task_status == "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+        - email_address is defined
+
+    - name: Set Tar File Name for Message
+      set_fact:
+        netstorage_file_message: "Assets saved to Netstorage: {{ akamai_asset_path }}/{{ netstorage_tar_file }}"
+      when:
+        - pretask_status == "OK"
+        - task_status == "Ansible Task Finished Successfully"
+        - target_env == "netstorage"
+
+    - name: Set Backup File Name for Message
+      set_fact:
+        netstorage_file_message: "Backup of target assets saved to Netstorage: {{ akamai_asset_path }}/{{ backup_tar_file }}"
+      when:
+        - pretask_status == "OK"
+        - task_status == "Ansible Task Finished Successfully"
+        - target_backup == "yes"
+
+
+    - name: Send an email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <{{ email_address }}>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "Self-Service Asset Refresh Results for Job: {{ tower_job_id }}"
+        body: "{{ lookup('template', 'roles/aws_asset_refresh/templates/email_body.j2') }}"
+      when:
+        - pretask_status == "OK"
+        - task_status == "Ansible Task Finished Successfully"
+        - email_address is defined
+  rescue:
+    - name: Overwrite Task Status if Fail
+      set_fact:
+        task_status: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+    
+    - name: Fail Task 
+      fail:
+        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+  always:
+    - name: Send Error email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <alain.bagmi@associates.hq.dhs.gov>
+          - <kyle.day@associates.hq.dhs.gov>
+          - <mohammad.minaie@associates.hq.dhs.gov>
+          - <antonio.punzo@associates.hq.dhs.gov>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "Self-Service Asset Refresh Results for Job: {{ tower_job_id }}"
+        body: "{{ lookup('template', 'roles/aws_asset_refresh/templates/email_error.j2') }}"
+      when:
+        - pretask_status == "Ansible Pre-Task Failed" or task_status == "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+        - email_address is defined

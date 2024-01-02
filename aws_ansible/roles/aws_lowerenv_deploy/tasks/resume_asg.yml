@@ -1,0 +1,11 @@
+- name: Resume Launching / Terminating of instances in ASG
+  command: "aws autoscaling resume-processes --auto-scaling-group-name {{ env }}-as-group --scaling-processes {{ item }}"
+  loop:
+    - Terminate
+    - Launch
+  become: no
+  run_once: yes
+
+#- name: Fail the playbook since this playbook should only run when something else fails
+#  fail:
+#    msg: "Failing playbook after resuming ASG operation due to earlier failure"

@@ -1,0 +1,321 @@
+- name:  6.1.11-12 Delete CGIAdmin directory in /var/db/sudo
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /var/db/sudo/cgiadmin
+    - /var/db/sudo/vsmith
+    - /var/sb/sudo/rfreeman
+    
+- name: 6.1.6 and 6.1.8 Make /etc/passwd and /etc/group 664
+  file:
+    path: "{{ item }}"
+    state: file
+    mode: 0644
+    owner: root
+    group: root
+  with_items:
+    - /etc/passwd
+    - /etc/group
+
+- name: 5.4.1.4 Ensure /etc/default/useradd has INACTIVE=30
+  lineinfile:
+    dest: /etc/default/useradd
+    line: INACTIVE=30
+
+- name: 5.4.1.4 Ensure /etc/default/useradd does not have INACTIVE=-1
+  lineinfile:
+    dest: /etc/default/useradd
+    line: INACTIVE=-1
+    state: absent
+
+- name: 5.3.1 Ensure /etc/security/pwquality.conf has passwd settings for minlen
+  lineinfile:
+    dest: /etc/security/pwquality.conf
+    line:  minlen=14
+
+- name: 5.3.1 Ensure /etc/security/pwquality.conf has passwd settings for minlen
+  lineinfile:
+    dest: /etc/security/pwquality.conf
+    state: absent
+    line:  minlen=12
+
+- name: Ensure Bamboo & svc_nessus are in sshusers
+  user:
+    name: "{{ item }}"
+    groups: sshusers
+    append: yes
+  with_items:
+    - bamboo
+    - svc_nessus
+    - zenoss
+
+- name: Ensure Bamboo & svc_nessus are in sshusers
+  user:
+    name: apache
+    groups: bamboo
+    append: yes
+  ignore_errors: yes
+
+- name: 5.2.10-15 Ensure sshd.conf has correct settings
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    line: "{{ item }}"
+  with_items:
+    - LoginGraceTime 60
+    - AllowGroups sshusers securityeng sudoroot localssh wheel
+    - DenyGroups sshdeny
+    - Ciphers aes256-ctr,aes192-ctr,aes128-ctr
+#    - MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com
+#    Above MAC setting breaks Zenoss SSH, looking into it.
+
+- name: 5.2.12 becuase the rules were poorly written
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    line: Ciphers aes128-ctr,aes192-ctr,aes256-ctr
+    state: absent
+
+- name: 5.1.3 permission of user and group permissions match
+  file:
+    path: "{{ item.name }}"
+    state: "{{ item.type }}"
+    mode: "{{ item.mod }}"
+    owner: root
+    group: root
+  ignore_errors: yes
+  with_items:
+    - { name: '/etc/cron.hourly', mod: '0600', type: 'directory' }
+    - { name: '/etc/passwd-', mod: '0600', type: 'file' }
+    - { name: '/etc/group-', mod: '0600', type: 'file' }
+    - { name: '/etc/cron.daily', mod: '0600', type: 'directory' }
+    - { name: '/etc/cron.weekly', mod: '0600', type: 'directory' }
+    - { name: '/etc/cron.monthly', mod: '0700', type: 'directory' }
+    - { name: '/etc/cron.d', mod: '0600', type: 'directory' }
+    - { name: '/etc/cron.allow', mod: '0600', type: 'file' }
+    - { name: '/etc/crontab', mod: '0600', type: 'file' }
+    - { name: '/etc/at.allow', mod: '0600', type: 'file' }
+    - { name: '/etc/ssh/sshd_config', mod: '0600', type: 'file' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/log', mod: '0775', type: 'directory' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/log/tmp', mod: '0775', type: 'directory' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/events', mod: '0775', type: 'directory' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/events/locks', mod: '0775', type: 'directory' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/events/locks/reader', mod: '0775', type: 'directory' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/locks', mod: '0775', type: 'directory' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/locks/reader', mod: '0775', type: 'directory' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/Database', mod: '0775', type: 'directory' }
+    - { name: '/opt/ds_agent/3.10.0-229.11.1.el7.x86_64/redirfs.ko', mod: '0770', type: 'file' }
+    - { name: '/opt/ds_agent/3.10.0-229.11.1.el7.x86_64/gsch.ko', mod: '0770', type: 'file' }
+    - { name: '/opt/bmc/bladelogic/RSCD/Transactions/Database/package_tracking.db', mod: '0770', type: 'file' }
+    - { name: '/usr/share/doc/ius-release-1.0/IUS-COMMUNITY-EUA', mod: '0660', type: 'file' }
+
+- name: 5.1.8 Ensure that /etc/cron.deny and /etc/at.deny do not exist
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/cron.deny
+    - /etc/at.deny
+    - /etc/cron..monthly
+    - /etc/cron..d
+
+- name: 4.2.1.3 Ensure rsyslog default file permissions configured
+  lineinfile:
+    dest: /etc/rsyslog.conf
+    line: $FileCreateMode 0640 
+
+- name: 1.1.1.8 Ensure mounting of FAT filesystems is disabled
+  lineinfile:
+    dest: /etc/modprobe.d/CIS.conf
+    line: install vfat /bin/true 
+
+- name: 1.5.1 Ensure Core Dumps are restricted ( can be removed in the future )
+  lineinfile:
+    state: absent
+    dest: /etc/security/limits.conf
+    line: fs.suid_dumpable = 0
+
+- name: 1.5.1 Ensure Core Dumps are restricted ( can be removed in the future )
+  lineinfile:
+    dest: /etc/security/limits.conf
+    line: "* hard core 0"
+
+- name: 3.2.1 Ensure Source routed packets are not accepted
+  lineinfile:
+    dest: /etc/sysctl.conf
+    line: "{{ item }}"
+  with_items:
+    - net.ipv4.conf.all.accept_source_route = 0
+    - net.ipv4.conf.default.accept_source_route = 0
+    - net.ipv4.icmp_echo_ignore_broadcast = 1
+    - net.ipv4.icmp_ignore_bogus_error_responses = 1
+    - net.ipv4.tcp_syncookies = 1
+    - fs.suid_dumpable = 0
+
+#- name: Replace all module arguments in an existing rule
+#  pamd:
+#    name: password-auth
+#    type: password
+#    control: sufficient
+#    module_path: pam_unix.so
+#    module_arguments: 'sha512 shadow nullok try_first_pass use_authtok remember=5'
+#    state: updated
+
+- name: Ensure cgifamdin is usermod -s /sbin/nologin
+  command: usermod -s /sbin/nologin cgifadmin
+
+- name: ensure umask is set for 7 for others
+  replace:
+    path: "{{ item }}"
+    regexp: 'umask 022'
+    replace: 'umask 027'
+  with_items:
+    - /etc/bashrc
+    - /etc/profile 
+
+- name: ensure umask is set for 7 for others
+  replace:
+    path: "{{ item }}"
+    regexp: 'umask 002'
+    replace: 'umask 027'
+  with_items:
+    - /etc/bashrc
+    - /etc/profile
+
+- name: Find matches in /etc/securetty for each word listed below and comment them out 
+  replace:
+    path: /etc/securetty
+    regexp: '^(vc\/[3-9]\n|vc\/\d{2}\n|tty[0-9]\n|tty\d{2}\n|ttysclp0\n|ttyS0\n|sclp_line0\n|3270\/tty1\n|hvc[0-7]\n|hvsi[0-2]\n|xvc0)'
+    replace: '#\1'
+    backup: yes
+
+- name: See if /var/www/html/wwwroot/default exists
+  stat:
+    path: /var/www/html/wwwroot/default
+  register: wwwroot
+
+- name: Make Apache own the default docroot
+  file:
+    path: /var/www/html/wwwroot/default
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0770
+    recurse: yes
+  when: wwwroot.stat.exists
+
+- name: See if /var/log/newrelic exists
+  stat:
+    path: /var/log/newrelic
+  register: newrelic
+
+- name: Make Newrelic logs non-worldwriteable
+  file:
+    path: /var/log/newrelic
+    state: directory
+    mode: 0770
+    recurse: yes
+  when: newrelic.stat.exists
+
+- name: 3.4.3 Ensure /etc/hosts.deny has deny catchall
+  lineinfile:
+    dest: /etc/hosts.deny
+    line:  "ALL: ALL"
+
+- name: 3.4.2 Ensure /etc/hosts.allow has only internal IPs
+  blockinfile:
+    dest: /etc/hosts.allow
+    block: |
+      ALL: 10.0.0.0/8
+      ALL: 172.16.0.0/12
+      ALL: 192.168.0.0/16
+      ALL: 127.0.0.1
+
+- name: 1.3 Esnure Aide is installed
+  yum:
+    name: aide
+    state: present
+
+- name: Initilize Aide
+  command: aide --init
+
+- name: Take Aide Baseline
+  command: mv /var/lib/aide/aide.db.new.gz /var/lib/aide/aide.db.gz 
+
+- name: Run Aide in crontab
+  cron:
+    name: "Run Aide for CIS 1.3"
+    minute: "0"
+    hour: "5"
+    job: "/usr/sbin/aide --check"
+
+- name: 2.2.1.2 NTP settings
+  lineinfile:
+    dest: /etc/ntp.conf
+    line: "{{ item }}"
+  with_items:
+    - restrict -4 default kod nomodify notrap nopeer noquery
+    - restrict -6 default kod nomodify notrap nopeer noquery
+
+- name: 2.2.1.2 This is needed b/c of poorly written tests needing the order of valudes to be exact
+  lineinfile:
+    dest: /etc/ntp.conf
+    state: absent
+    line: restrict -6 default kod nomodify nopeer notrap noquery
+
+- name: 2.2.1.3 Put options in for Chrony
+  lineinfile:
+    dest: /etc/sysconfig/chronyd
+    line: OPTIONS="-u chrony"
+    create: yes
+
+- name: Ensure /tmp has noexec
+  mount:
+    path: /tmp
+    src: /dev/mapper/rootvg-tmplv
+    fstype: xfs
+    opts: defaults,nodev,nosuid,noexec
+    state: present
+
+- name: Ensure /var//tmp has noexec
+  mount:
+    path: /var/tmp
+    src: /tmp
+    fstype: none
+    opts: bind,noexec
+    state: present
+
+- name: Get list of groups, needed for mysql
+  shell: groups | tr -s " " "\012"
+  register: groups
+
+- name: Clean up some CGI stuff they left with 777
+  file:
+    path: /tmp/blade/
+    state: absent
+
+- name: take away other permissions on CGI bladelogic stuff
+  command: chmod -R o-wrx /opt/bmc/bladelogic/
+  ignore_errors: yes
+
+- name: take away other permissions on CGI bladelogic stuff
+  command: chmod -R o-wrx /opt/bmc/Bladelogic/
+  ignore_errors: yes
+
+- name: Remove extra options line that we forgot ot take out of /etc/sysconfig/chronyd
+  lineinfile:
+    dest: /etc/sysconfig/chronyd
+    state: absent
+    line: OPTIONS=""
+
+#- name: Ensure mysql is in sshusers
+#  user:
+#    name: mysql
+#    groups: sshusers
+#    append: yes
+#  when: "mysql" in groups.stdout_lines
+
+#- name: Ensure msyql home is 700
+#  file:
+#    path: /home/mysql
+#    mode: 0700
+#  when: "mysql" in groups.stdout_lines

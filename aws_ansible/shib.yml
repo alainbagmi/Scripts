@@ -1,0 +1,8 @@
+---
+- name: Install Shibboleth
+  hosts: 172.22.58.15
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+  roles: 
+    - shib

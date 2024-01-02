@@ -1,0 +1,68 @@
+- name: Create Groups and set GID's
+  group:
+    name: haproxy
+    state: present 
+    gid: 2337
+
+- name: Create the proper user inside of the server
+  user: 
+    name: haproxy
+    groups: haproxy
+    append: yes
+    uid: 2337
+
+#- name: Copy over source files
+#  copy: 
+#    src: haproxy-{{ haproxy_verion }}.tar.gz
+#    dest: /tmp/haproxy-{{ haproxy_verion }}.tar.gz
+
+- name: Create tmp dir
+  file:
+    path: /tmp/haproxy-{{ haproxy_verion }}
+    state: directory
+   
+- name: unarchieve source files
+  unarchive:
+    src: haproxy-{{ haproxy_verion }}.tar.gz
+    dest: /tmp/haproxy-{{ haproxy_verion }}
+
+- name: build and install packages
+  shell: "make TARGET=linux2628 USE_PCRE=1 USE_OPENSSL=1 USE_ZLIB=1 && make install"
+  args:
+    chdir: /tmp/haproxy-{{ haproxy_verion }}/haproxy-{{ haproxy_verion }}/
+
+- name: Copy over startup script /etc/init.d/haproxy
+  copy: 
+    src: haproxy
+    dest: /etc/init.d/haproxy
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy over service file when RHEL 7
+  template:
+    src: haproxy.service
+    dest: /usr/lib/systemd/system/haproxy.service
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "7"
+ 
+- name: Create /etc/haproxy directory
+  file: 
+    path: /etc/haproxy
+    state: directory
+    owner: root
+    group: root
+    mode: 0755 
+  
+#  - name: Copy over configuration file /etc/haproxy/haproxy.cfg
+#    copy: src=../files/haproxy.cfg.staging dest=/etc/haproxy/haproxy.cfg owner=root group=root mode=0755
+
+- name: Restart HAProxy Service and add it to chkconfig
+  service: 
+    name: haproxy
+    state: restarted
+    enabled: yes
+
+- name: Delete tmp dir
+  file:
+    path: /tmp/haproxy-{{ haproxy_verion }}
+    state: absent

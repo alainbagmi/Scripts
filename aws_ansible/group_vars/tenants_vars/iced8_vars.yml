@@ -1,0 +1,29 @@
+iced8:
+  project_name: ICE
+  alias: iced8
+  drupal_version: 8
+  akamai_group: 18765
+  akamai_path: /183946/ice
+  newrelic_id: 137935451
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testintd8.dhs.gov
+      public: testintd8.dhs.gov
+    akamai_cpcode:
+      edit: 237298
+      public: 237296
+  staging:
+    site_urls:
+      edit: edit.staging.ice.gov
+      public: staging.ice.gov
+    akamai_cpcode:
+      edit: 237298
+      public: 237296
+  prod:
+    site_urls:
+      edit: edit.ice.gov
+      public: www.ice.gov
+    akamai_cpcode:
+      edit: 237299
+      public: 114414

@@ -1,0 +1,42 @@
+---
+
+- name: Print inputs variables
+  debug:
+     msg: "{{ project_name }} {{ tenant_name }} {{ code_release }}"
+
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+- name: CLone the repository
+  environment:
+    TMPDIR: "/home/bamboo/quan"
+    #----- Declaring variables and exporting
+    GIT_SSL_NO_VERIFY: TRUE
+    log_dir: data/bamboo_scripts/deploy/log
+    webroot: var/www/html/wwwroot
+    settingsroot: data/bamboo/xml-data/build-dir/settings
+    filesroot: =/var/www/sites-files
+    server: 172.22.84.20
+    #
+      
+  git:
+    repo: "{{ base_stash_project }}/{{ tenant_name }}_gov.git"
+    dest: "/home/bamboo/quan/{{ tenant_name }}"
+    version: "master"
+    track_submodules: yes
+    force: yes
+    depth: 1
+  become: no
+  run_once: yes
+
+- name: Set Apache URL
+  set_fact:
+    server: '172.22.84.20'
+
+- name: Print uptime from server
+  shell: ssh -q {{ server }} uptime
+  register: shell_output
+- debug: var=shell_output
+
+
+
+
+

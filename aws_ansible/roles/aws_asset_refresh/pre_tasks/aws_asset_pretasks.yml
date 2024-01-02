@@ -1,0 +1,127 @@
+- name: Create Directories and Set Facts
+  block:
+    - name: Set Source Paths
+      set_fact:
+        aws_source_path: "/mnt/{{ source_env }}/sites-files/{{ source_env }}.{{ tenant }}_gov_build/files/"
+        empty_path: "/data/adhoc_tasks/apache_empty"
+        target_tenant: "{{ tenant }}"
+
+    - name: Set Target Paths
+      set_fact:
+        target_path: "/mnt/{{ target_env }}/sites-files/{{ target_env }}.{{ target_tenant }}_gov_build/files/"
+        backup_tar_file: "{{ target_tenant }}_{{ target_env }}_assets_backup-{{ current_run_timestamp.stdout }}.tar.gz"
+        netstorage_tar_file: "{{ target_tenant }}_{{ source_env }}_assets_snapshot-{{ current_run_timestamp.stdout }}.tar.gz"
+
+    - name: Set Source Netstorage Path
+      set_fact:
+        aws_source_path: "{{ aws_docking_assets }}/"
+      when: source_env == "netstorage"
+
+    # Override Target Path when Netstorage is target
+    # So no accidental lower asset changes occur
+    - name: Set Path to empty
+      set_fact:
+        target_path: ""
+      when: target_env == "netstorage"
+
+    #Set Source index
+    - name: Set Source Index Upper
+      set_fact:
+        source_index: "upper_env"
+      when: source_env == "production" or source_env == "prod"
+    
+    - name: Set Source Index Lower
+      set_fact:
+        source_index: "lower_env"
+      when: source_env == "staging" or source_env == "testint"
+
+    #Set Target index
+    - name: Set Target Index Upper
+      set_fact:
+        target_index: "upper_env"
+      when: target_env == "production" or target_env == "prod"
+    
+    - name: Set Target Index Lower
+      set_fact:
+        target_index: "lower_env"
+      when: target_env == "staging" or target_env == "testint"
+
+    # Set sync_excludes
+    - name: Set sync_exludes
+      set_fact: 
+        sync_exclude: "--exclude cache/* --exclude tmp/* --exclude static-backup/* --exclude php/twig/*"
+        # path_exclude:
+        # - "{{ aws_source_path }}css/*"
+        # - "{{ aws_source_path }}js/*"
+        # - "{{ aws_source_path }}cache/*"
+        # - "{{ aws_source_path }}tmp/*"
+        # - "{{ aws_source_path }}static-backup/*"
+        # - "{{ aws_source_path }}php/twig/*"
+      when: exclude_files == "default"
+
+    - name: Set sync_exludes
+      set_fact: 
+        sync_exclude: "--exclude cache/* --exclude tmp/* --exclude static-backup/* --exclude php/twig/* --exclude css/* --exclude js/* --exclude err/* --exclude ilink/*"
+        # path_exclude:
+        # - "{{ aws_source_path }}cache/*"
+        # - "{{ aws_source_path }}tmp/*"
+        # - "{{ aws_source_path }}static-backup/*"
+        # - "{{ aws_source_path }}php/twig/*"
+      when: exclude_files == "migrate"
+
+    - name: Set sync_exludes
+      set_fact: 
+        sync_exclude: "--exclude cache/* --exclude tmp/* --exclude static-backup/* --exclude php/twig/*"
+        # path_exclude:
+        # - "{{ aws_source_path }}css/*"
+        # - "{{ aws_source_path }}/js/*"
+        # - "{{ aws_source_path }}cache/*"
+        # - "{{ aws_source_path }}tmp/*"
+        # - "{{ aws_source_path }}static-backup/*"
+        # - "{{ aws_source_path }}err"
+        # - "{{ aws_source_path }}ilink/*"
+        # - "{{ aws_source_path }}php/twig/*"
+      when: exclude_files == "uscis"
+
+    - name: Get Empty Path Stats
+      stat:
+        path: "{{ empty_path }}/"
+      register: empty_path_stat
+
+- name: Perform Target Backup
+  block:
+    - name: Archive File
+      shell: "cd {{ target_path }} && tar --exclude='js/*' --exclude='cache/*' --exclude='tmp/*' --exclude='static-backup/*' --exclude='php/twig/*' --exclude='css/*' --exclude='err/*' --exclude='ilink/*' -zcf {{ target_asset_backup_path }}/{{ backup_tar_file }} ."
+
+    - name: Ensure Mode and Permissions are set
+      file:
+        path: "{{ target_asset_backup_path }}/{{ backup_tar_file }}"
+        owner: apache
+        group: apache
+        mode: 0776
+
+    # - name: Archive Target Backup File
+    #   archive:
+    #     path:
+    #       - "{{ target_path }}"
+    #     dest: "{{ target_asset_backup_path }}/{{ backup_tar_file }}"
+    #     exclude_path: "{{ path_exclude }}"
+    #     format: gz
+    #     mode: 0776
+    #     owner: apache
+    #     group: apache
+
+    - name: Sync Target Backup File to Netstorage
+      shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ target_asset_backup_path }}/{{ backup_tar_file }} sshacs@dhswcms.upload.akamai.com:{{ akamai_asset_path }}/{{ backup_tar_file }}"
+
+    - name: Cleaning Post-Task if directory exists
+      synchronize:
+        src: "{{ empty_path }}/"
+        dest: "{{ target_asset_backup_path}}/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ inventory_hostname }}"
+      become: yes
+  when:
+    - target_backup == "yes"
+    - target_index == "lower_env"

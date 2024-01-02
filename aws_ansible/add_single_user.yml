@@ -1,0 +1,52 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  ignore_errors: yes
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+
+  tasks:
+    - name: Add a user
+      block:
+      # - name: Run a command
+      #   shell: "hostname"
+      #   delegate_to: "{{ host_ip }}"
+      #   with_inventory_hostnames:
+      #     - "tag_aws_autoscaling_groupName_production_as_group"
+      #     - "tag_aws_autoscaling_groupName_testint_as_group"
+      #   loop_control:
+      #     loop_var: host_ip
+          
+      - name: Run my commands
+        shell: "{{ item }}"
+        with_items:
+          # - useradd -u 1500 "{{ user_name }}"
+          #- chage -I -1 -m 0 -M 99999 -E -1 "{{ user_name }}"
+          #- mkdir /home/"{{ user_name }}"/.ssh
+          #- chown "{{ user_name }}":"{{ user_name }}" /home/"{{ user_name }}"/.ssh
+          #- chmod 700 /home/"{{ user_name }}"/.ssh
+          #- usermod -a -G adm,wheel,systemd-journal,root "{{ user_name }}"
+          - echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDOZo+67wPfEoiwGFG/ezxGc0jrOuRXOa6TJJ890gfu/CfrWmvOkqQxN90PmVQ14CNZVZSdhX1jprJpHmxY6jwoKtp0IlToymx1xIC+0UfbJFfeIoBBMBTW5ddB1UvTBJvCznosuHYZkeIZpgQHCrgwLzvs/SyiD35k5jg5hcmgWOe09xe6H/AE695g9k0krHrZ+YwIibT/NqozAnqUmS1LFKhsQAHuNmfU5CBtsIssxDeiL3ZXazCxHox6iLr3isQ0RRqvWw+L8beQz9qDZtQiSd6uEvAGcrLR3Fp16LCKICn0TTlGOHpMnmT1FmKmqbAX/n719VM2VCUqx++1yekdJNq9T6y0FoDiiKvLlFghlSCw/yVzEF4UnYllEqF6ep63ZUQnBlmMepTyBAuOdHQLk9O2mZ6r2MvO7sIpHfgMmJlAUtZ768erDwhzuzutsBUvUWELSjI7wur1tKjt0MUShbqIMs4Nal2ulzmYmpKnxo7SER5rb8SXKa6x3brJKo8= abagmi@madrid" > /home/"{{ user_name }}"/.ssh/authorized_users
+          - chown "{{ user_name }}":"{{ user_name }}" /home/"{{ user_name }}"/.ssh/authorized_users
+          - chmod 600 /home/"{{ user_name }}"/.ssh/authorized_users
+          - ignore_errors: yes
+
+      - name: Get user id
+        shell: id -u "{{ user_name }}"
+        register: user_id
+        become: true 
+
+
+      - name: sudo without password for new user
+        blockinfile:
+          create: yes
+          path: "/etc/sudoers.d/{{ user_id.stdout }}-"{{ user_name }}""
+          block: |
+
+            "{{ user_name }}"         ALL=(ALL)       NOPASSWD: ALL
+          mode: 0440
+        become: true

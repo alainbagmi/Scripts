@@ -1,0 +1,29 @@
+tsad8:
+  project_name: TSA
+  alias: tsad8
+  drupal_version: 8
+  akamai_group: 4767
+  akamai_path: /183946/tsa2
+  newrelic_id: 140456374
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testing.tsa.gov
+      public: testing.tsa.gov
+    akamai_cpcode:
+      edit: 177266
+      public: 177266
+  staging:
+    site_urls:
+      edit: edit-staging.tsa.gov
+      public: staging.tsa.gov
+    akamai_cpcode:
+      edit: 177266
+      public: 177266
+  prod:
+    site_urls:
+      edit: edit.tsa.gov
+      public: www.tsa.gov
+    akamai_cpcode:
+      edit: 183939
+      public: 25703

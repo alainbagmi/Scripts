@@ -1,0 +1,61 @@
+---
+- hosts: localhost
+  become: yes
+  become_method: sudo
+  #remote_user: ansible_tower
+
+  roles:
+    - aws_config_export
+  
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+  
+  vars:
+    tenantvars: "{{ tenants[vars['tenant']] }}"
+    in_progress: "0"
+    drupal_version: "{{ tenantvars.drupal_version }}"
+    akamai_path: "{{ tenantvars.akamai_path }}"
+    env_path: "/data/{{ tenant }}"
+    empty_path: "/data/adhoc_tasks/ansible_empty"
+    tar_file: "{{ tenant }}_{{ source_env }}_config_export-{{ current_date.stdout }}.tar.gz"
+
+  pre_tasks:
+    #- include: roles/aws_common/tasks/get_tenant_vars.yml
+    - name: Load tenant vars
+      include_vars:
+        dir: group_vars/tenants_vars
+        name: tenants
+
+    - shell: 'date +%m-%d-%Y-%H_%M'
+      register: current_date
+    - set_fact:
+        docroot_path: "/var/www/html/wwwroot/{{ source_env }}.{{ tenant }}_gov_build/docroot/"
+
+    - name: Set server for production
+      set_fact:
+        delegate_host: "{{ groups['tag_aws_autoscaling_groupName_production_as_group'][0] }}"
+      when: source_env == "production"
+    
+    - name: Set server for staging
+      set_fact:
+        delegate_host: "{{ groups['tag_aws_autoscaling_groupName_staging_as_group'][0] }}"
+      when: source_env == "staging"
+
+    - name: Set server for testint
+      set_fact:
+        delegate_host: "{{ groups['tag_aws_autoscaling_groupName_testint_as_group'][0] }}"
+      when: source_env == "testint"
+    #- name: Set Fact
+    #  set_fact:
+    #    delegate_host: "{{ item }}"
+    #  with_inventory_hostnames:
+    #    - "tag_purpose_{{ source_env }}"
+
+    - include: roles/aws_config_export/pre_tasks/aws_host_entry.yml
+
+    - include: roles/aws_config_export/pre_tasks/create_config_paths.yml
+
+ 
+  

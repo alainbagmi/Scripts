@@ -1,0 +1,15 @@
+---
+
+- name: gracefully restart apache
+  command: service httpd graceful
+  args:
+    warn: no
+  listen: "restart apache"
+
+
+- name: start maxscale
+  service: 
+    name: maxscale
+    state: started
+    enabled: yes
+  listen: "start maxscale"

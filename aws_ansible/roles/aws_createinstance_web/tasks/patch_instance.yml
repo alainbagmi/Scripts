@@ -1,0 +1,97 @@
+---
+- name: Create Patching file directory
+  file:
+    path: /tmp/patching
+    state: directory
+
+- name: List all Packages Pre-Patching
+  yum:
+    list: updates 
+    update_cache: true
+  become: true
+  become_method: sudo
+  register: results
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Copy Results To A File 
+  copy: 
+    content: "{{ results | to_nice_json(indent=2) }}" 
+    dest: /tmp/patching/prepatching_packages_web.json
+
+- name: List all packages available for ansible, php and apache
+  yum:
+    list: "{{ item }}"
+  with_items:
+    - ansible
+    - php
+    - apache
+  register: PKGS
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+  become: true
+  become_method: sudo
+
+- name: Copy Results To A File
+  copy:
+    content: "{{ PKGS | to_nice_json(indent=2) }}"
+    dest: /tmp/patching/ansible_php_apache_packages_web.json
+
+- name: Apply patching to  EC2 Instance
+  yum: 
+    name: "*"
+    state: latest
+    exclude:
+      - ansible*
+      - php* 
+      - apache*
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+  become: true
+  become_method: sudo
+
+- name: List updated packages Post patching 
+  shell: rpm -qa --last | grep "$(date +%a\ %d\ %b\ %Y)" | cut -f 1 -d " " 
+  register: result 
+  args: 
+    warn: no
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Copy Results To A File
+  copy:
+    content: "{{ result.stdout_lines | to_nice_json }}"
+    dest: /tmp/patching/postpatching_packages_web.json
+
+- name: Mail all packages Postpatching
+  mail:
+    from: Pyrite_Web_AMI
+    to: 
+    - antonio.punzo@associates.hq.dhs.gov
+    - kyle.day@associates.hq.dhs.gov
+    - mohammad.minaie@associates.hq.dhs.gov
+    - morris.smith@associates.hq.dhs.gov
+    - sergei.ternovski@associates.hq.dhs.gov
+    - phucdat.nguyen@associates.hq.dhs.gov
+    - alain.bagmi@associates.hq.dhs.gov
+    subject: "OS Pre And Post Patches For Web AMI"
+    body: Pre And Post Patch Attachments For Web AMI
+    attach: 
+    - /tmp/patching/prepatching_packages_web.json
+    - /tmp/patching/ansible_php_apache_packages_web.json
+    - /tmp/patching/postpatching_packages_web.json
+
+- name: Delete Patching file directory
+  file:
+    path: /tmp/patching
+    state: absent
+
+- name: Stop Splunk
+  become: yes
+  become_method: sudo
+  shell: /opt/splunkforwarder/bin/splunk stop
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+ 
+
+- name: Clear Instance Specific Information
+  become: yes
+  become_method: sudo
+  shell: /opt/splunkforwarder/bin/splunk clone-prep-clear-config
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+

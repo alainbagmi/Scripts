@@ -1,0 +1,11 @@
+[Unit]
+Description=HAProxy
+After=syslog.target network.target
+
+[Service]
+Type=simple
+ExecStart=/etc/init.d/haproxy start
+ExecStop=/bin/pkill mcrouter
+
+[Install]
+WantedBy=multi-user.target

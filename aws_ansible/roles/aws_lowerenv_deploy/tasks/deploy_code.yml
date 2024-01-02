@@ -1,0 +1,133 @@
+---
+
+- name: Push combined repo to Stash (testint)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:
+#    - "git add -A"
+    - "git add -A -f docroot/.*"
+    - "git add -A -f docroot/*"
+#    - "git add -u docroot"
+#    - "git add -f docroot/sites/default/settings.php"
+    - "git commit -m 'Latest code for testint tenant deployment' --quiet"
+    - "git push origin develop --quiet"
+  run_once: yes
+  when: env == "testint"
+  ignore_errors: yes
+  delegate_to: localhost
+
+- name: Push combined repo to Stash (staging)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:
+    - "git add -A -f docroot/.*"
+    - "git add -A -f docroot/*"
+    - "git commit -m 'Latest code for staging tenant deployment' --quiet"
+    - "git push origin master --quiet"
+  run_once: yes
+  when: env == "staging"
+  ignore_errors: yes
+  delegate_to: localhost
+
+- name: Push combined repo to Stash (prod)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:
+    - "git add -A -f docroot/.*"
+    - "git add -A -f docroot/*"
+    - "git commit -m 'Staged Code for Production deployment' --quiet"
+    - "git push origin live --quiet"
+  run_once: yes
+  when: env == "production"
+  ignore_errors: yes
+  delegate_to: localhost
+
+- name: Change file ownership, group and permissions
+  file:
+    path: "/var/www/html/wwwroot/{{ env }}.{{ tenant }}_gov_build/"
+    owner: apache
+    group: apache
+    mode: '0770'
+    recurse: yes
+    follow: no
+  become: yes
+  become_user: root
+#  when: env == "testint" or env == "staging"
+
+#staging
+- name: Do a git pull on each one of the web servers and run drush commands
+  git:
+    accept_hostkey: yes
+    repo: '{{ aws_stash_project }}'
+    dest: '/var/www/html/wwwroot/{{ env }}.{{ tenant }}_gov_build/'
+    version: "master"
+    force: yes
+#    depth: 1
+#    umask: "0007"
+  become: yes
+  become_user: apache
+  notify:
+    - drush update database
+    - drush cache registry {{ drupal_version }}
+    - restart apache
+  when: env == "staging"
+
+
+#testint
+- name: Do a git pull on each one of the web servers and run drush commands
+  git:
+    accept_hostkey: yes
+    repo: "{{ aws_stash_project }}"
+    dest: "/var/www/html/wwwroot/{{ env }}.{{ tenant }}_gov_build/"
+    version: "develop"
+    force: yes
+#    depth: 1
+#    umask: "0007"
+  become: yes
+  become_user: apache
+  notify:
+    - drush update database
+    - drush cache registry {{ drupal_version }}
+    - restart apache
+  when: env == "testint"
+
+
+#Production
+- name: Do a git pull on each one of the web servers and run drush commands
+  git:
+    accept_hostkey: yes
+    repo: "{{ aws_stash_project }}"
+    dest: "/var/www/html/wwwroot/{{ env }}.{{ tenant }}_gov_build/"
+    version: "live"
+    force: yes
+  become: yes
+  become_user: apache
+  notify:
+    - drush update database
+    - drush cache registry {{ drupal_version }}
+    - restart apache
+  when: env == "production"
+
+
+- name: Re-create symlink for prod
+  file:
+    src: /etc/httpd/conf.d/tenants/{{ tenant }}-edit.conf
+    dest: /etc/httpd/conf.d/{{ tenant }}-edit.conf
+    state: link
+  when: env == "production"
+  become: yes
+  become_user: root
+  run_once: yes
+
+#- name: Resume Launching / Terminating of instances in ASG
+#  command: "aws autoscaling resume-processes --auto-scaling-group-name {{ env }}-as-group --scaling-processes {{ item }}"
+#  loop:
+#    - Terminate
+#    - Launch
+#  become: no
+#  run_once: yes
+#  delegate_to: localhost
+

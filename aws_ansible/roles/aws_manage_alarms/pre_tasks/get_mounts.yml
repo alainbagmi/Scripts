@@ -1,0 +1,25 @@
+---
+- name: Get Volume Information
+  block:
+  - name: Get Volume ID
+    set_fact:
+      device_type: "{{ ec2_facts.instances|json_query(query) }}"
+    vars:
+      query: "[].block_device_mappings[].device_name"
+    ignore_errors: yes
+
+
+  - name: Get a list of the paths where devices are attached
+    shell: "df -h | grep {{ item }} | awk '{print $6}'"
+    register: device_paths
+    with_items: "{{ device_type.stdout }}"
+    ignore_errors: yes
+
+  - name: Show the device paths
+    debug:
+      msg: "{{ device_paths }}"
+    ignore_errors: yes
+
+  
+
+  

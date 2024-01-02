@@ -1,0 +1,61 @@
+---
+- name: Do Settings Tasks
+  block:
+    - name: Ensure everything is owned by ansible_tower
+      file:
+        path: "{{ working_dir }}/initial_repos/settingstemplates/"
+        owner: awx
+        group: awx
+        recurse: yes
+
+    - name: Create prod, staging, testint folders
+      file:
+        path: "{{ item }}"
+        owner: awx
+        group: awx
+        mode: 0700
+        state: directory
+      with_items:
+        - "{{ working_dir }}/initial_repos/settingstemplates/prod"
+        - "{{ working_dir }}/initial_repos/settingstemplates/staging"
+        - "{{ working_dir }}/initial_repos/settingstemplates/testint"
+
+    - name: Generate the has salt
+      shell: head -c 55 /dev/random | base64
+      register: new_hash
+
+    - name: Show new hash
+      debug:
+        msg: "{{ new_hash.stdout }}"
+
+    - name: Set Hash as fact
+      set_fact:
+        config_hash: "{{ new_hash.stdout }}"
+
+    - name: Copy the files
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: awx
+        group: awx
+        mode: 0700
+      with_items:
+        - { src: '../files/prodd8/settings.local.inc', dest: '{{ working_dir }}/initial_repos/settingstemplates/prod/settings.local.inc' }
+        - { src: '../files/prodd8/settings.php', dest: '{{ working_dir }}/initial_repos/settingstemplates/prod/settings.php' }
+        - { src: '../files/prodd8/settings.env.inc', dest: '{{ working_dir }}/initial_repos/settingstemplates/prod/settings.env.inc' }
+        - { src: '../files/prodd8/services.yml', dest: '{{ working_dir }}/initial_repos/settingstemplates/prod/services.yml' }
+        - { src: '../files/prodd8/drush.yml', dest: '{{ working_dir }}/initial_repos/settingstemplates/prod/drush.yml' }
+
+        - { src: '../files/stagingd8/settings.local.inc', dest: '{{ working_dir }}/initial_repos/settingstemplates/staging/settings.local.inc' }
+        - { src: '../files/stagingd8/settings.php', dest: '{{ working_dir }}/initial_repos/settingstemplates/staging/settings.php' }
+        - { src: '../files/stagingd8/settings.env.inc', dest: '{{ working_dir }}/initial_repos/settingstemplates/staging/settings.env.inc' }
+        - { src: '../files/stagingd8/services.yml', dest: '{{ working_dir }}/initial_repos/settingstemplates/staging/services.yml' }
+        - { src: '../files/stagingd8/drush.yml', dest: '{{ working_dir }}/initial_repos/settingstemplates/staging/drush.yml' }
+
+        - { src: '../files/testintd8/settings.local.inc', dest: '{{ working_dir }}/initial_repos/settingstemplates/testint/settings.local.inc' }
+        - { src: '../files/testintd8/settings.php', dest: '{{ working_dir }}/initial_repos/settingstemplates/testint/settings.php' }
+        - { src: '../files/testintd8/settings.env.inc', dest: '{{ working_dir }}/initial_repos/settingstemplates/testint/settings.env.inc' }
+        - { src: '../files/testintd8/services.yml', dest: '{{ working_dir }}/initial_repos/settingstemplates/testint/services.yml' }
+        - { src: '../files/testintd8/drush.yml', dest: '{{ working_dir }}/initial_repos/settingstemplates/testint/drush.yml' }
+
+

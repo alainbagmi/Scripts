@@ -1,0 +1,56 @@
+- name: Check if Gov/Gov Build Paths exists
+  block:
+    - name: Show the list
+      debug:
+        msg: "{{ create_repo_list }}"
+
+    - name: Check if the main onboarding directory exists
+      stat:
+        path: "{{ working_dir }}/initial_repos/"
+      register: onboarding_dir
+
+    - name: Delete Directory if it exists
+      file:
+        path: "{{ working_dir }}/initial_repos/"
+        state: absent
+      become: yes
+      when: onboarding_dir.stat.exists and onboarding_dir.stat.isdir
+
+    - name: Make the directory/remake the directory
+      file:
+        path: "{{ working_dir }}/initial_repos/{{ gov_repo }}/"
+        state: directory
+        owner: awx
+        group: awx
+        mode: 0700
+        recurse: yes
+
+    - name: Reregister the newly created directory
+      stat:
+        path: "{{ working_dir }}/initial_repos/{{ gov_repo }}/"
+      register: clean_onboard_dir
+  when: gov_branch_result.stdout | int == 0 or govbuild_branch_result.stdout | int == 0
+
+- name: Create the Settings path
+  block:
+    - name: Make the settings path
+      file:
+        path: "{{ working_dir }}/initial_repos/settingstemplates/"
+        state: directory
+        owner: awx
+        group: awx
+        mode: 0700
+        recurse: yes
+  when: settings_branch_result.stdout | int == 0
+
+- name: Create the Combo path
+  block:
+    - name: Make the combo path
+      file:
+        path: "{{ working_dir }}/initial_repos/combotemplate/{{ combo_repo }}/"
+        state: directory
+        owner: awx
+        group: awx
+        mode: 0700
+        recurse: yes
+  when: combo_repo_result.stdout | int != 0

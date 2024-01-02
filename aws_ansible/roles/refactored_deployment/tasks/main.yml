@@ -1,0 +1,14 @@
+---
+
+- include: ref_lock_edit_sites.yml
+  when: inventory_hostname in groups['prod_web'] #or inventory_hostname in groups['philly_web']
+
+- include: update_symlinks.yml
+#  when: "'all_prod_webheads' in group_names"
+  when: inventory_hostname in groups['prod_web'] or inventory_hostname in groups['philly_web']
+
+- include: ref_unlock_edit_sites.yml
+#  when: "'all_prod_webheads' in group_names"
+  when: inventory_hostname in groups['prod_web'] #or inventory_hostname in groups['philly_web'] 
+
+

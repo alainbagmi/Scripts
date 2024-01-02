@@ -1,0 +1,9 @@
+---
+- name: Cleaning Post-Task
+  synchronize:
+    src: "{{ empty_path }}/"
+    dest: "{{ item }}"
+    recursive: yes
+    delete: yes
+  delegate_to: "{{ inventory_hostname }}"
+  with_items: "{{ db_path_list }}"

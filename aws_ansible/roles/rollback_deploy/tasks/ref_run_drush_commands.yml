@@ -1,0 +1,67 @@
+---
+- name: Confirm Host for Running Drush Commands
+  debug:
+    msg: "haii i only run on one host"
+  tags:
+    - databasetest
+  run_once: true
+
+
+
+- name: Capture latest release
+  find:
+    paths: "/var/www/html/wwwroot/{{ tenant }}_gov_build"
+    file_type: directory
+  register: release_ver
+  tags:
+    - real
+  run_once: true
+
+
+- name: Set Latest Release as a fact
+  set_fact:
+    latest_file: "{{ release_ver.files | sort(attribute='mtime',reverse=true) | first }}"
+  tags:
+    - real
+  run_once: true
+
+
+- name: Register Latest Release
+  debug:
+    msg: "{{ latest_file['path'] }}"
+  register: latest_release
+  tags:
+    - real
+  run_once: true
+
+
+
+#Use the release number instead of docroot
+- name: Drush Update Database
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ latest_release.msg }} updb -y"
+  ignore_errors: yes
+  tags:
+    - real
+  run_once: true
+
+
+- name: Run the drush rr / cc all (Is called drush cr now)
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases cr --root={{ latest_release.msg }}"
+  when: drupal_version == "8" or drupal_version == "D8" or drupal_version == "d8"
+  ignore_errors: yes
+  tags:
+    - real
+  run_once: true
+
+
+
+- name: Run the drush rr / cc all (for Drupal v7)
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ latest_release.msg }} {{ item }}"
+  with_items:
+    - cc all
+    - rr
+  when: drupal_version == "7" or drupal_version == "D7" or drupal_version == "d7"
+  ignore_errors: yes
+  tags:
+    - real
+  run_once: true

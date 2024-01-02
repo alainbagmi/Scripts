@@ -1,0 +1,43 @@
+---
+- hosts: "tag_aws_autoscaling_groupName_{{ env }}_as_group[0]"
+  remote_user: ansible_tower
+  become: yes
+  become_method: sudo
+  
+  roles:
+    - aws_drush_adhoc
+
+#- name: Show hostvars
+#  debug:
+#    msg: "Hosts: {{ webapp_hosts }}"
+
+  vars:
+    in_progess: "0"
+    task_status: ""
+    pretask_status: ""
+    spec_type: "drush_command"
+    tenantvars: "{{ tenants[vars['tenant']] }}"
+    drupal_version: "{{ tenantvars.drupal_version }}"
+#    email_address: "sergei.ternovski@associates.hq.dhs.gov"
+    
+  pre_tasks:
+    - name: Attempt to get variables from group_vars/tenants
+      block:
+        # - include: roles/common/tasks/get_tenant_vars.yml
+        - name: Load in tenant vars
+          include_vars:
+            dir: group_vars/tenants_vars
+            name: tenants
+        - name: Set Pretask Status
+          set_fact:
+            pretask_status: "OK"
+      rescue:
+        - set_fact:
+            pretask_status: "Ansible Pre-Task Failed"
+            task_status: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/aws_drush_adhoc/tasks/email_tenant.yml
+          when: email_address is defined
+        
+        - name: Fail Task because of Pre-Task Errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"

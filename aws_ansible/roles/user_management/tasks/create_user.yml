@@ -1,0 +1,65 @@
+---
+
+  - name: Check the sudoers file for bamboo
+    lineinfile: 
+      dest: /etc/sudoers
+      state: present
+      insertafter: EOF
+      line: "{{ item }}"
+    with_items:
+      - "%esdo ALL = (ALL) NOPASSWD : ALL"
+      - "Defaults:zenoss !requiretty"
+      - "%zenoss  ALL=(ALL) NOPASSWD: /opt/zenoss/libexec/*"
+
+  - name: Create ESDO Group
+    group:
+      gid: 850
+      name: esdo
+
+  - name: Create sshusers Group
+    group:
+      gid: 481
+      name: sshusers
+
+
+  - name: Create Zenoss Group
+    group:
+      gid: 851
+      name: zenoss
+
+  - name: Create Zenoss User
+    user:
+      name: zenoss
+      uid: 1337
+      group: 851
+      groups: sshusers
+      comment: "Zenoss - Service Account"
+
+
+
+# Add users that have been created here
+
+  - name: Create the user
+    user:
+      name: sfredericq
+      uid: 1099
+      group: 850
+      groups: sshusers
+      comment: "Sara Fredericq - WCM"
+
+# Deploy SSH Keys
+
+  - name: Deploy SSH Keys
+    authorized_key:
+      key: "{{ lookup('file', '../files/{{ item }}_id_rsa.pub') }}"
+      user: "{{ item }}"
+    with_items:
+      - sfredericq
+
+# Push Exiry back
+
+  - name: Check the sudoers file for bamboo
+    command: chage -M 4400 {{ item }}
+    with_items:
+      - sfredericq
+

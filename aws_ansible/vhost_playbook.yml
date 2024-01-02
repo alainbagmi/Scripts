@@ -1,0 +1,17 @@
+---
+
+- hosts: 172.22.81.18
+  become: yes
+
+  pre_tasks:
+  - name: var check
+    include_vars:
+      file: group_vars/tenants
+      name: tenants
+
+  roles:
+    - vhosts
+
+  handlers:
+    - include: roles/common/handlers/main.yml 
+     

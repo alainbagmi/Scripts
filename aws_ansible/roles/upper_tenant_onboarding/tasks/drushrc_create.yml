@@ -1,0 +1,41 @@
+---
+- name: make a file for the user plan
+  copy:
+    content: ""
+    dest: "/data/bamboo_scripts/drush_aliases/{{ tenant_alias }}.aliases.drushrc.php"
+    force: yes
+    group: bamboo
+    owner: bamboo
+    mode: 0700
+  delegate_to: bamboo
+
+- name: create user plan for user off of default template 
+  blockinfile:
+   path: "/data/bamboo_scripts/drush_aliases/{{ tenant_alias }}.aliases.drushrc.php"
+   block: | 
+    <?php
+    require('/data/bamboo_scripts/drush_command/aliases_common.php');
+    $aliases['testint']['root'] = '/var/www/html/wwwroot/testint.{{tenant_alias}}_gov_build/docroot/';
+    $aliases['testint']['l'] = 'https://{{testint_edit_url}}';
+    $aliases['staging']['root'] = '/var/www/html/wwwroot/staging.{{tenant_alias}}_gov_build/docroot/';
+    $aliases['staging']['l'] = 'https://{{staging_edit_url}}';
+    $aliases['prod']['root'] = '/var/www/html/wwwroot/{{tenant_alias}}_gov_build/docroot/';
+    $aliases['prod']['l'] = 'https://{{prod_site_url}}';
+    $aliases['public'] = $aliases['prod'];
+    $aliases['public']['l'] = 'https://{{prod_site_url}}';
+    $aliases['philly']['root'] = $aliases['prod']['root'];
+    $aliases['philly']['l'] = $aliases['prod']['l'];
+    $aliases['d{{drupal_version}}_testint'] = $aliases['testint'];
+    $aliases['d{{drupal_version}}_staging'] = $aliases['staging'];
+    $aliases['d{{drupal_version}}_prod'] = $aliases['prod'];
+  delegate_to: bamboo
+
+- name: Remove the blockinfile markers (since they mess up drush)
+  lineinfile:
+    path: "/data/bamboo_scripts/drush_aliases/{{ tenant_alias }}.aliases.drushrc.php"
+    line: "{{ item }}"
+    state: absent
+  with_items:
+    - "# BEGIN ANSIBLE MANAGED BLOCK"
+    - "# END ANSIBLE MANAGED BLOCK"
+  delegate_to: bamboo

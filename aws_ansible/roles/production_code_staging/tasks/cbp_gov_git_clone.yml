@@ -1,0 +1,19 @@
+---
+
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+- name: CLone the cbp_gov repository
+  environment:
+    TMPDIR: "/home/bamboo/quan"
+    #----- Declaring variables and exporting
+    GIT_SSL_NO_VERIFY: TRUE
+    #
+      
+  git:
+    repo: "{{ base_stash_project }}/{{ tenant_name }}_gov.git"
+    dest: "/home/bamboo/quan/{{ tenant_name }}_gov"
+    version: "master"
+    track_submodules: yes
+    force: yes
+    depth: 1
+  become: no
+  run_once: yes

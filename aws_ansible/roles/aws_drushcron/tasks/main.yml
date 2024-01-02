@@ -1,0 +1,22 @@
+---
+- name: Get the Instance ID of the server im on to protect
+  command: curl http://169.254.169.254/latest/meta-data/instance-id
+  register: protected_instance_id_raw
+
+- set_fact:
+    protected_instance_id: "{{ protected_instance_id_raw.stdout }}"
+
+- debug:
+    var: protected_instance_id
+
+- name: ADD Scale-In Protection
+  shell: /usr/local/bin/aws autoscaling set-instance-protection --instance-ids {{ protected_instance_id }} --auto-scaling-group-name {{ env }}-as-group --protected-from-scale-in
+
+- name: Run Drush Cron for the Environment
+  shell: cd /var/www/sites-files && ./drush_cron.sh
+  ignore_errors: True
+  become: yes
+  become_user: apache
+
+- name: Remove Scale-In Protection
+  shell: /usr/local/bin/aws autoscaling set-instance-protection --instance-ids {{ protected_instance_id }} --auto-scaling-group-name {{ env }}-as-group --no-protected-from-scale-in

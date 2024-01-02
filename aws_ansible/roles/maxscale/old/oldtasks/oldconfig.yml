@@ -1,0 +1,23 @@
+---
+
+- name: Copy /etc/maxscale.cnf
+  copy: 
+    src: "{{ env }}_maxscale.cnf"
+    dest: /etc/maxscale.cnf 
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Copy over the AES encrypted .secrets file 
+  copy: 
+    src: .secrets 
+    dest: /var/lib/maxscale/.secrets 
+    owner: maxscale
+    group: maxscale
+    mode: 0400
+
+- name: Start MaxScale Service
+  service: 
+    name: maxscale 
+    state: started 
+    enabled: yes

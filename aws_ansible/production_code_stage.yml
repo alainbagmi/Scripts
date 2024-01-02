@@ -1,0 +1,35 @@
+#- hosts: prod_web
+#- hosts: localhost
+### WORK IN PROGRESS
+- hosts: 172.22.84.20
+  become: yes
+
+  roles:
+    - production_code_staging
+
+  vars:
+    base_stash_project: "https://maestro.dhs.gov/stash/scm/{{ project_name }}/"
+    tenant_repo: "{{ tenant_name }}_gov_build.git"
+    tenant_settings: "{{ tenant_name }}_settings.git"
+    cbp_gov_build: "/home/bamboo/quan/{{ tenant_name }}_gov_build"
+    cbp_gov: "/home/bamboo/quan/{{ tenant_name }}_gov"
+    cbp_settings: "/home/bamboo/quan/{{ tenant_name }}_settings/prod/"
+
+    #release_number: "{{ bamboo_build_number }}"
+    #tenant_path: "{{ site_root }}{{ env }}.{{ tenant }}_gov_build/docroot"
+    #tenantvars: "{{ tenants[vars['tenant']] }}"
+    #drupal_version: "{{ tenantvars.drupal_version }}"
+    #local_repo: '{{ local_checkouts }}{{ tenant }}/{{ env }}/'
+    #local_settings: '{{ local_checkouts }}{{ tenant }}/settings/'
+    #sitefiles_link: "{{ tenant_path }}/sites/default/files"
+    #submodule_path: "{{ local_repo }}docroot/profiles/{{ tenant }}_gov"
+
+
+    proxy_env:
+       GIT_SSL_NO_VERIFY: true
+
+  environment:
+    #----- Declaring variables and exporting
+    #
+    GIT_SSL_NO_VERIFY: TRUE
+    

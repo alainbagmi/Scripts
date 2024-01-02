@@ -1,0 +1,83 @@
+- hosts: wcm_new_prod_webheads_philly
+  remote_user: bamboo
+  become: yes 
+  become_method: sudo
+
+  tasks:
+
+#  - name: Add prefork settings to the file in Philly Prod
+#    blockinfile:
+#      dest: /etc/httpd/conf.modules.d/00-mpm.conf
+#      insertafter: EOF
+#      content: |
+#        <IfModule prefork.c>
+#        StartServers     5
+#        MinSpareServers  5
+#        MaxSpareServers  5
+#        ServerLimit      15
+#        MaxClients       15
+#        MaxRequestsPerChild  5000
+#        </IfModule>
+#        KeepAliveTimeout 2
+#        MaxKeepAliveRequests 5000
+#   
+#  - name: Restart httpd
+#    command: service httpd graceful
+#
+#- hosts: wcm_new_staging_webheads
+#  remote_user: bamboo
+#  become: yes
+#  become_method: sudo
+#
+#  tasks:
+#
+#  - name: Add prefork settings to the file in Phx staging
+#    blockinfile:
+#      dest: /etc/httpd/conf.modules.d/00-mpm.conf
+#      insertafter: EOF
+#      content: |
+#        <IfModule prefork.c>
+#        StartServers     5
+#        MinSpareServers  5
+#        MaxSpareServers  10
+#        ServerLimit      26
+#        MaxClients       26
+#        MaxRequestsPerChild  5000
+#        MaxRequestWorkers 26
+#        </IfModule>
+#        KeepAliveTimeout 2
+#        MaxKeepAliveRequests 5000
+#
+#  - name: Restart httpd
+#    command: service httpd graceful
+#
+#
+
+- hosts: wcm_new_prod_webheads
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+
+  tasks:
+
+  - name: Add prefork settings to the file in Phx prod
+    blockinfile:
+      dest: /etc/httpd/conf.modules.d/00-mpm.conf
+      insertafter: EOF
+      content: |
+        <IfModule prefork.c>
+        StartServers     5
+        MinSpareServers  5
+        MaxSpareServers  10
+        ServerLimit      50
+        MaxClients       50
+        MaxRequestsPerChild  5000
+        </IfModule>
+        KeepAliveTimeout 2
+        MaxKeepAliveRequests 5000
+
+  - name: Restart httpd
+    command: service httpd graceful
+
+
+

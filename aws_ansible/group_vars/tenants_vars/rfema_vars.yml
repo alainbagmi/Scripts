@@ -1,0 +1,29 @@
+rfema:
+  project_name: FEMA_BASE
+  alias: rfema
+  drupal_version: 8
+  akamai_group: 194190
+  akamai_path: /183946/fema
+  newrelic_id: 140456369
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint-recovery.fema.gov
+      public: testint-recovery.fema.gov
+    akamai_cpcode:
+      edit: 724082
+      public: 724080
+  staging:
+    site_urls:
+      edit: edit-staging-recovery.fema.gov
+      public: staging-recovery.fema.gov
+    akamai_cpcode:
+      edit: 724082
+      public: 724080
+  prod:
+    site_urls:
+      edit: edit-recovery.fema.gov
+      public: recovery.fema.gov
+    akamai_cpcode:
+      edit: 724081
+      public: 724079

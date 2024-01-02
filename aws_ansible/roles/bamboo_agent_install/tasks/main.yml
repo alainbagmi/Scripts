@@ -1,0 +1,62 @@
+---
+# tasks file for bamboo_agent_install
+
+- name: Create a user bamboo
+  user:
+    name: bamboo
+
+- name: Install dependency packages
+  package:
+    name: "{{ DEPENDENCY_PACKAGES }}"
+
+- name: Create bamboo directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: bamboo
+    group: bamboo
+    recurse: yes
+  loop:
+   - "{{ BAMBOO_AGENT_INSTALL_DIR }}"
+   - "{{ BAMBOO_AGENT_HOME_DIR }}"
+   - "{{ BAMBOO_AGENT_UPGRADE_DIR }}"
+   - "{{ BAMBOO_AGENT_BAKFILES_DIR }}"
+   - "{{ BAMBOO_AGENT_NEWFILES_DIR }}"
+   
+- name: Make sure jar file is present locally
+  stat:
+    path: "{{ role_path }}/files/atlassian-bamboo-agent-installer-{{ VERSION }}.jar"
+  register: st
+  become: no
+  delegate_to: localhost
+
+- assert: 
+    that:
+      - st.stat.exists
+    fail_msg: |
+
+
+       You will need to download the bamboo agent installer from Bamboo Server (using the direction below)
+       and place it under "{{ role_path }}/files" dir
+
+       Go to Bamboo Server > Gear ICON (Top Right Corner) > Agents > Install remote agent > DOWNLOAD Remote Agent JAR
+
+- name: Copy the JAR file into the bamboo agent server
+  copy:
+    src: atlassian-bamboo-agent-installer-{{ VERSION }}.jar
+    dest: "{{ BAMBOO_AGENT_INSTALL_DIR }}/"
+    owner: bamboo
+    group: bamboo
+
+- name: Install bamboo remote agent
+  command: java -Dbamboo.home\={{ BAMBOO_AGENT_HOME_DIR }} -jar {{ BAMBOO_AGENT_INSTALL_DIR }}/{{ BAMBOO_AGENT_JAR_FILE }} {{ BAMBOO_SERVER_URL }} install
+  args:
+    creates: "{{ BAMBOO_AGENT_HOME_DIR }}/bin"
+  become: yes
+  become_user: bamboo
+
+- name: bamboo agent service file
+  template:
+    src: bamboo-agent.service.j2
+    dest: /etc/systemd/system/bamboo-agent.service
+  notify: restart bamboo_agent

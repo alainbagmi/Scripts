@@ -1,0 +1,51 @@
+---
+- name: Run Drush Status Drupal 8
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} status"
+  when: drush_status == "Yes" or drush_status == "yes"
+  register: drush_status_result
+  retries: 2
+  until: drush_status_result.rc == 0
+  ignore_errors: yes
+
+- name: Output of Drush Status
+  debug:
+    var: drush_status_result
+  when: drush_status == "Yes" or drush_status == "yes" 
+
+- name: Run Drush updb Drupal 8
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} updb -y"
+  when: drush_updb == "Yes" or drush_updb == "yes"
+  register: drush_updb_result
+  retries: 2
+  until: drush_updb_result.rc == 0
+  ignore_errors: yes
+
+- name: Output of Drush UPDB
+  debug:
+    var: drush_updb_result
+  when: drush_updb == "Yes" or drush_updb == "yes"
+
+- name: Run Drush cr Drupal 8
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} cr"
+  when: drush_clear == "Yes" or drush_clear == "yes"
+  register: drush_clear_result
+  retries: 3
+  until: drush_clear_result.rc == 0
+  ignore_errors: yes
+
+- name: Output of Drush Clear
+  debug:
+    var: drush_clear_result
+  when: drush_clear == "Yes" or drush_clear == "yes"
+
+#- name: Run Drush Check Security Updates
+#  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_path }} ups --check-disabled --security-only"
+#  register: security_update_result
+#  ignore_errors: yes
+#  delegate_to: 172.22.81.16
+#  when: env == staging
+
+#- name: Output of Drush Check security Updates
+#  debug:
+#    var: security_update_result
+#  when: drush_security_check == "Yes" or drush_security_check == "yes"

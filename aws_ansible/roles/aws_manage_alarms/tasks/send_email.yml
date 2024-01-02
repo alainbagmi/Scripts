@@ -1,0 +1,55 @@
+---
+- name: Set an Send Email
+  block:
+  # - name: Set Arn
+  #   set_fact:
+  #     sns_arn: "arn:aws-us-gov:sns:us-gov-west-1:62894281569:WCMMonitoring"
+
+  - name: Set Email subject Config Error
+    set_fact:
+      sns_subj: "WCM AWS Notification Message: Cloudwatch Agent Install/Configuration Error"
+    when: 
+      - config_status is defined
+      - config_status == "ERROR"
+
+  - name: Set Email subject Alarm Error
+    set_fact:
+      sns_subj: "WCM AWS Notification Message: Cloudwatch Agent Alarm Creation Error"
+    when: 
+      - alarm_status is defined
+      - alarm_status == "ERROR"
+
+  # - name: Set message for SNS Email
+  #   set_fact:
+  #     #sns_message: "{{ lookup('template', '../templates/email_error.j2') }}"
+  #     sns_message: "An Error Occured Test"
+
+  - name: Send Error email
+    mail:
+      host: 10.0.10.87
+      port: 25
+      to:
+         - <antonio.punzo@associates.hq.dhs.gov>
+#         - <alain.bagmi@associates.hq.dhs.gov>
+#         - <kyle.day@associates.hq.dhs.gov>
+# #        - <cathleen.tracy@hq.dhs.gov>
+#         - <mohammad.minaie@associates.hq.dhs.gov>
+#         - <sergei.ternovski@associates.hq.dhs.gov>
+#         - <phucdat.nguyen@associates.hq.dhs.gov>
+      from: esdowcmmonitoring@hq.dhs.gov
+      subject: "{{ sns_subj }}"
+      body: "{{ lookup('template', '../templates/email_error.j2') }}"
+
+  #- name: Try to send an Email
+  #  sns:
+  #    msg: "{{ lookup('template', '../templates/email_error.j2') }}"
+  #    subject: "{{ sns_subj }}"
+  #    region: "us-gov-west-1"
+  #    topic: "{{ sns_arn }}"
+  #    validate_certs: no
+  #- name: Attempt to send the SNS Email
+  #  command: aws sns publish --cli-input-json '{{ lookup('template', 'group_vars/templates/sns_pub.json.j2') | to_json }}'
+  #  register: sns_pub_out
+    #retries: 3
+    #until: sns_pub_out.rc == 0
+    #ignore_errors: yes 

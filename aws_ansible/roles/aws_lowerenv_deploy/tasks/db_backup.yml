@@ -1,0 +1,26 @@
+---
+- name: Register Timestamp
+  shell: 'date +%m_%d_%Y'
+  register: timestamp
+
+#- name: Take a backup of tenant db
+#  mysql_db:
+#    state: dump
+#    name: "{{ tenant }}_prod"
+#    login_user: root
+#    login_password: "{{ root_pass }}"
+#    login_host: production-db-reader.wcm.com
+#    single_transaction: yes
+#    target: "/data/prod_deploy_backup/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+
+- name: Switching to command to address max_packet_size in mysqldump
+  shell: "mysqldump --max-allowed-packet=75M  --single-transaction -uroot -p{{ root_pass }}  {{ tenant }}_prod -P 3306 -h {{ env }}-db-reader.wcm.com | gzip > /data/prod_deploy_backup/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+
+- name: Change permissions on backup
+  file:
+    path: "/data/prod_deploy_backup/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+    owner: awx
+    group: awx
+
+- debug:
+    msg: "DB backup name = {{ tenant }}{{ timestamp.stdout }}.sql.gz, stored in /data/prod_deploy_backup"

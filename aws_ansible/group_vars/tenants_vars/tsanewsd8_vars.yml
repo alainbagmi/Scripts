@@ -1,0 +1,29 @@
+tsanewsd8:
+  project_name: TSANEWS
+  alias: tsanewsd8
+  drupal_version: 8
+  akamai_group: 116984
+  akamai_path: /183946/tsa_news
+  newrelic_id: 140457814
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint-mobile.tsa.gov
+      public: testint-mobile.tsa.gov
+    akamai_cpcode:
+      edit: 398306
+      public: 398306
+  staging:
+    site_urls:
+      edit: edit-staging-mobile.tsa.gov
+      public: staging-mobile.tsa.gov
+    akamai_cpcode:
+      edit: 398306
+      public: 398306
+  prod:
+    site_urls:
+      edit: edit-mobile.tsa.gov
+      public: mobile.tsa.gov
+    akamai_cpcode:
+      edit: 398307
+      public: 398307

@@ -1,0 +1,20 @@
+---
+- hosts: "all_{{ hostgroup }}_webheads"
+  become: yes
+  become_method: sudo
+  remote_user: bamboo
+
+  roles:
+    - maxscale
+
+  vars:
+    - database_servers: all_{{ hostgroup }}_database_servers
+
+  vars_files:
+    - group_vars/mysql_user_creds.yml
+    - group_vars/proxy
+
+  handlers:
+    - include: roles/common/handlers/main.yml 
+
+    

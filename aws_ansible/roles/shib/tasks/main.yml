@@ -1,0 +1,53 @@
+---
+
+- name: Setup Shib yum repo
+  copy:
+    src: shib.repo
+    dest: /etc/yum.repos.d/shib.repo
+    mode: 0600
+
+- name: Enable Shib repo
+  command: yum-config-manager --enable {{ item }}
+  with_items:
+    - epel
+    - security_shibboleth
+
+- name: Install Shib and DS
+  yum:  
+    name: "{{ item }}"
+  with_items:
+    - shibboleth
+    - shibboleth-embedded-ds
+  environment: "{{ proxy_env }}"
+
+- name: Disable Shib repo
+  command: yum-config-manager --disable {{ item }}
+  with_items:
+    - epel
+    - security_shibboleth
+
+- name: Copy Configuration Files
+  copy:
+    src: "{{ item }}"
+    dest: /etc/shibboleth/{{ item }}
+    mode: 0755
+  with_items:
+    - SSO-Federationmetadata.xml
+    - OMB-Max-metadata.xml
+    - dhs.key
+    - dhs.crt
+    - shibboleth2.xml
+    - attribute-map.xml
+
+#- name: Setup Selinux policies
+
+- name: Start and enable Shib service
+  service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  with_items:
+    - shibd
+    - httpd
+
+

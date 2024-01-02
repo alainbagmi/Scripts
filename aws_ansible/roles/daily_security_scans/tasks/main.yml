@@ -1,0 +1,93 @@
+#runs daily security checks on drupal modules
+---
+
+- name : Looping through Module Scanning
+
+  include_role:
+    name: module_scanning
+    
+  vars:
+    drupal_version: "{{ first_item.value.drupal_version }}"
+    docroot: "{{ docroot_prefix }}{{ first_item.value.alias }}_gov_build/docroot"
+    #docroot: "{{ docroot_prefix }}staging.cbp_gov_build/docroot"
+    site_alias: "{{ first_item.value.alias }}"
+    #site_alias: "cbp"
+    
+  with_dict: "{{ tenants }}"
+  loop_control:
+    loop_var: first_item 
+
+
+
+
+
+
+
+#  - debug:
+#      msg: "{{ item.value }}"
+#    with_dict: "{{ tenant_information.FEMA.production.site_urls }}"
+
+
+
+
+
+  #- name : Debug Messaging
+
+
+    
+    #with_dict: "{{ tenant_information }}"
+
+
+    #vars:
+    #  drupal_version: "{{ item.value.drupal_version }}"
+    #debug:
+    #  msg: "{{ drupal_version }}"
+      #include_role:
+      #  name: module_scanning
+
+    #with_dict: "{{ tenant_information }}"
+    
+
+
+    #loop_control:
+    #  loop_var: "{{ item0.value.drupal_version }}"
+
+
+    #loop_control:
+    #  loop_var: "{{ item1.value.drupal_version }}"
+
+  #  script: "roles/common/files/get_jira_users.py {{ item.value.alias }} {{ item.value.drupal_version }}"
+        #register: email_list
+  #  with_dict: "{{ tenant_information }}"
+
+
+
+
+
+
+
+
+
+
+
+  #- name : Get the Emails
+  #  script: "roles/common/files/get_jira_users.py {{ item.value.alias }} {{ item.value.drupal_version }}"
+      #register: email_list
+      #debug:
+      #  msg: "{{ email_list }}"
+
+  #  with_dict: "{{ tenant_information }}"
+
+
+  #- name: Calling an individual element
+  #  debug:
+  #     msg: "{{ tenant_information.FEMA.production.site_urls.edit }}"
+
+
+    #pre_tasks:
+    #  - name: Get the list of email users
+    #    script: roles/common/files/get_jira_users.py {{ site_alias }} {{ drupal_version }}
+    #    register: email_list
+
+  # MAYBE
+  # email_list.stdout

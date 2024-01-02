@@ -1,0 +1,29 @@
+diamond:
+  project_name: DIAMOND
+  alias: diamond
+  drupal_version: 7
+  akamai_group: 116983
+  akamai_path: /183946/emerald
+  newrelic_id: 26379964
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint-media.dhs.gov
+      public: testint-media.dhs.gov
+    akamai_cpcode:
+      edit: 406338
+      public: 406246
+  staging:
+    site_urls:
+      edit: edit-staging-media.dhs.gov
+      public: staging-media.dhs.gov
+    akamai_cpcode:
+      edit: 406338
+      public: 406246
+  prod:
+    site_urls:
+      edit: edit-media.dhs.gov
+      public: www.media.dhs.gov
+    akamai_cpcode:
+      edit: 406337
+      public: 406245

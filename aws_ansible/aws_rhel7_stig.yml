@@ -1,0 +1,4 @@
+- hosts: tag_hardening_true
+  roles:
+    - role: aws_RHEL7_STIG
+  become: yes

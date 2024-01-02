@@ -1,0 +1,35 @@
+---
+- hosts: 172.22.81.16
+#- hosts: staging_web[0]
+  remote_user: bamboo
+  become_method: sudo
+  become: yes
+  
+
+  roles:
+    - merge_pull_request
+  
+  vars:
+    in_progress: "0"
+    pre_task_status: ""
+    task_status: ""
+    env: staging
+    jump_ip:  "{{ groups['tower'][0] }}"
+    proxy_env:
+      GIT_SSL_NO_VERIFY: true
+
+  pre_tasks:
+    - name: Attempt to Perform PreTasks
+      block:
+        - include: roles/common/tasks/get_tenant_vars.yml
+        - name: Show jump IP
+          debug:
+            msg: "{{ jump_ip }}"
+      rescue:
+        - set_fact:
+            task_status: "FAILED"
+            task_message: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/merge_pull_request/tasks/email_tenant.yml
+        - name: Fail Task because of errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"

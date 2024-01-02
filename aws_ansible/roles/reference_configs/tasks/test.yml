@@ -1,0 +1,4 @@
+---
+  - name: debug docroot
+    debug:
+      var: tenantdocroot

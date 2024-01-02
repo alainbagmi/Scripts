@@ -1,0 +1,29 @@
+oigd8:
+  project_name: IG
+  alias: oigd8
+  drupal_version: 8
+  akamai_group: 116980
+  akamai_path: /183946/oig
+  newrelic_id: 140721150
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint-oig.dhs.gov
+      public: testint-oig.dhs.gov
+    akamai_cpcode:
+      edit: 464220
+      public: 464220
+  staging:
+    site_urls:
+      edit: edit-staging-oig.dhs.gov
+      public: staging-oig.dhs.gov
+    akamai_cpcode:
+      edit: 464220
+      public: 464220
+  prod:
+    site_urls:
+      edit: edit-oig.dhs.gov
+      public: oig.dhs.gov
+    akamai_cpcode:
+      edit: 464219
+      public: 464219

@@ -1,0 +1,12 @@
+---
+
+- include: git_repo_and_settings.yml
+  delegate_to: localhost
+
+- include: sync_docroot.yml
+- include: create_symlinks.yml
+
+- include: sync_settings.yml
+
+- include: philly_code_stage.yml
+  when: env == "prod"

@@ -1,0 +1,30 @@
+---
+# - name: add tower to root group
+#   shell: whoami
+#   become: yes
+#   become_user: root
+
+- name: add tower to root group
+  shell: usermod -a -G root ansible_tower
+  become: yes
+  become_user: root
+
+- name: set perms on grub/grub2
+  shell: chmod 755 /boot/grub
+  become: yes
+  become_user: root
+
+- name: set perms on grub/grub2
+  shell: chmod 755 /boot/grub2
+  become: yes
+  become_user: root
+
+- name: set perms on grub.cfg
+  shell: chmod 644 /boot/grub/grub.conf
+  become: yes
+  become_user: root
+
+- name: set perms on grub.cfg
+  shell: chmod 644 /boot/grub2/grub.cfg
+  become: yes
+  become_user: root

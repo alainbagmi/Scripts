@@ -1,0 +1,35 @@
+---
+#NOTE - Setting EFS to be backed up is not supported via ansible
+- name: Create prod vhost EFS
+  efs:
+    state: present
+    name: production-apache-vhosts
+    encrypt: yes
+    throughput_mode: bursting
+    tags:
+       Name: production-apache-vhosts
+    targets:
+        - subnet_id: subnet-affbfbd9
+          security_groups: [ "sg-9dbcabfb" ]
+        - subnet_id: subnet-6897930c
+          security_groups: [ "sg-9dbcabfb" ]
+        - subnet_id: subnet-d600938f
+          security_groups: [ "sg-9dbcabfb" ]
+
+- name: Create prod asset EFS
+  efs:
+    state: present
+    name: production-assets
+    encrypt: yes
+    throughput_mode: bursting
+    tags:
+       Name: production-assets
+    targets:
+        - subnet_id: subnet-affbfbd9
+          security_groups: [ "sg-9dbcabfb" ]
+        - subnet_id: subnet-6897930c
+          security_groups: [ "sg-9dbcabfb" ]
+        - subnet_id: subnet-d600938f
+          security_groups: [ "sg-9dbcabfb" ]
+
+

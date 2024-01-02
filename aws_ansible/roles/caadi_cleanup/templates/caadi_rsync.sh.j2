@@ -1,0 +1,83 @@
+! /bin/bash
+
+#Set error handling
+set -eu -o pipefail
+
+#All of these caadi form directories are using YYYMMDD prefix
+today=$(date '+%Y%m%d')
+
+#Since this is cron we should get yesterday's date, just in case
+yesterday=$(date '+%Y%m%d' -d '1 day ago')
+
+#Either 7001 or 7003
+formversion=$1
+
+#Run this like "./caadi_rsync 7001 prod" and "./caadi_rsync 7003 prod" in prod, with staging in staging, testint for testint, demo or leave blank before the go-live date. 
+
+prod_sitefiles=production.dhs_gov_build
+staging_sitefiles=staging.dhs_gov_build
+testint_sitefiles=testint.dhs_gov_build
+demo_sitefiles=testint.caadi_gov_build
+host=${2:-demo}
+sitefiles=$host'_sitefiles'
+destdir=$host'_dest'
+
+#We are sending these to a Windows server and need random \/'s everywhere, ridiculous imo. We may have to also change their $env path to PROD in prod, too?
+demo_dest=\UAT
+staging_dest=\UAT
+testint_dest=\UAT
+prod_dest=\PROD
+
+caadi_path=/var/www/sites-files/${!sitefiles}/files-private/webform/CAADI_$formversion/$formversion'FormSubmissions'
+
+#If there are no directories added today, move along. If there are empty directories it is because the previous cron run of this script rsync them successfully, so move them to the completed folder. Otherwise rsync the non-empty directories up to their destination.  Rsync --remove-source-files will not remove failed submissions, so the next cron will try again (nice). --partials will let them keep any partially failed submissions that made it up there, letting them know we tried, and the next cron run or two should fix that when it tries again. 
+
+if [[ ! "$(ls -d $caadi_path/$today* 2>/dev/null)" ]]; then
+#  echo "$(date) no forms submittited today"
+  sleep .1
+else
+  todays_dirs=$(ls -d $caadi_path/$today*)
+  logfile=$caadi_path/logs/$today'_'$formversion'_log'
+  touch $logfile
+  echo $logfile
+#touch the files to update the metadata due to possible gluster issue
+  for dir in $todays_dirs; do
+    cd $dir
+    find . -exec touch {} \;
+  done
+  for dir in $todays_dirs; do
+    if [ -n "$(find "$dir" -maxdepth 0 -type d -empty 2>/dev/null)" ]; then
+      #echo "$(date) Moving today's empty directories to completed folder" && mv $dir $caadi_path/completed/
+      sleep .1
+    else
+      rsync -r --ignore-missing-args --remove-source-files --modify-window=1 --partial --log-file=$logfile $dir --rsync-path='rsync\rsync.exe' -e 'ssh -o StrictHostKeyChecking=no -p 8000' crm-admin@10.0.4.97:${!destdir}/CAADI_$formversion\/$formversion'FormSubmissions'\/Incoming//
+    fi
+  done
+fi
+
+#Do this again for any potential leftovers from yesterday just in case someone submitted something at 11:59pm, like some kind of animal 
+
+if [[ ! "$(ls -d $caadi_path/$yesterday* 2>/dev/null)" ]]; then
+#  echo "$(date) no extra forms submittited yesterday" 
+  sleep .1
+else
+  yesterdays_dirs=$(ls -d $caadi_path/$yesterday*)
+
+  logfile=$caadi_path/logs/$yesterday'_'$formversion'_log'
+
+#touch the files to update the metadata due to possible gluster issue
+  for dir in $yesterdays_dirs; do
+    cd $dir
+    find . -exec touch {} \;
+  done
+
+  for dir in $yesterdays_dirs; do
+    if [ -n "$(find "$dir" -maxdepth 0 -type d -empty 2>/dev/null)" ]; then
+      #echo "$(date) Moving yesterday's empty directories to completed folder" && mv $dir $caadi_path/completed/
+      sleep .1
+    else
+      rsync -r --ignore-missing-args --remove-source-files --modify-window=1 --partial --log-file=$logfile $dir --rsync-path='rsync\rsync.exe' -e 'ssh -o StrictHostKeyChecking=no -p 8000' crm-admin@10.0.4.97:${!destdir}/CAADI_$formversion\/$formversion'FormSubmissions'\/Incoming//
+    fi
+  done
+fi
+

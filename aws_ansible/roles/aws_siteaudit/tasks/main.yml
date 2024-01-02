@@ -1,0 +1,23 @@
+---
+- name: get user
+  shell: whoami
+  register: who_raw
+  
+- set_fact:
+    who: "{{who_raw.stdout_lines}}"
+
+- debug:
+    var: who
+  
+- name: get aws binary
+  shell: echo $PATH
+  register: aws_raw
+
+- set_fact:
+    aws_bin: "{{aws_raw.stdout_lines}}"
+
+- name: Run Site Audit one
+  shell: /data/aws_scripts/python_scripts/siteAudit.py --site staging --format html
+
+- name: Run Site Audit two
+  shell: /data/aws_scripts/python_scripts/siteAudit.py --site prod --format html

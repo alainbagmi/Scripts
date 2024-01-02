@@ -1,0 +1,14 @@
+---
+
+#
+#
+- name: Print inputs variables
+  debug:
+     msg: "{{ project_name }} {{ tenant_name }} {{ code_release }}"
+
+- include: cbp_git_clone.yml
+  delegate_to: localhost
+- include: rsync.yml
+- include: symlinks_and_cleanup.yml
+#
+#

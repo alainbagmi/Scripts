@@ -1,0 +1,75 @@
+---
+- name: Attemp DB Refresh
+  block:
+    - name: Set Path
+      set_fact:
+        db_refresh_path: "/data/db_refreshes/{{ site_alias }}/"
+
+    - name: Get path Stats
+      stat:
+        path: "{{ db_refresh_path }}"
+      register: db_refresh_stats
+    
+    - name: Make directory if not exists
+      file:
+        path: "{{ db_refresh_path }}"
+        state: directory
+        owner: bamboo
+        group: bamboo
+        mode: 0775
+        recurse: yes
+      when: db_refresh_stats.stat.isdir is not defined
+    
+    
+    - include: prod_db_commands.yml
+      when: netstorage_source_flag == 0
+    
+    - include: lower_db_commands.yml
+      when: netstorage_target_flag == 0
+
+
+    #- include: db_to_netstorage.yml
+    #  when: netstorage_target_flag == 1 
+
+  
+    - include: d8_drush_commands.yml
+      when:
+        - drupal_version == "8"
+        - netstorage_target_flag == 0
+
+    - include: d7_drush_commands.yml
+      when:
+        - drupal_version == "7"
+        - netstorage_target_flag == 0
+
+    - name: Set Success Flag
+      set_fact:
+        task_status: "Ansible Task Finished Successfully"
+
+  rescue:
+    - name: Overwrite Task Status if Fail
+      set_fact:
+        task_status: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+    
+    - name: Fail Task 
+      fail:
+        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+  always:
+ 
+    - name: Set Path
+      set_fact:
+        db_refresh_path: "/data/db_refreshes/{{ site_alias }}"
+
+    - name: Get path Stats
+      stat:
+        path: "{{ db_refresh_path }}"
+      register: db_refresh_stats
+    
+    - name: Remove the Directory if it exists
+      file:
+        path: "{{ db_refresh_path }}"
+        state: absent
+      when: db_refresh_stats.stat.isdir is defined and db_refresh_stats.stat.isdir 
+    
+    - include: email_tenant.yml
+      when: email_address is defined

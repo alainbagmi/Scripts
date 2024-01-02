@@ -1,0 +1,79 @@
+---
+- name: Pretasks for tenant onboarding 
+  block:
+    - name: Set Host Name to env
+      set_fact:
+        host_name: "{{ env }}" 
+
+    - name: Set facts for testint
+      set_fact:
+        clone_branch: "develop"
+        delegate_host: "{{ groups['tag_aws_autoscaling_groupName_testint_as_group'][0] }}"
+        daily_db_check: "test"
+      when: env == "testint"
+
+    - name: Set branch for staging
+      set_fact:
+        clone_branch: "master"
+        delegate_host: "{{ groups['tag_aws_autoscaling_groupName_staging_as_group'][0] }}"
+        daily_db_check: "stage"
+      when: env == "staging"
+
+    - name: Set branch for production
+      set_fact:
+        clone_branch: "security"
+        delegate_host: "{{ groups['tag_aws_autoscaling_groupName_production_as_group'][0] }}"
+        daily_db_check: "production"
+      when: env == "production"
+
+  when: run_cmd == "onboard"
+  # when: '"tenant_onboard" in tag_list'
+  #tags: [tenant_onboard]
+
+- name: Pretasks for tenant onboarding test
+  block:
+    - name: Set Host Name to target wcmlab for testing
+      set_fact:
+        host_name: "{{ target }}"
+        delegate_host: "{{ groups['tag_aws_autoscaling_groupName_wcmlab_as_group'][0] }}"
+      when:
+        - target is defined
+        - target == "wcmlab"
+
+    - name: Set facts for testint
+      set_fact:
+        clone_branch: "develop"        
+        daily_db_check: "test"
+      when: 
+        - env == "testint"
+        - target is defined
+        - target == "wcmlab"
+
+    - name: Set branch for staging
+      set_fact:
+        clone_branch: "master"
+        daily_db_check: "stage"
+      when: 
+        - env == "staging"
+        - target is defined
+        - target == "wcmlab"
+
+    - name: Set branch for production
+      set_fact:
+        clone_branch: "security"
+        daily_db_check: "production"
+      when: 
+        - env == "production"
+        - target is defined
+        - target == "wcmlab"
+    
+    - name: Overide facts
+      set_fact:
+        asset_path: "/mnt/wcmlab_{{ env }}/sites-files/wcmlab_{{ env }}.{{ tenant }}_gov_build"
+        wwwroot_path: "/var/www/html/wwwroot/wcmlab_{{ env }}.{{ tenant }}_gov_build"
+        vhost_path: "/etc/httpd/wcmlab_{{ env }}_conf.d"
+      when:
+        - target is defined
+        - target == "wcmlab"
+  when: run_cmd == "onboard_test"
+  # when: '"tenant_onboard_test" in tag_list'

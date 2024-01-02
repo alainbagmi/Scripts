@@ -1,0 +1,8 @@
+---
+- name: Deploy TSA Tie network settings
+  hosts: wcm_new_staging_webheads:wcm_new_prod_webheads:wcm_new_prod_webheads_philly
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+  roles: 
+    - tsa_tie

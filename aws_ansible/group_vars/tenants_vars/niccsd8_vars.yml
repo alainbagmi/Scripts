@@ -1,0 +1,29 @@
+niccsd8:
+  project_name: NICCS
+  alias: niccsd8
+  drupal_version: 8
+  newrelic_id: 140456577
+  akamai_group: 28689
+  akamai_path: /183946/nics
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit.testint.niccs.us-cert.gov
+      public: testint.niccs.us-cert.gov
+    akamai_cpcode:
+      edit: 188484
+      public: 188485
+  staging:
+    site_urls:
+      edit: edit-preview.niccs.us-cert.gov
+      public: preview.niccs.us-cert.gov
+    akamai_cpcode:
+      edit: 188484
+      public: 188485
+  prod:
+    site_urls:
+      edit: edit.niccs.us-cert.gov
+      public: niccs.us-cert.gov
+    akamai_cpcode:
+      edit: 197708
+      public: 19940

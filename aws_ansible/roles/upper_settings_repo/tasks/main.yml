@@ -1,0 +1,289 @@
+---
+## tasks file for settings_repo
+## Need repo name
+
+- name: Check If Repo Exist
+  shell: git ls-remote https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ tenant_alias }}_settings.git  >/dev/null ;echo $?
+  register: result
+  ignore_errors: true
+  become: true 
+  become_user: bamboo
+
+- debug:
+    msg:
+     - THE REPO "https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ tenant_alias }}_settings.git" ALREADY EXIST
+     - PLEASE DELETE THE REPO MANUALLY.
+  when: result.stdout == '0'
+
+
+- name: Create a settings repo
+  uri:
+    url: "{{ url }}{{ stash_project }}/repos/"
+    method: POST
+    body_format: json
+    body:
+      name: "{{ tenant }}_settings"
+    force_basic_auth: yes
+    validate_certs: no
+    status_code: 201, 409
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Basic YmFtYm9vOkJhbUIwMGklNTYyMg=="
+      Accept: "application/json"
+  when: result.stdout >= '1'
+
+- name: Create the folder
+  file:
+    path: /data/bamboo_scripts/pythonScripts/settingtemplates
+    owner: bamboo
+    group: bamboo
+    state: directory
+  when: result.stdout >= '1'
+
+
+- name: Create the git repo
+  shell: su - bamboo -c "cd /data/bamboo_scripts/pythonScripts/settingtemplates && git init"
+  when: result.stdout >= '1'
+
+
+- name: Change the repo to be owned by bamboo
+  file:
+    path: /data/bamboo_scripts/pythonScripts/settingtemplates
+    owner: bamboo
+    group: bamboo
+    recurse: yes
+  when: result.stdout >= '1'
+
+
+- name: Create the prod, staging, testint folders
+  file:
+    path: "{{ item }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0700
+    state: directory
+  with_items:
+    - /data/bamboo_scripts/pythonScripts/settingtemplates/prod
+    - /data/bamboo_scripts/pythonScripts/settingtemplates/staging
+    - /data/bamboo_scripts/pythonScripts/settingtemplates/testint
+  when: result.stdout >= '1'
+
+
+#Run a drush command to generate this, and then append it to the settings file
+- name: Generate the hash salt required for D8
+  shell: head -c 55 /dev/random | base64
+  register: new_hash
+
+
+- debug:
+    msg: "{{ new_hash.stdout }}"
+   
+
+- name: Copy the settings files onto the jumpbox for D8 site
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0700
+  with_items:
+    - { src: '../files/prodd8/settings.local.inc', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/prod/settings.local.inc' }
+    - { src: '../files/prodd8/settings.php', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/prod/settings.php' }
+    - { src: '../files/prodd8/settings.env.inc', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/prod/settings.env.inc' }
+    - { src: '../files/prodd8/services.yml', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/prod/services.yml' }
+
+
+    - { src: '../files/stagingd8/settings.local.inc', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/staging/settings.local.inc' }
+    - { src: '../files/stagingd8/settings.php', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/staging/settings.php' }
+    - { src: '../files/stagingd8/settings.env.inc', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/staging/settings.env.inc' }
+    - { src: '../files/stagingd8/services.yml', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/staging/services.yml' }
+
+
+    - { src: '../files/testintd8/settings.local.inc', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/testint/settings.local.inc' }
+    - { src: '../files/testintd8/settings.env.inc', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/testint/settings.env.inc' }
+    - { src: '../files/testintd8/services.yml', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/testint/services.yml' }
+    - { src: '../files/testintd8/settings.php', dest: '/data/bamboo_scripts/pythonScripts/settingtemplates/testint/settings.php' }
+
+  when: 
+    - drupal_version == "8"
+    - result.stdout >= '1'
+
+
+
+- name: Git add, commit, and push
+  shell: su - bamboo -c "cd /data/bamboo_scripts/pythonScripts/settingtemplates && git add * && git commit -m 'Initial commit' && git remote add origin https://maestro.dhs.gov/stash/scm/{{ project }}/{{ tenant }}_settings.git && git push origin master --force"
+  when: result.stdout >= '1'
+
+
+- name: Clean up
+  file:
+    state: absent
+    path: /data/bamboo_scripts/pythonScripts/settingtemplates
+  
+
+#- name: check If DB Exist In Testint
+#  shell:  mysql -uroot -p"{{ dbpass }}" -Ns -e "show databases like '{{ tenant }}_test'"> /tmp/db;cat /tmp/db|wc -l
+#  register: testint
+#  delegate_to: "{{ test_db }}"
+
+
+#- name: Create the database in testint
+#  mysql_db:
+#    login_user: root
+#    login_password: "{{ root_pass }}"
+#    name: "{{ tenant }}_test"
+#    state: present
+#  delegate_to: "{{ test_db }}"
+#  when: 
+#    - testint.stdout == '0'
+#    - target_env == "testint"
+
+#- debug:
+#    msg: " Database '{{ tenant }}_test' Exist "
+#  when: 
+#    - testint.stdout >= '1'
+#    - target_env == "testint"
+
+#- name: check If User Exist In Testint DB
+#  shell: mysql -uroot -p"{{ dbpass }}" -Ns -e  "select user from mysql.user WHERE user='{{ tenant }}_test'" > /tmp/db;cat /tmp/db|wc -l
+#  register: dbtest
+#  delegate_to: "{{ test_db }}"
+
+
+#- name: Create the user inside of the testint databases
+#  mysql_user:
+#    login_user: root
+#    login_password: "{{ root_pass }}"
+#    name: '{{ tenant }}_test'
+#    host: '172.22.81.%'
+#    password: "{{ dbpass }}"
+#    priv: '{{ tenant }}_test.*:ALL'
+#    state: present
+#  delegate_to: "{{ test_db }}"
+#  when: 
+#    - dbtest.stdout == '0'
+#    - target_env == "testint"
+
+
+#- debug:
+#    msg: " User '{{ tenant }}_test' Exist "
+#  when: 
+#    - dbtest.stdout >= '1'
+#    - target_env == "testint"
+
+
+#- name: check If DB Exist in Staging
+#  shell:  mysql -uroot -p"{{ dbpass }}" -Ns -e "show databases like '{{ tenant }}_test'"> /tmp/db;cat /tmp/db|wc -l
+#  register: staging
+#  delegate_to: "{{ stage_db }}"
+
+
+#- name: Create the database in staging
+#  mysql_db:
+#    login_user: root
+#    login_password: "{{ root_pass }}"
+#    name: "{{ tenant }}_stage"
+#    state: present
+#  delegate_to: "{{ stage_db }}"
+#  when: 
+#    - staging.stdout == '0'
+#    - target_env == "staging"
+
+
+#- debug:
+#    msg: " Database '{{ tenant }}_test' Exist "
+#  when: 
+#    - staging.stdout >= '1'
+#    - target_env == "staging"
+
+
+#- name: check If User Exist In staging DB
+#  shell: mysql -uroot -p"{{ dbpass }}" -Ns -e  "select user from mysql.user WHERE user='{{ tenant }}_test'" > /tmp/db;cat /tmp/db|wc -l
+ # register: dbstage
+ # delegate_to: "{{ stage_db }}"
+#
+#- name: Create the user inside of the staging databases
+#  mysql_user:
+#    login_user: root
+#    login_password: "{{ root_pass }}"
+#    name: '{{ tenant }}_stage'
+#    host: '{{ item }}'
+#    password: "{{ dbpass }}"
+#    priv: '{{ tenant }}_stage.*:ALL'
+#    state: present
+#  with_items:
+#    - 127.0.0.1
+#    - 172.22.81.%
+#    - 172.23.81.%
+#  delegate_to: "{{ stage_db }}"
+#  when: 
+#    - dbstage.stdout == '0'
+#    - target_env == "staging"
+
+
+#- debug:
+#    msg: " User '{{ tenant }}_test' Exist "
+#  when: 
+#    - dbstage.stdout >= '1'
+#    - target_env == "staging"
+
+
+- name: check If DB Exist in prod
+  shell:  "mysql -uroot -p'{{ dbpass }}' -Ns -e 'show databases like '{{ tenant }}_test''> /tmp/db;cat /tmp/db|wc -l"
+  register: prod
+  delegate_to: "{{ prod_db }}"
+
+
+- name: Create the database in prod
+  mysql_db:
+    login_user: root
+    login_password: "{{ root_pass }}"
+    name: "{{ tenant }}_prod"
+    state: present
+  delegate_to: "{{ prod_db }}"
+  when: 
+    - prod.stdout == '0'
+    - target_env == "prod" or target_env == "production"
+
+
+- debug:
+    msg: " Database '{{ tenant }}_test' Exist "
+  when: 
+    - prod.stdout >= '1'
+    - target_env == "prod" or target_env == "production"
+
+
+- name: check If User Exist In prod DB
+  shell: mysql -uroot -p"{{ dbpass }}" -Ns -e  "select user from mysql.user WHERE user='{{ tenant }}_test'" > /tmp/db;cat /tmp/db|wc -l
+  register: dbprod
+  delegate_to: "{{ prod_db }}"
+
+- debug:
+    msg: "Value of query is {{ dbprod.stdout}}"
+
+
+- name: Create the user inside of the prod database
+  mysql_user:
+    login_user: root
+    login_password: "{{ root_pass }}"
+    name: '{{ tenant }}_prod'
+    host: '{{ item }}'
+    password: "{{ dbpass }}"
+    priv: '{{ tenant }}_prod.*:ALL'
+    state: present
+  with_items:
+    - 127.0.0.1
+    - 172.22.84.%
+    - 172.23.84.%
+  delegate_to: "{{ prod_db }}"
+  when: 
+    - dbprod.stdout == '0'
+    - target_env == "prod" or target_env == "production"
+
+
+- debug:
+    msg: " User '{{ tenant }}_test' Exist "
+  when: 
+    - dbprod.stdout >= '1'
+    - target_env == "prod" or target_env == "production"
+

@@ -1,0 +1,7 @@
+---
+#- hosts: "all_web"
+- hosts: 172.22.81.18:172.22.81.16:172.22.81.19:172.22.81.20
+  become: yes
+
+  roles:
+    - environment_variables

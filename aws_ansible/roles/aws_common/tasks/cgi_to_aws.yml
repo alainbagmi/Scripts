@@ -1,0 +1,70 @@
+---
+- name: Do DB refresh
+  block:
+    - name: Set DB refresh Path
+      set_fact:
+        empty_path: "/data/adhoc_tasks/ansible_empty"
+      
+    - name: Set DB Paths to list for clean up
+      set_fact:
+        db_path_list:
+          - "/data/adhoc_tasks/{{ site_alias }}_files/database_files"
+
+    - name: Set DB Names
+      set_fact:
+        source_db_name: "{{ site_alias }}_prod"
+        target_db_name: "{{ site_alias }}_prod"
+
+    #- shell: 'date +%Y-%m-%d'
+    #  register: current_run_timestamp
+    
+    - name: Set path
+      set_fact:
+        aws_db_path: "/data/adhoc_tasks/{{ site_alias }}_files/database_files"
+
+    - name: Set Source DB File
+      set_fact:
+        source_sql_file: "{{ source_db_name}}_db-{{ current_run_timestamp.stdout }}.sql.gz"
+
+    - name: Dump Production SQL Database 
+      shell: "ssh -i /home/ansible_tower/.ssh/cgi_bamboo_idrsa -A bamboo@10.0.4.97 -p 8008 'mysqldump --single-transaction -h 172.22.86.11 -u{{ cgi_dbuser }} -p{{ cgi_dbpass }} {{ source_db_name }} | gzip ' > {{ aws_db_path }}/{{ source_sql_file }}"
+
+    - name: Check size of file
+      shell: "du -sh * {{ aws_db_path }}/"
+      register: prod_sql_size
+
+    - name: Show file size
+      debug:
+        msg: "{{ prod_sql_size.stdout }}"
+
+    - name: Change Owner and Group to ansible_tower
+      file:
+        path: "{{ aws_db_path }}/{{ source_sql_file }}"
+        owner: ansible_tower
+        group: ansible_tower
+        mode: 0776
+
+    - name: Drop Target Database
+      mysql_db:
+        name: "{{ target_db_name }}"
+        state: absent
+        login_host: "{{ target_env }}-db.wcm.com"
+        login_user: "{{ aws_dbuser }}"
+        login_password: "{{ aws_dbpass }}"
+
+    - name: Re-Create Target Database
+      mysql_db:
+        name: "{{ target_db_name }}"
+        state: present
+        login_host: "{{ target_env }}-db.wcm.com"
+        login_user: "{{ aws_dbuser }}"
+        login_password: "{{ aws_dbpass }}"
+
+    - name: Import Source DB
+      mysql_db:
+        name: "{{ target_db_name }}"
+        state: import
+        target: "{{ aws_db_path }}/{{ source_sql_file }}"
+        login_host: "{{ target_env }}-db.wcm.com"
+        login_user: "{{ aws_dbuser }}"
+        login_password: "{{ aws_dbpass }}"

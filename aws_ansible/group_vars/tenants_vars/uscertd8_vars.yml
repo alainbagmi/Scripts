@@ -1,0 +1,29 @@
+uscertd8:
+  project_name: USCERT
+  alias: uscertd8
+  drupal_version: 8
+  akamai_group: 28392
+  akamai_path: /183946/uscert
+  newrelic_id: 140456368
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit.test.us-cert.gov
+      public: test.us-cert.gov
+    akamai_cpcode:
+      edit: 188482
+      public: 188483
+  staging:
+    site_urls:
+      edit: edit.qa.us-cert.gov
+      public: qa.us-cert.gov
+    akamai_cpcode:
+      edit: 188482
+      public: 188483
+  prod:
+    site_urls:
+      edit: edit.us-cert.gov
+      public: www.us-cert.gov
+    akamai_cpcode:
+      edit: 209816
+      public: 188416

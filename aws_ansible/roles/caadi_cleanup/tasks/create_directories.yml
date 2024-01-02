@@ -1,0 +1,21 @@
+---
+- name: "Organize completed caadi form submission logs and leftovers"
+  debug:
+    msg: "Yesterday's rsync logs and logs of the completed form directories will be moved to their corresponding year/month directories"
+ 
+- name: "Ensure a path for yesterday's completed directories exists"
+  file:
+    path: "{{ formpath }}/completed/{{ yesterday.stdout[:4] }}/{{ yesterday.stdout[4] }}{{ yesterday.stdout[5] }}"
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0770
+
+- name: "Ensure a path for yesterday's rsync logs exists"
+  file:
+    path: "{{ formpath }}/logs/{{ yesterday.stdout[:4] }}/{{ yesterday.stdout[4] }}{{ yesterday.stdout[5] }}"
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0770
+

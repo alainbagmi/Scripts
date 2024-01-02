@@ -1,0 +1,37 @@
+---
+
+- name: Deploy the WCM ENV Vars for Command line
+  template:
+    src: wcm_vars.sh
+    dest: /etc/profile.d/wcm_vars.sh
+    mode: 644
+    owner: root
+    group: root
+
+- name: Deploy the WCM ENV Vars for Apache
+  lineinfile:
+    path: /etc/sysconfig/httpd
+    line: "{{ item.split(':')[0] }}={{ item }}"
+  with_items:
+    - "{{ MEMCACHED_SERVERS }}"
+    - "{{ DB_SERVER }}"
+    - "{{ PROXY_SERVER }}"
+    - "{{ SOLR_SERVER }}"
+
+- name: Deploy the WCM ENV Vars for Apache
+  lineinfile:
+    path: /etc/sysconfig/httpd
+    line: "db_port={{ item }}"
+  with_items:
+    - "{{ DB_PORT }}"
+
+
+- name: Put Var Names in /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+  with_items:
+    - "{{ MEMCACHED_HOSTS }}"
+    - "{{ DB_HOST }}"
+    - "{{ PROXY_HOST }}"
+    - "{{ SOLR_HOST }}"

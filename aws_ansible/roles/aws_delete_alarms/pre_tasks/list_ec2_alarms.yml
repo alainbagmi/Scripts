@@ -1,0 +1,13 @@
+---
+- name: Get alarms by tags
+  block:
+  - name: Get the resource group alarms with deleted ec2id tag
+    #shell: "aws resourcegroupstaggingapi get-resources --cli-input-json '{{ lookup('template', '../templates/get_alarms_bytag.json.j2') | to_json }}' | grep ResourceARN"
+    #command: aws configservice select-resource-config --cli-input-json '{{ lookup('template', '../templates/expression.json.j2') | to_json }}'
+    command: aws cloudwatch describe-alarms --alarm-name-prefix "{{ ec2_id }}"
+    register: tag_alarms_out
+    retries: 2
+    until: tag_alarms_out.rc == 0
+    ignore_errors: yes
+
+  - meta: end_play

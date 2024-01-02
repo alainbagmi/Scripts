@@ -1,0 +1,6 @@
+- name: Get the list of email users
+  script: roles/common/files/get_jira_users.py "{{ site_alias }}" "{{ drupal_version }}"
+  register: email_list
+  delegate_to: localhost
+  connection: local
+  become: no

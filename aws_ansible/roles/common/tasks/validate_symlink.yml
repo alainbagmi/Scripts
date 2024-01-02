@@ -1,0 +1,214 @@
+---
+- name: Show tenant being Deployed
+  debug:
+    msg: "Tenant Name: {{ tenant }}"
+
+#***************Check if docroot, latest, rollback Symlinks Exist***************
+- name: Set paths as Fact
+  set_fact:
+    docroot_path: "/var/www/html/wwwroot/{{ tenant }}_gov_build/docroot"
+    latest_path: "/var/www/html/wwwroot/{{ tenant }}_gov_build/latest"
+    rollback_path: "/var/www/html/wwwroot/{{ tenant }}_gov_build/rollback"
+    dev_null_path: "/dev/null"
+
+#******************************Gather Stats for Symlinks******************************
+- name: Get docroot Symlink Stat
+  stat:
+    path: "{{ docroot_path }}"
+  register: sym_docroot
+
+- name: Get latest Symlink Stat
+  stat:
+    path: "{{ latest_path }}"
+  register: sym_latest
+
+- name: Get rollback Symlink Stat
+  stat:
+    path: "{{ rollback_path }}"
+  register: sym_rollback
+
+
+#******************************Set Message Based On Deploy Type******************************
+#***************Initial Deployment 
+# Tenant has never been deployed before
+# Current Symlink State: No Symlinks exist
+# Symlink Modifications: docroot -> latest, latest -> Rel 1, rollback -> /dev/null
+
+#***************Initial Refactor Deployment
+# Tenant has previous releases but hasn't been deployed using refactored deploy code
+# Current Symlink State: docroot -> Pre-Deploy Rel, latest and rollback don't exist
+# Symlink Modifications: docroot -> latest, latest -> Current Deploy Rel, rollback -> Pre-Deploy Rel
+
+#***************Refactored Deployment
+# Tenant already Deployed using refactored deploy code
+# Symlink State: docroot -> latest, latest -> Pre-Deploy Rel and rollback -> Rollback Rel
+
+- name: Set Message if Initial Deploy 
+  set_fact:
+    deploy_state: "Initial Deploy: creating symlinks docroot -> latest, latest -> /dev/null and rollback -> /dev/null"
+  when:
+    - refactored_deployment is defined
+    - initial_deployment == "yes" or initial_deployment == "Yes"
+    - sym_docroot.stat.islnk is not defined
+
+- name: Set Message if Initial Refactor Deployment
+  set_fact:
+    deploy_state: "Initial Refactor Deployment: Updating Symlinks: setting docroot -> latest, latest -> {{ sym_docroot.stat.lnk_source }} and rollback -> /dev/null"
+  when:
+    - refactored_deployment is defined
+    - initial_deployment == "no" or initial_deployment == "No"
+    - sym_docroot.stat.islnk is defined and sym_docroot.stat.islnk
+    - sym_latest.stat.islnk is not defined
+    - sym_rollback.stat.islnk is not defined
+
+
+- name: Set Message if Refactored Deployment
+  set_fact: 
+    deploy_state: "Refactored Deployment: Tenant previously refactored during deployment. Validating Symlinks. Symlinks will not be modified!"
+  when:
+    - refactored_deployment is defined
+    - initial_deployment == "no" or initial_deployment == "No"
+    - sym_docroot.stat.islnk is defined and sym_docroot.stat.islnk
+    - sym_latest.stat.islnk is defined and sym_latest.stat.islnk
+    - sym_rollback.stat.islnk is defined and sym_rollback.stat.islnk
+
+- name: Set Message if Rollback
+  set_fact:
+    deploy_state: "Rollback: Validating Symlinks for Rollback"
+  when:
+    - rollback_deploy is defined
+
+
+#******************************Get Highest Rel in Tenant directory******************************
+- name: Find Current Deploy Release Path
+  find: 
+    paths: "/var/www/html/wwwroot/{{ tenant }}_gov_build/"
+    file_type: directory
+    patterns: "Rel*"
+  register: found_files
+
+- name: Set Current Deploy Release as Fact
+  set_fact:
+    latest_file: "{{ found_files.files | sort(attribute='ctime',reverse=true) | first }}"
+    #latest_file: "{{ found_files.files | sort(attribute='mtime',reverse=true) | first }}"
+
+- name: Set Current Deploy Release Path as Fact
+  set_fact:
+    release: "{{ latest_file['path'] }}"
+
+- name: Show Current Deploy Release Path
+  debug:
+    msg: "Latest Release: {{ latest_file['path'] }}"
+
+#******************************Fail Catches******************************
+- name: Deploy Failed Problem with docroot Symlink- See Message
+  fail:
+    msg: "docroot Symlink not found but initial deployment was set to No/no. Unable to continue with Deploy!"
+  when:
+    - refactored_deployment is defined
+    - sym_docroot.stat.islnk is not defined
+    - initial_deployment == "no" or initial_deployment == "No"
+
+- name: Deploy Failed Problem with latest Symlink/Release- See Message
+  fail:
+    msg: "latest Symlink already pointing to most recent Rel. Unable to continue with Deploy!"
+  when: 
+    - refactored_deployment is defined
+    - sym_latest.stat.islnk is defined and sym_latest.stat.islnk
+    - sym_latest.stat.lnk_source == release
+    
+
+- name: Rollback Failed Problem with latest/rollback Symlink/Release-See Message
+  fail:
+    msg: "latest Symlink and rollback Symlink currently point to same Rel. Unable to rollback!"
+  when:
+    - rollback_deploy is defined
+    - sym_latest.stat.islnk is defined and sym_latest.stat.islnk
+    - sym_rollback.stat.islnk is defined and sym_rollback.stat.islnk
+    - sym_rollback.stat.lnk_source == sym_latest.stat.lnk_source
+    
+
+- name: Rollback Failed Problem with latest/rollback Symlink- See Message
+  fail:
+    msg: "rollback symlink and latest Symlink not found. Unable to rollback!"
+  when:
+    - rollback_deploy is defined
+    - sym_latest.stat.islnk is not defined
+    - sym_rollback.stat.islnk is not defined
+        
+#******************************Show Type of Deploy Occuring******************************
+- name: Show Deploy Type
+  debug:
+    msg: "{{ deploy_state }}"
+
+
+- name: Show Rollback Release (rollback -> Rel#)
+  debug:
+    msg: "Rollback Rel: {{ sym_rollback.stat.lnk_source }}"
+  when: 
+    - rollback_deploy is defined
+#***************Modify Symlinks based on Deployment Type***************
+#***Refactored Deploy Play 
+- name: Refactored Deploy Show Current/Pre-Deploy Release
+  debug: 
+    msg: "Current Rel: {{ sym_latest.stat.lnk_source }}"
+  when:
+    - sym_docroot.stat.islnk is defined and sym_docroot.stat.islnk
+    - sym_latest.stat.islnk is defined and sym_latest.stat.islnk
+    - sym_rollback.stat.islnk is defined and sym_rollback.stat.islnk
+
+#***Initial Refactor Deployment/Initial Deployment Play 
+- name: Set rollback Symlink to /dev/null When rollback Not Defined
+  file:
+    dest: "{{ rollback_path }}"
+    src: "{{ dev_null_path }}"
+    owner: apache
+    group: apache
+    state: link
+  when:
+    - refactored_deployment is defined
+    - sym_rollback.stat.islnk is not defined
+    
+#***Initial Refactor Deployment Play
+- name: Set latest Symlink to Current/Pre-Deploy Rel
+  file:
+    dest: "{{ latest_path }}"
+    src: "{{ sym_docroot.stat.lnk_source }}"
+    owner: apache
+    group: apache
+    state: link
+  when:
+    - refactored_deployment is defined
+    - sym_docroot.stat.islnk is defined and sym_docroot.stat.islnk
+    - sym_latest.stat.islnk is not defined
+
+
+#***Initial Deployment Play
+- name: Set docroot Symlink to point to /dev/null
+  file: 
+    dest: "{{ latest_path }}"
+    src: "{{ dev_null_path }}"
+    owner: apache
+    group: apache
+    state: link
+  when:
+    - refactored_deployment is defined 
+    - sym_latest.stat.islnk is not defined
+    - sym_docroot.stat.islnk is not defined
+    
+#***Initial Deployment/Initial Refactor Deployment 
+- name:  Set docroot Symlink to latest
+  file:
+    dest: "{{ docroot_path }}"
+    src: "{{ latest_path }}"
+    owner: apache
+    group: apache
+    state: link
+  when:
+    - refactored_deployment is defined
+    - sym_latest.stat.islnk is not defined
+    
+
+
+
+

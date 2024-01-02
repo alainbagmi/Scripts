@@ -1,0 +1,37 @@
+---
+
+- name: Turn off the update module
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot dis update -y"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush update 7"
+
+
+- name: Uninstall update module
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot pmu update -y"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush update 7"
+
+
+- name: Turn on the update module
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot en update -y"
+#  ignore_errors: yes
+  run_once: true
+  listen: "drush update 7"
+
+
+- name: Set the notification threshold
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot vset update_notification_threshold security -y"
+#  ignore_errors: yes
+  run_once: true
+  listen: "drush update 7"
+  
+
+- name: Check disabled modules
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot vset update_check_disabled 1 -y"
+#  ignore_errors: yes
+  run_once: true
+  listen: "drush update 7"
+       
+

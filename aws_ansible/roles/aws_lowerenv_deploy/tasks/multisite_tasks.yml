@@ -1,0 +1,74 @@
+---
+
+- name: ensure multisite source directories for symlinks exist - testint/staging
+  file:
+    path: '{{ sitefiles_root }}{{ env }}.{{ tenant }}_gov_build/{{ item.path | basename }}-files'
+    state: directory
+    group: apache
+    owner: apache
+  with_items: "{{ multisite_dirs.files }}"
+  when:
+    - env == "testint" or env == "staging"
+    - multisite|bool
+
+- name: ensure multisite directories exist - testint/staging
+  file:
+    path: '{{ tenant_path }}/sites/{{ item.path | basename }}'
+    state: directory
+    group: apache
+    owner: apache
+  with_items: "{{ multisite_dirs.files }}"
+  when:
+    - env == "testint" or env == "staging"
+    - multisite|bool
+
+- name: Create symlink to multisite site-files and notify drush updb, cache clear, and apache graceful
+  file:
+    src: '{{ sitefiles_root }}{{ env }}.{{ tenant }}_gov_build/{{ item.path | basename }}-files'
+    dest: '{{ tenant_path }}/sites/{{ item.path | basename }}/files'
+    state: link
+    group: apache
+    owner: apache
+  notify: # these need to be updated to notify drush with the specific domain for the multisite
+    - drush update database
+    - drush cache registry {{ drupal_version }}
+    - restart apache
+  with_items: "{{ multisite_dirs.files }}"
+  when:
+    - env == "testint" or env == "staging"
+    - multisite|bool
+
+- name: ensure multisite source directories for symlinks exist - prod
+  file:
+    path: '{{ sitefiles_root }}{{ tenant_prefix }}{{ item.path | basename }}-files'
+    state: directory
+    group: apache
+    owner: apache
+  with_items: "{{ multisite_dirs.files }}"
+  when:
+    - env == "prod"
+    - multisite|bool
+
+#- name: ensure multisite directories exist - prod
+  file:
+    path: '{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/sites/{{ item.path | basename }}'
+    state: directory
+    group: apache
+    owner: apache
+  with_items: "{{ multisite_dirs.files }}"
+  when:
+    - env == "prod"
+    - multisite|bool
+
+- name: Create symlink to multisite site-files without notifying restart/cache clear handlers
+  file:
+    src: '{{ sitefiles_root }}{{ tenant_prefix }}{{ item.path | basename }}-files'
+    dest: '{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/sites/{{ item.path | basename }}/files'
+    state: link
+    group: apache
+    owner: apache
+  with_items: "{{ multisite_dirs.files }}"
+  when:
+    - env == "prod"
+    - multisite|bool
+

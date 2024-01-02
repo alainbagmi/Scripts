@@ -1,0 +1,14 @@
+[Unit]
+Description=Atlassian Bamboo Agent
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=bamboo
+Group=bamboo
+
+ExecStart={{ BAMBOO_AGENT_HOME_DIR }}/bin/bamboo-agent.sh start
+ExecStop={{ BAMBOO_AGENT_HOME_DIR }}/bin/bamboo-agent.sh stop
+
+[Install]
+WantedBy=multi-user.target

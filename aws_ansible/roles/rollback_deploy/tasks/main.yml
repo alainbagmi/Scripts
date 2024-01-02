@@ -1,0 +1,13 @@
+---
+- include: get_db_backup_name.yml
+
+- include: refactored_restore_db.yml
+
+- include: ref_lock_edit_sites.yml
+  when: inventory_hostname in groups['prod_web'] #or inventory_hostname in groups['philly_web']
+
+- include: perform_rollback.yml
+  when: inventory_hostname in groups['prod_web'] or inventory_hostname in groups['philly_web']
+
+- include: ref_unlock_edit_sites.yml 
+  when: inventory_hostname in groups['prod_web'] #or inventory_hostname in groups['philly_web']

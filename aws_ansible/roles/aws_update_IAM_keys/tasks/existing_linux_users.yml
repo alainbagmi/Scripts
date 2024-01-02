@@ -1,0 +1,7 @@
+---
+- name: get Linux Users on the Machine
+  shell: "getent passwd | awk -F: '$3 > 1000 {print $1}'"
+  register: raw_linux_list
+
+- set_fact:
+    linux_list: "{{ raw_linux_list.stdout_lines }}"

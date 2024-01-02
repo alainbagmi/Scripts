@@ -1,0 +1,77 @@
+---
+- name: Attempt Merge Pull Request
+  block:
+    - name: Site Alias
+      debug:
+        msg: "{{ site_alias }}"
+    
+    - name: Drupal Version
+      debug:
+        msg: "{{ drupal_version }}"
+
+    - name: Project Name
+      debug:
+        msg: "{{ project_name }}"
+
+    - name: Set Stash Project
+      set_fact:
+        stash_project: "{{ site_alias }}_gov"
+    
+    - name: Set Facts
+      set_fact:
+        docroot_path: "/var/www/html/wwwroot/staging.{{ site_alias }}_gov_build/docroot/"
+        url: "https://maestro.dhs.gov/stash/rest/api/latest/projects/{{ project_name }}/repos/{{ stash_project }}/pull-requests"
+    
+    - include: check_security_updates.yml
+      
+    - include: close_pull_request.yml
+    
+    - name: Set Security Update Warning
+      set_fact:
+        security_update_warning: "WARNING: IGNORING OUT OF DATE MODULES"
+      when: 
+        - security_update_final is defined
+        - check_updates is defined
+        - check_updates == "ignore"
+
+    - name: Set Success Flag
+      set_fact:
+        task_status: "OK"
+        task_message: "TASK FINISHED SUCCESSFULLY"
+
+  rescue:
+    - name: Set Message If security updates needed
+      set_fact:
+        security_update_message: "ERROR: USER HAS OUT OF DATE MODULE"
+      when: update_num is defined and update_num > 0
+
+    - name: Set Message If Failure occurs trying to get security updates
+      set_fact:
+        security_update_fail: "ERROR: FAILURE OCCURED ATTEMPTING TO GET SECURITY UPDATES"
+      when: security_update_flag is not defined
+
+    - name: Set Message If No Pull Request Found
+      set_fact:
+        pull_request_message: "ERROR: NO PULL REQUEST FROM MASTER TO SECURITY FOUND"   
+      when: branch is defined and branch != "security"
+    
+    - name: Set Message If Failure occurs trying to close Pull request
+      set_fact:
+        pull_request_fail: "ERROR: FAILURE OCCURED PARSING JSON DATA"
+      when: 
+        - merge_flag is not defined
+        - pull_request_message is not defined
+        - update_num is defined
+        - update_num == 0
+    
+    - name: Overwrite Task Status if Fail
+      set_fact:
+        task_status: "FAILED"
+        task_message: "FATAL - ERROR OCCURED DURING MAIN TASK"
+    
+    - name: Fail Task
+      fail:
+        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+  always:
+    - include: email_tenant.yml

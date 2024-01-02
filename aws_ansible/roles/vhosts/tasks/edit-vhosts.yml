@@ -1,0 +1,10 @@
+---
+- name: Edit Site Vhost Configuration File
+  template:
+    src: default-edit-vhost.j2
+    dest: /etc/httpd/conf.d/tenants/{{ tenants[vars['tenant']]['name'] }}-edit.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: "{{ backup_mode }}"
+

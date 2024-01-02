@@ -1,0 +1,280 @@
+---
+
+- name: Make the directory where tenant site code will be stored (if it doesn't already exist)
+  file:
+    path: /data/site_code/
+    owner: awx
+    group: awx
+    state: directory
+    mode: 0770
+  run_once: yes
+  become: yes
+
+- name: Create the specific tenant folder in site_code if it doesnt exist
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+
+
+- name: Change everything in tenant dir to 770 if they already have stuff there
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}"
+    mode: 0770
+    owner: awx
+    group: awx
+  become: yes
+
+
+- name: Create the specific tenant env (prod,stage,test) folder in site_code/tenant after removing it in previous step
+  file:
+    dest: "{{ local_repo }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+
+
+
+- name: Git Repo clone if deploying to testint
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+  environment:
+    TMPDIR: "/data/site_code/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ base_stash_project }}{{ tenant_repo }}'
+    dest: '{{ local_repo }}'
+    version: "develop"
+    track_submodules: yes
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "testint"
+  run_once: yes
+
+
+- name: Updating folder to have correct chmod settings on .git
+  file:
+    dest: '{{ local_repo }}/.git'
+    mode: 0770
+    state: directory
+    recurse: yes
+  run_once: yes
+  become: yes
+  when: env == "testint"
+
+- name: Update the Submodule (if the submodule code is in the server for testint)
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  when: env == "testint"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout develop
+    - git reset --hard origin/develop
+  run_once: yes
+
+
+ 
+- name: Git Repo clone if deploying to staging and repo is empty
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ base_stash_project }}{{ tenant_repo }}'
+    dest: '{{ local_repo }}'
+    version: "master"
+    track_submodules: yes
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "staging"  
+  run_once: yes
+
+
+- name: Updating folder to have correct chmod settings on .git
+  file:
+    dest: '{{ local_repo }}/.git'
+    mode: 0770
+    state: directory
+    recurse: yes
+  run_once: yes
+  become: yes
+  when: env == "staging"
+
+- name: Update the Submodule (if the submodule code is in the server for staging)
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  when: env == "master"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout master
+    - git reset --hard origin/master
+  run_once: yes
+
+
+
+# Production Code Refactored
+- name: Git Repo clone if repo is empty
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ base_stash_project }}{{ tenant_repo }}'
+    dest: '{{ local_repo }}'
+    version: "security"
+    track_submodules: yes
+    force: yes
+#    depth: 1  
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "prod" 
+  run_once: yes
+
+- name: Updating folder to have correct chmod settings on .git
+  file:
+    dest: '{{ local_repo }}/.git'
+    mode: 0770
+    state: directory
+    recurse: yes
+  run_once: yes
+  become: yes
+  when: env == "prod"
+
+
+
+- name: Update the Submodule
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout security
+    - git reset --hard origin/security
+  when: env == "prod"
+  run_once: yes
+
+- name: Git checkout live
+  shell: "cd {{ local_repo }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout live
+    - git reset --hard origin/live
+  when: env == "prod"
+  run_once: yes
+
+- name: Git checkout live submodule
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout live
+    - git reset --hard origin/live
+  when: env == "prod"
+  run_once: yes
+
+
+- name: Merge security to live
+  shell: "cd {{ local_repo }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git merge security
+    - "git tag {{ git_tag_name }}"
+    - "git push origin live {{ git_tag_name }}"
+  when: env == "prod"
+  run_once: yes
+
+- name: Merge security to live submodule
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git merge security
+    - "git tag {{ git_tag_name }}"
+    - "git push origin live {{ git_tag_name }}"
+  when: env == "prod"
+  run_once: yes
+# End Of Production Code Refactored
+
+
+- name: Git Settings
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    repo: '{{ base_stash_project }}{{ tenant_settings }}'
+    executable: "{{ git_binary_path }}"
+    dest: '{{ local_settings }}'
+    version: "master"
+    update: yes
+    force: yes
+    umask: "007"
+  become: yes
+  become_user: awx
+  run_once: yes
+#  ignore_errors: yes
+
+# check if multisite
+- name: check the location of sites.php file
+  stat:
+    path: "{{ local_settings }}multisite/sites.php"
+  register: sites_file
+
+
+- name: git_repo_and_settings.yml - set multisite fact if multisite is TRUE
+  set_fact:
+    multisite: True
+#  when: sites_file.stat.exists
+  when: sites_file.stat.exists == True
+
+
+- name: git_repo_and_settings.yml - set multisite fact if multisite is FALSE
+  set_fact:
+    multisite: False
+#  when: sites_file.stat.exists
+  when: sites_file.stat.exists == False
+
+
+- name: get a list of multisite directories
+  find:
+    paths: "{{ local_settings }}multisite/"
+    patterns: "*"
+    recurse: no
+    file_type: directory
+  register: multisite_dirs
+  when: multisite|bool == True
+
+- name: Set everything to be 770 again due to umask bug
+  file:
+    dest: "{{ local_repo }}"
+    mode: 0770
+    recurse: yes
+  become: yes
+  run_once: yes

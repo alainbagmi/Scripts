@@ -1,0 +1,11 @@
+{
+  "BlockDeviceMappings": [
+      {"DeviceName":"/dev/sdc",
+        "Ebs":{
+            "VolumeType":"gp3",
+            "DeleteOnTermination":true,
+            "SnapshotId": "{{ staging_newest_snapshot }}",
+            "Encrypted":true,
+        }
+    }]
+}

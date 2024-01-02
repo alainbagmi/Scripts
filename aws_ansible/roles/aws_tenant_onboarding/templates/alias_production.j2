@@ -1,0 +1,8 @@
+ $aliases['prod']['root'] = '/var/www/html/wwwroot/{{ site_alias }}gov_build/docroot/';
+  $aliases['prod']['l'] = 'https://{{ edit_url }}';
+  $aliases['public'] = $aliases['prod'];
+  $aliases['public']['l'] = 'https://{{ site_url }}';
+
+  $aliases['d{{drupal_version}}_testint'] = $aliases['testint'];
+  $aliases['d{{drupal_version}}_staging'] = $aliases['staging'];
+  $aliases['d{{drupal_version}}_staging'] = $aliases['prod'];

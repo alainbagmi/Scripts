@@ -1,0 +1,153 @@
+---
+#### Pre tasks steps for new tenant creation
+#### Check the stash project, add it to create list if needed
+
+- name: Check if stash project exists
+  block:
+    - name: API call to check project
+      uri:
+        url: "{{ stash_url }}"
+        method: GET
+        return_content: yes
+        body_format: json
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Authorization: "Basic YmFtYm9vOkJhbUIwMGklNTYyMg=="
+      register: stash_dumps
+      ignore_errors: yes
+
+    - name: Show URI Output
+      debug:
+        msg: "{{ stash_dumps }}"
+
+    - name: Show Json Content
+      debug:
+        msg: "{{ stash_dumps.json }}"
+    
+    - name: Show Json status
+      debug:
+        msg: "{{ stash_dumps.status }}"
+      
+    - name: Set the stash repo status flag and combo_repo
+      set_fact:
+        project_status: "absent"
+        repo_status: "{{ repo_status + ['absent'] }}"
+      when: stash_dumps.status == 404
+    
+    - name: Set the stash repo status flag
+      set_fact:
+        project_status: "present"
+      when: stash_dumps.status == 200
+
+#### Check the Gov, add it to create list if needed
+- name: Check Gov Repo
+  block:
+    - name: Check If Gov Repo Exist
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ gov_repo }}.git  >/dev/null ;echo $?"
+      register: stash_repo_result
+      ignore_errors: true
+    
+    - name: Add gov repo to list if missing
+      set_fact:
+        create_repo_list: "{{ create_repo_list + [gov_repo] }}"
+      when: stash_repo_result.stdout | int != 0 
+
+    - name: Check if gov repo is empty 
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ gov_repo }}.git | wc -l"
+      register: gov_branch_result
+      ignore_errors: true
+
+    - name: Set repo_status
+      set_fact:
+        repo_status: "{{ repo_status + ['gov_absent'] }}"
+      when: gov_branch_result.stdout | int == 0
+
+#### Check the Gov Build, add it to create list if needed
+- name: Check Gov Build Repo
+  block:
+    - name: Check If Build Repo Exist
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ govbuild_repo }}.git  >/dev/null ;echo $?"
+      register: build_repo_result
+      ignore_errors: true
+    
+    - name: Add gov build repo to list if missing
+      set_fact:
+        create_repo_list: "{{ create_repo_list + [govbuild_repo] }}"
+      when: build_repo_result.stdout | int != 0
+
+    - name: Check if govbuild repos are empty
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ govbuild_repo }}.git | wc -l"
+      register: govbuild_branch_result
+      ignore_errors: true
+
+    - name: Set repo_status
+      set_fact:
+        repo_status: "{{ repo_status + ['govbuild_absent'] }}"
+      when: govbuild_branch_result.stdout | int == 0
+
+#### Check the Settings, add it to create list if needed
+- name: Check Settings Repo
+  block:
+    - name: Check If Settings Repo Exist
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ settings_repo }}.git >/dev/null ;echo $?"
+      register: settings_repo_result
+      ignore_errors: true
+    
+    - debug:
+        msg:
+        - THE REPO "{{ git_stash_url }}/{{ stash_project }}/{{ settings_repo }}.git" ALREADY EXIST
+        - PLEASE DELETE THE REPO MANUALLY.
+      when: settings_repo_result.stdout |  int == 0
+
+    - name: Add settings repo to list if missing
+      set_fact:
+        create_repo_list: "{{ create_repo_list + [settings_repo] }}"
+      when: settings_repo_result.stdout | int != 0
+
+    - name: Check if settings repo is empty
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ settings_repo }}.git | wc -l"
+      register: settings_branch_result
+      ignore_errors: true
+
+    - name: Set repo_status
+      set_fact:
+        repo_status: "{{ repo_status + ['settings_absent'] }}"
+      when: settings_branch_result.stdout | int == 0
+
+#### Check the Combined, add it to create list if needed
+- name: Check Combined Repo
+  block:
+    - name: Check If Combined Repo Exist
+      shell: "git ls-remote {{ git_stash_url }}/WCMAWS/{{ combo_repo }}.git >/dev/null ;echo $?"
+      register: combo_repo_result
+      ignore_errors: true
+    
+    - debug:
+        msg:
+        - THE REPO "{{ git_stash_url }}/WCMAWS/{{ combo_repo }}.git" ALREADY EXIST
+        - PLEASE DELETE THE REPO MANUALLY.
+      when: combo_repo_result.stdout |  int == 0
+
+    - name: Set combo repo
+      set_fact:
+        combo_stash_url: "https://maestro.dhs.gov/stash/rest/api/latest/projects/WCMAWS"
+      when: combo_repo_result.stdout | int != 0
+
+    - name: Set repo_status
+      set_fact:
+        repo_status: "{{ repo_status + ['combo_absent'] }}"
+      when: combo_repo_result.stdout | int != 0
+
+- name: Update Tenant Status if Needed
+  block:
+    - name: Change the tenant_status flag if repos exist and aren't empty
+      set_fact:
+        repo_status: "{{ create_repo_list + ['present'] }}"
+  when: 
+    - gov_branch_result.stdout | int != 0
+    - govbuild_branch_result.stdout | int != 0
+    - settings_branch_result.stdout | int != 0
+    - combo_repo_result.stdout | int == 0
+
+        

@@ -1,0 +1,69 @@
+---
+- name: Set Backup Facts
+  set_fact:
+    netstorage_docking_path: "/data/transit_files/assetrefresh/to_netstorage/{{ target_site_alias }}_files/files/"
+    tar_file: "{{ target_site_alias }}_{{ target_env }}_assets_backup-{{ current_run_timestamp.stdout }}.tar.gz"
+    netstorage_dest: "{{ akamai_path }}"
+
+
+- name: Get Jump Path Stats
+  stat:
+    path: "{{ netstorage_docking_path }}"
+  register: netstorage_docking_stats
+  delegate_to: "{{ jump_ip }}"
+
+
+- name: Make Jump Path if not exist
+  file:
+    path: "{{ netstorage_docking_path }}"
+    state: directory
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+    recurse: yes
+  delegate_to: "{{ jump_ip }}"
+  when:
+    - netstorage_docking_stats.stat.isdir is not defined
+
+- name: Archive File
+  archive:
+    path:
+      - "{{ asset_target_path }}"
+    dest: "{{ sitesfiles_path }}{{ tar_file }}"
+    format: gz
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+
+- name: Copy/Sync Tar File to Jump
+  synchronize:
+    mode: pull
+    src: "{{ sitesfiles_path }}{{ tar_file }}"
+    dest: "{{ netstorage_docking_path }}{{ tar_file }}"
+    private_key: /home/bamboo/.ssh/id_rsa
+  delegate_to: "{{ jump_ip }}"
+
+- name: Remove Tar File from Target Environment
+  file:
+    path: "{{ sitesfiles_path }}{{ tar_file }}"
+    state: absent
+
+- name: Sync Tar File From Jump To Netstorage
+  shell: "rsync -av -e 'ssh -i /home/bamboo/.ssh/id_rsa2 -p 8002' {{ netstorage_docking_path }}{{ tar_file }} sshacs@172.22.84.11:{{ netstorage_dest }}"
+  become: no
+  delegate_to: "{{ jump_ip }}"
+
+- name: Remove Tar Files after rsync to Netstorage
+  file:
+    path: "{{ netstorage_docking_path }}{{ tar_file }}"
+    state: absent
+  delegate_to: "{{ jump_ip }}"
+
+- name: Ensure Docking Bay is returned to original mode and owner
+  file:
+    path: "{{ netstorage_docking_path }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+    recurse: yes
+  delegate_to: "{{ jump_ip }}"

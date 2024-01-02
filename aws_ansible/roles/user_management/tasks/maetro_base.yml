@@ -1,0 +1,120 @@
+---
+- hosts: hub1
+
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+  tasks:
+
+# Sudoers
+
+  - name: Check the sudoers file for bamboo
+    lineinfile: 
+      dest: /etc/sudoers
+      state: present
+      insertafter: EOF
+      line: "{{ item }}"
+    with_items:
+      - "%bamboo ALL = (ALL) NOPASSWD : ALL"
+      - "%esdo ALL = (ALL) NOPASSWD : ALL"
+      - "Defaults:zenoss !requiretty"
+      - "Defaults:bamboo !requiretty"
+      - "%zenoss  ALL=(ALL) NOPASSWD: ALL"
+
+# Ryslog
+
+  - name: Check the rsyslog file for authpriv command
+    lineinfile:
+      dest: /etc/rsyslog.conf
+      state: present
+      insertafter: EOF
+      line: "authpriv.*;*.info;mail.*;cron.none @HQALMSSR6A03"
+
+# Groups
+
+  - name: Create Bamboo Group
+    group:
+      gid: 860
+      name: bamboo
+
+  - name: Create Zenoss Group
+    group:
+      gid: 851
+      name: zenoss
+
+  - name: Create ESDO Group
+    group:
+      gid: 850
+      name: esdo
+
+#  - name: Create localssh Group
+#    group:
+#      gid: 481
+#      name: localssh
+
+
+# Service Users
+
+  - name: Create Bamboo User
+    user:
+      name: bamboo
+      uid: 860
+      group: 860
+      groups: localssh
+      comment: "Bamboo - Service Account"
+
+  - name: Create Zenoss User
+    user:
+      name: zenoss
+      uid: 1337
+      group: 851
+      groups: localssh
+      comment: "Zenoss - Service Account"
+
+# BTG Users
+
+  - name: Create canderson user
+    user:
+      name: canderson
+      uid: 852
+      group: 850
+      groups: localssh
+      comment: "Chris Anderson - Maestro"
+
+  - name: Create kday user
+    user:
+      name: kday
+      uid: 886
+      group: 850
+      groups: localssh
+      comment: "Kyle the Candyman Day - Maestro"
+
+  - name: Create msmith user
+    user:
+      name: msmith
+      uid: 1082
+      group: 850
+      groups: localssh
+      comment: "Morris Smith - CGI/Maestro"
+
+  - name: Create aiqbal user
+    user:
+      name: aiqbal
+      uid: 2001
+      group: 850
+      groups: localssh
+      comment: "Asif Iqbal - Maestro"
+
+# Deploy SSH Keys
+
+  - name: Deploy SSH Keys
+    authorized_key:
+      key: "{{ lookup('file', '../files/{{ item }}_id_rsa.pub') }}"
+      user: "{{ item }}"
+    with_items:
+      - canderson
+      - bamboo
+      - zenoss
+      - kday
+      - msmith
+      - aiqbal

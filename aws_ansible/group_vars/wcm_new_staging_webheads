@@ -1,0 +1,144 @@
+---
+docroot_prefix: /var/www/html/wwwroot/staging.
+target_db_ip: 172.22.83.14
+web_server_drush: 172.22.81.11
+
+drupal_sites_staging:
+
+  - site_name: precheck
+    site_url: staging-dhsprecheck.dhs.gov
+    site_alias: staging-dhsprecheck.dhs.gov
+    edit_url: edit-staging-dhsprecheck.dhs.gov
+    edit_alias: edit-staging-dhsprecheck.dhs.gov
+
+  - site_name: tsa2
+    site_url: staging.tsa.gov
+    site_alias: staging-dhsprecheck.dhs.gov
+    edit_url: edit-staging-dhsprecheck.dhs.gov
+    edit_alias: edit-staging-dhsprecheck.dhs.gov
+
+  - site_name: dhs
+    site_url: staging1.dhs.gov
+    site_alias: staging1.dhs.gov
+    edit_url: edit.staging1.dhs.gov
+    edit_alias: edit.staging1.dhs.gov
+
+
+  - site_name: bsi
+    site_url: qa.buildsecurityin.us-cert.gov
+    site_alias: qa.buildsecurityin.us-cert.gov
+    edit_url: edit.qa.buildsecurityin.us-cert.gov
+    edit_alias: edit.qa.buildsecurityin.us-cert.gov
+
+  - site_name: cbp
+    site_url: staging.cbp.gov
+    site_alias: staging.cbp.gov
+    edit_url: edit.staging.cbp.gov
+    edit_alias: edit.staging.cbp.gov
+
+  - site_name: cfema
+    site_url: staging-careers.fema.gov
+    site_alias: staging-careers.fema.gov
+    edit_url: edit-staging-careers.fema.gov
+    edit_alias: edit-staging-careers.fema.gov
+
+
+  - site_name: daipd8
+    site_url: staging.disasterassistance.gov
+    site_alias: staging.disasterassistance.gov
+    edit_url: edit.staging.disasterassistance.gov
+    edit_alias: edit.staging.disasterassistance.gov
+
+
+  - site_name: diamond
+    site_url: staging-media.dhs.gov
+    site_alias: staging-media.dhs.gov
+    edit_url: edit-staging-media.dhs.gov
+    edit_alias: edit-staging-media.dhs.gov
+
+  - site_name: fema
+    site_url: staging.fema.gov
+    site_alias: staging.fema.gov
+    edit_url: edit.staging.fema.gov
+    edit_alias: edit.staging.fema.gov
+
+  - site_name: fleta
+    site_url: staging.fleta.gov
+    site_alias: staging.fleta.gov
+    edit_url: edit.staging.fleta.gov
+    edit_alias: edit.staging.fleta.gov
+
+  - site_name: fletc
+    site_url: staging.fletc.gov
+    site_alias: staging.fletc.gov
+    edit_url: edit.staging.fletc.gov
+    edit_alias: edit.staging.fletc.gov
+
+
+  - site_name: ice
+    site_url: staging.ice.gov
+    site_alias: staging.ice.gov
+    edit_url: edit.staging.ice.gov
+    edit_alias: edit.staging.ice.gov
+
+
+  - site_name: ics
+    site_url: qa.ics-cert.us-cert.gov
+    site_alias: qa.ics-cert.us-cert.gov
+    edit_url: edit.qa.ics-cert.us-cert.gov
+    edit_alias: edit.qa.ics-cert.us-cert.gov
+
+  - site_name: niccs
+    site_url: staging.niccs.us-cert.gov
+    site_alias: staging.niccs.us-cert.gov
+    edit_url: edit.staging.niccs.us-cert.gov
+    edit_alias: edit.staging.niccs.us-cert.gov
+
+
+  - site_name: precheck
+    site_url: staging-dhsprecheck.dhs.gov
+    site_alias: staging-dhsprecheck.dhs.gov
+    edit_url: edit-staging-dhsprecheck.dhs.gov
+    edit_alias: edit-staging-dhsprecheck.dhs.gov
+
+  - site_name: ready
+    site_url: staging.ready.gov
+    site_alias: staging.ready.gov
+    edit_url: edit.staging.ready.gov
+    edit_alias: edit.staging.ready.gov
+
+
+  - site_name: sits
+    site_url: staging-studyinthestates.dhs.gov
+    site_alias: staging-studyinthestates.dhs.gov
+    edit_url: edit-staging-studyinthestates.dhs.gov
+    edit_alias: edit-staging-studyinthestates.dhs.gov
+
+
+  - site_name: tsa2
+    site_url: beta-staging.tsa.gov
+    site_alias: beta-staging.tsa.gov
+    edit_url: edit-beta-staging.tsa.gov
+    edit_alias: edit-beta-staging.tsa.gov
+
+  - site_name: tsanews
+    site_url: staging-mobile.tsa.gov
+    site_alias: staging-mobile.tsa.gov
+    edit_url: edit-staging-mobile.tsa.gov
+    edit_alias: edit-staging-mobile.tsa.gov
+
+
+  - site_name: uscert
+    site_url: qa.us-cert.gov
+    site_alias: qa.us-cert.gov
+    edit_url: edit.qa.us-cert.gov
+    edit_alias: edit.qa.us-cert.gov
+
+
+  - site_name: uscis
+    site_url: staging.uscis.gov
+    site_alias: beta-staging.uscis.gov
+    edit_url: edit.staging.uscis.gov
+    edit_alias: edit.beta-staging.uscis.gov 
+
+docroot_path_suffix: staging.

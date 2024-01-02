@@ -1,0 +1,32 @@
+---
+
+#- debug:
+    #var: "{{ item }}.{{ ENV }}.site_urls.public"
+#    var: item.value
+#  with_dict: "{{ tenants }}"
+
+- name: Deploy Default Vhost
+  template:
+    src: default.vhost.conf.j2
+    dest: /etc/httpd/conf.d/test/[default-server].conf
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Deploy Public Vhost
+  template:
+    src: vhost.conf.j2
+    dest: /etc/httpd/conf.d/test/{{ item['value']['alias'] }}-public.conf
+    owner: root
+    group: root
+    mode: 0644
+  with_dict: "{{ tenants }}"
+
+- name: Deploy Edit Vhost
+  template:
+    src: vhost-edit.conf.j2
+    dest: /etc/httpd/conf.d/test/{{ item['value']['alias'] }}-edit.conf
+    owner: root
+    group: root
+    mode: 0644
+  with_dict: "{{ tenants }}"

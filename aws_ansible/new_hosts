@@ -1,0 +1,230 @@
+[local]
+127.0.0.1
+
+[all:children]
+phoenix
+philly
+
+[all_galera:children]
+staging_database
+prod_database
+
+[all_web:children]
+staging_web
+testint_web
+prod_web
+philly_web
+
+
+[all_app:children]
+prod_app
+staging_app
+testint_app
+
+
+[phoenix:children]
+prod_web
+prod_database
+staging_web
+staging_database
+testint_web
+testint_database
+prod_app
+wcm_vpn
+
+[wcm_vpn]
+172.22.84.11
+
+[testint_web]
+172.22.81.18
+
+[testint_database]
+172.22.83.11
+
+[testint_app]
+172.22.81.18
+
+[staging_web]
+172.22.81.16
+172.22.81.19
+172.22.81.20
+
+[staging_database]
+172.22.83.14
+172.22.83.15
+172.22.83.16
+
+[production_web:children]
+prod_web
+
+[prod_web]
+172.22.84.20
+172.22.84.21
+172.22.84.22
+172.22.84.23
+
+[production_database:children]
+prod_database
+
+[prod_database]
+172.22.86.11
+172.22.86.14
+172.22.86.15
+
+[production_app:children]
+prod_app
+
+[prod_app]
+172.22.85.13
+172.22.85.14
+
+[staging_app]
+172.22.81.19
+172.22.81.20
+
+[philly:children]
+philly_database
+philly_web
+philly_app
+
+[philly_database]
+172.23.86.13
+
+[philly_web]
+172.23.84.14
+172.23.84.15
+
+[philly_app]
+172.23.85.13
+172.23.85.14
+
+[almss:children]
+almss_r6
+almss_r7
+
+[almss_r6:children]
+bamboo
+codedx
+splunk
+jira
+proxy
+appvet
+jira_db
+#alm_philly
+
+[almss_r7:children]
+dhs_proxy
+appvet_tools
+tower
+zenoss
+confluence
+confluence_dc
+jira_dc
+atl_dc_dr
+
+[jira]
+172.22.58.14
+
+[jira_dc]
+172.22.58.23 jdk=1
+172.22.58.24 jdk=1
+172.22.58.25 jdk=1
+
+[confluence]
+172.22.58.15
+
+[confluence_dc]
+172.22.58.26
+172.22.58.27
+172.22.58.28
+
+[stash]
+172.22.58.11
+
+[bitbucket]
+172.22.58.11
+
+[bamboo]
+172.22.58.11 jdk=1
+
+[codedx]
+172.22.58.12
+
+[splunk]
+172.22.58.13
+
+[proxy]
+172.22.84.11
+
+[dhs_proxy]
+172.22.58.17
+
+[appvet]
+172.22.58.18
+
+[appvet_tools]
+172.22.58.19
+
+[tower]
+172.22.58.21
+
+[zenoss]
+172.22.58.22	
+
+[jira_db]
+172.22.59.11
+
+[alm_philly]
+172.23.58.11
+172.23.58.13
+
+[proxy_philly]
+172.23.58.11
+
+[ghe]
+172.22.58.20 ansible_ssh_port=122
+
+[mapptest]
+172.22.19.18
+
+<<<<<<< HEAD
+[hub1]
+172.23.58.13
+
+[atl_dc_dr]
+172.23.58.12 jdk=1
+172.23.58.14 jdk=1
+
+[maestro:children]
+almss
+
+[mylab]
+myjira ansible_host=192.168.1.180 jdk=1
+myconfluence ansible_host=192.168.1.182
+mymysqlserver ansible_host=192.168.1.184
+mybitbucket ansible_host=192.168.1.160
+mybamboo ansible_host=192.168.1.165
+myapache ansible_host=192.168.1.112
+#mygluster ansible_host=192.168.1.121
+myjiranode1 ansible_host=192.168.1.121
+myjiranode2 ansible_host=192.168.1.122
+mynfsserver ansible_host=192.168.1.130
+[mylab:children]
+mynfsservers
+mynfsclients
+mygatlings
+[mynfsservers]
+mynfsserver ansible_host=192.168.1.130
+[mynfsclients]
+myjiranode1 ansible_host=192.168.1.121
+myjiranode2 ansible_host=192.168.1.122
+[mygatlings]
+mygatling ansible_host=192.168.1.190
+=======
+[aws_all]
+10.0.10.60
+10.0.4.97
+10.0.10.40
+10.0.10.87
+10.0.10.16
+>>>>>>> 5fd3b90671d556ff969207e404c5c7c37dafbdf1

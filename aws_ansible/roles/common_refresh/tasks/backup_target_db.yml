@@ -1,0 +1,66 @@
+---
+#------------ Backup Target DB To Netstorage ----------
+- name: Target SQL file
+  set_fact:
+    target_netstorage_file: "{{ site_alias}}_{{ target_env }}_db_backup-{{ current_run_timestamp.stdout }}.sql.gz"
+
+- name: Set Docking/Destination paths as Fact
+  set_fact:
+    target_path: "/data/db_refreshes/"
+    netstorage_jump: "/data/transit_files/db_refresh/to_netstorage/{{ site_alias }}/"
+    target_tower_file: "{{ target_env }}.{{ target_db_name }}_{{ current_run_timestamp.stdout }}.sql"
+    netstorage_dest: "{{ akamai_path }}"
+    
+- name: Get NetStorage JumpBox path Stats
+  stat:
+    path: "{{ netstorage_jump }}"
+  register: netstorage_stats
+  #delegate_to: "{{ jump_ip }}"
+
+- name: Make netstorage_jump if not exist
+  file:
+    path: "{{ netstorage_jump }}"
+    state: directory
+    owner: bamboo
+    group: bamboo
+    mode: 0775
+    recurse: yes
+  #delegate_to: "{{ jump_ip }}"
+  when:
+    - netstorage_stats.stat.isdir is not defined
+
+- name: GZip sql target file
+  shell: "gzip {{ target_path }}{{ target_tower_file }}"
+  register: sql_target_final
+  #delegate_to: "{{ jump_ip }}"
+
+- name: Change Permissions on Target DB Dump
+  file:
+    path: "{{ target_path }}"
+    mode: 0770
+    recurse: yes
+  become: yes
+
+- name: Synchronize Pull to Jump (Target Dump -> Jump)
+  synchronize:
+    src: "{{ target_path }}{{ target_tower_file}}.gz"
+    dest: "{{ netstorage_jump }}{{ target_netstorage_file }}"
+    mode: pull
+    group: no
+    owner: no
+    perms: no
+    times: no
+  #delegate_to: "{{ jump_ip }}"
+  become: no
+
+- name: Change Owner/Group to bamboo
+  file: 
+    path: "{{ netstorage_jump }}{{ target_netstorage_file }}"
+    owner: bamboo
+    group: bamboo
+  #delegate_to: "{{ jump_ip }}"
+
+- name: Sync SQL File to Netstorage
+  shell: "rsync -av -e 'ssh -i /home/bamboo/.ssh/id_rsa2 -p 8002' {{ netstorage_jump }}{{ target_netstorage_file }} sshacs@172.22.84.11:{{ netstorage_dest }}"
+  become: no
+  #delegate_to: "{{ jump_ip }}"

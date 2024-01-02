@@ -1,0 +1,69 @@
+---
+- name: Run Drush for D8
+  block:
+    - name: Set Docroot paths Lower Environments
+      set_fact:
+        docroot_path: "/var/www/html/wwwroot/{{ target_env }}.{{ tenant }}_gov_build/docroot/"
+      when: target_env == "testint" or target_env == "staging"
+    
+    - name: Set Docroot paths Upper Environments
+      set_fact:
+        docroot_path: "/var/www/html/wwwroot/{{ tenant }}_gov_build/docroot/"
+      when: target_env == "prod"
+
+    - name: Set Fact
+      set_fact:
+        delegate_host: "{{ item }}"
+      with_inventory_hostnames:
+        - "tag_purpose_{{ target_env }}"
+
+    - name: Show Host
+      debug:
+        msg: "{{ delegate_host }}"
+
+    - name: Run Drush UPDB (d8)
+      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} updb -y"
+      delegate_to: "{{ delegate_host }}"
+      register: drush_updb_result
+      retries: 3
+      until: drush_updb_result.rc == 0
+      ignore_errors: yes
+
+
+    - name: Output of Drush updb (d8) 
+      debug:
+        var: drush_updb_result
+
+    - name: Get the Drupal version of the site, run drush cr if d8
+      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} cr"
+      delegate_to: "{{ delegate_host }}"
+      register: drush_cr_result
+      retries: 0
+      #until: drush_cr_result.rc == 0
+      #ignore_errors: yes
+
+    - name: Output of Drush CR (d8) 
+      debug:
+        var: drush_cr_result
+  rescue:
+    - name: Run Drush Status
+      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} status"
+      delegate_to: "{{ delegate_host }}"
+      register: drush_status_result
+      retries: 0
+
+    - name: Output of Drush CR (d8) 
+      debug:
+        var: drush_status_result
+
+    - name: Get the Drupal version of the site, run drush cr if d8
+      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} cr"
+      delegate_to: "{{ delegate_host }}"
+      register: drush_cr_result
+      retries: 3
+      until: drush_cr_result.rc == 0
+      ignore_errors: yes
+
+    - name: Output of Drush CR (d8) 
+      debug:
+        var: drush_cr_result

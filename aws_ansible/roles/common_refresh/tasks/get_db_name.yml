@@ -1,0 +1,63 @@
+---
+- name: Get Source/Default Database Name
+  shell: "grep -w database {{ docroot_source }}sites/default/settings.local.inc"
+  register: source_databasename
+  run_once: true
+  delegate_to: "{{ source_web_ip[0] }}"
+  when:
+    - source_env is defined
+    - netstorage_source_flag == 0
+
+
+- name: Return Source/Default Database Name
+  set_fact:
+    source_db_name: "{{ source_databasename.stdout | regex_search(pattern, '\\2') | first }}"
+  vars:
+    pattern: "'database'(.*)'(.*)'"
+  run_once: true
+  when:
+  - source_env is defined
+  - netstorage_source_flag == 0
+
+- name: Show Source db name
+  debug:
+    msg: "{{ source_db_name }}"
+  when: 
+    - source_env is defined
+    - netstorage_source_flag == 0
+
+- name: Get Target Database Name
+  shell: "grep -w database {{ docroot_target }}sites/default/settings.local.inc"
+  register: target_databasename
+  run_once: true
+  delegate_to: "{{ target_web_ip[0] }}"
+  when:
+    - target_env is defined
+    - netstorage_target_flag == 0
+    - migration_target_databasename is not defined
+
+- name: Return Target Database Name
+  set_fact:
+    target_db_name: "{{ target_databasename.stdout | regex_search(pattern, '\\2') | first }}"
+  vars:
+    pattern: "'database'(.*)'(.*)'"
+  run_once: true
+  when:
+    - target_env is defined
+    - netstorage_target_flag == 0 
+    - migration_target_databasename is not defined
+
+
+- name: Show target db name
+  debug:
+    msg: "{{ target_db_name }}"
+  when: 
+    - target_env is defined
+    - netstorage_target_flag == 0
+    - migration_target_databasename is not defined
+
+- name: Set Target DB Name
+  set_fact:
+    target_db_name: "{{ migration_target_databasename }}"
+  when:
+    - migration_target_databasename is defined

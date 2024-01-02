@@ -1,0 +1,20 @@
+---
+
+- name: Install the MariaDB Enterprise Repo
+  yum:
+    name: http://downloads.mariadb.com/enterprise/dapw-ktc5/generate/10.1/mariadb-enterprise-repository.rpm
+    state: present
+  environment: "{{ proxy_env }}"
+
+
+- name: Ensure mariadb repo is enabled
+  command: yum-config-manager --enable mariadb-maxscale
+
+- name: Install maxscale
+  yum:
+    name: maxscale
+    state: latest
+  environment: "{{ proxy_env }}"
+
+- name: Ensure mariadb repo is disabled
+  command: yum-config-manager --disable mariadb-maxscale mariadb-enterprise-main mariadb-enterprise-tools mariadb-enterprise-pilot

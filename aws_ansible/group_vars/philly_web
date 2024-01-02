@@ -1,0 +1,19 @@
+---
+
+MEMCACHED_SERVERS: 
+  - memcache_server1:11211
+  - memcache_server2:11211
+
+MEMCACHED_HOSTS:
+  - 172.23.85.13   memcache_server1
+  - 172.23.85.14   memcache_server2
+
+DB_SERVER: db_server
+DB_HOST: 172.23.86.13    db_server
+DB_PORT: 3306
+
+PROXY_SERVER: proxy_server
+PROXY_HOST: 172.23.58.11    proxy_server
+
+SOLR_SERVER: solr_server
+SOLR_HOST: 172.23.85.13

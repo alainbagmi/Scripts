@@ -1,0 +1,29 @@
+usssd8:
+  project_name: USSS
+  alias: usssd8
+  drupal_version: 8
+  akamai_group: 10629
+  akamai_path: /183946/usss
+  newrelic_id: 000000000
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint.secretservice.gov
+      public: testint.secretservice.gov
+    akamai_cpcode:
+      edit: 894508
+      public: 861069
+  staging:
+    site_urls:
+      edit: edit-staging.secretservice.gov
+      public: staging.secretservice.gov
+    akamai_cpcode:
+      edit: 894508
+      public: 861069
+  prod:
+    site_urls:
+      edit: edit.secretservice.gov
+      public: www.secretservice.gov
+    akamai_cpcode:
+      edit: 894509
+      public: 85222

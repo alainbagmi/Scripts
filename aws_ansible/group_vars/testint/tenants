@@ -1,0 +1,278 @@
+tenants:
+
+  cbp:
+    name: cbp
+    testint:
+      tenant_alias: cbp
+      drupal_version: 7
+      site_url: testint.cbp.gov
+      site_alias: testint.cbp.gov
+      edit_url: edit.testint.cbp.gov
+      edit_alias: edit.testint.cbp.gov
+      docroot: testint.cbp_gov_build
+
+
+  cfema:
+    name: cfema
+    testint:
+      tenant_alias: cfema
+      drupal_version: 7
+      site_url: testint-careers.fema.gov
+      site_alias: testint-careers.fema.gov
+      edit_url: edit-testint-careers.fema.gov
+      edit_alias: edit-testint-careers.gema.gov
+      docroot: testint.cfema_gov_build
+
+
+  daip:
+    name: daip
+    testint:
+      tenant_alias: daip
+      drupal_version: 7
+      site_url: testintd8.dhs.gov
+      site_alias: testintd8.dhs.gov
+      edit_url: edit-testintd8.dhs.gov
+      edit_alias: edit-testintd8.dhs.gov
+      docroot: testint.daip_gov_build
+
+
+  daipd8:
+    name: daipd8
+    testint:
+      tenant_alias: daipd8
+      drupal_version: 8
+      site_url: testint.disasterassistance.gov
+      site_alias: testint.disasterassistance.gov
+      edit_url: edit.testint.disasterassistance.gov
+      edit_alias: edit.testint.disasterassistance.gov
+      docroot: testint.daipd8_gov_build
+
+
+
+  dhs:
+    name: dhs
+    testint:
+      tenant_alias: dhs
+      drupal_version: 7
+      site_url: testint1.dhs.gov
+      site_alias: testint1.dhs.gov
+      edit_url: edit.testint1.dhs.gov
+      edit_alias: edit.testint1.dhs.gov
+      docroot: testint.dhs_gov_build
+
+
+  everify:
+    name: everify
+    testint:
+      tenant_alias: everify
+      drupal_version: 8
+      site_url: testint.everify.gov
+      site_alias: testint.everify.gov
+      edit_url: edit-testint.everify.gov
+      edit_alias: edit-testint.dhs.gov
+      docroot: testint.everify_gov_build
+
+
+  fema:
+    name: fema
+    testint:
+      tenant_alias: fema
+      drupal_version: 7
+      site_url: testint.fema.gov
+      site_alias: testint.fema.gov
+      edit_url: edit.testint.fema.gov
+      edit_alias: edit.testint.fema.gov
+      docroot: testint.fema_gov_build
+
+
+  fleta:
+    name: fleta
+    testint:
+      tenant_alias: fleta
+      drupal_version: 7
+      site_url: testint.fleta.gov
+      site_alias: testint.fleta.gov
+      edit_url: edit.testint.fleta.gov
+      edit_alias: edit.testint.fleta.gov
+      docroot: testint.fleta_gov_build
+
+
+  fletc:
+    name: fletc
+    testint:
+      tenant_alias: fletc
+      drupal_version: 7
+      site_url: testint.fletc.gov
+      site_alias: testint.fletc.gov
+      edit_url: edit.testint.fletc.gov
+      edit_alias: edit.testint.fletc.gov
+      docroot: testint.fletc_gov_build
+
+
+  ice:
+    name: ice 
+    testint:
+      tenant_alias: ice
+      drupal_version: 7
+      site_url: testint.ice.gov
+      site_alias: testint.ice.gov
+      edit_url: edit.testint.ice.gov
+      edit_alias: edit.testint.ice.gov
+      docroot: testint.ice_gov_build
+
+
+  ics:
+    name: ics 
+    testint:
+      tenant_alias: ics
+      drupal_version: 7
+      site_url: qa.ics-cert.us-cert.gov
+      site_alias: qa.ics-cert.us-cert.gov
+      edit_url: edit.qa.ics-cert.us-cert.gov
+      edit_alias: edit.qa.ics-cert.us-cert.gov
+      docroot: testint.ics_gov_build
+
+
+  nccic:
+    name: nccic
+    testint:
+      tenant_alias: nccic
+      drupal_version: 7
+      site_url: testint-nccic.dhs.gov
+      site_alias: testint-nccic.dhs.gov
+      edit_url: edit-testint-nccic.dhs.gov
+      edit_alias: edit-testint-nccic.dhs.gov
+      docroot: testint.nccic_gov_build
+
+
+  niccs:
+    name: niccs
+    testint:
+      tenant_alias: niccs
+      drupal_version: 7
+      site_url: testint.niccs.us-cert.gov
+      site_alias: testint.niccs.us-cert.gov
+      edit_url: edit.testint.niccs.us-cert.gov
+      edit_alias: edit.testint.niccs.us-cert.gov
+      docroot: testint.niccs_gov_build
+
+
+  niem:
+    name: niem
+    testint:
+      tenant_alias: niem
+      drupal_version: 7
+      site_url: testint.niem.gov
+      site_alias: testint.niem.gov
+      edit_url: edit-testint.niem.gov
+      edit_alias: edit-testint.niem.gov
+      docroot: testint.niem_gov_build
+
+
+  oig:
+    name: oig
+    testint:
+      tenant_alias: oig
+      drupal_version: 8
+      site_url: testint-oig.dhs.gov
+      site_alias: testint-oig.dhs.gov
+      edit_url: edit-testint-oig.dhs.gov
+      edit_alias: edit-testint-oig.dhs.gov
+      docroot: testint.oig_gov_build
+
+
+  precheck:
+    name: precheck
+    testint:
+      tenant_alias: precheck
+      drupal_version: 7
+      site_url: testint-dhsprecheck.dhs.gov
+      site_alias: testint-dhsprecheck.dhs.gov
+      edit_url: edit-testint-dhsprecheck.dhs.gov
+      edit_alias: edit-testint-dhsprecheck.dhs.gov
+      docroot: testint.precheck_gov_build
+
+
+  ready:
+    name: ready
+    testint:
+      tenant_alias: ready
+      drupal_version: 7
+      site_url: testint.ready.gov
+      site_alias: testint.ready.gov
+      edit_url: edit.testint.ready.gov
+      edit_alias: edit.testint.ready.gov
+      docroot: testint.ready_gov_build
+
+
+  sits:
+    name: sits
+    testint:
+      tenant_alias: sits
+      drupal_version: 7
+      site_url: testint-studyinthestates.dhs.gov
+      site_alias: testint-studyinthestates.dhs.gov
+      edit_url: edit-testint-studyinthestates.dhs.gov
+      edit_alias: edit-testint-studyinthestates.dhs.gov
+      docroot: testint.sits_gov_build
+  
+
+  tsa2:
+    name: tsa2
+    testint:
+      tenant_alias: tsa2
+      drupal_version: 7
+      site_url: beta-testint.tsa.gov
+      site_alias: beta-testint.tsa.gov
+      edit_url: edit-beta-testint.tsa.gov
+      edit_alias: edit-beta-testint.tsa.gov
+      docroot: testint.tsa2_gov_build
+
+
+  tsanews:
+    name: tsanews
+    testint:
+      tenant_alias: tsanews
+      drupal_version: 7
+      site_url: testint-mobile.tsa.gov
+      site_alias: testint-mobile.tsa.gov
+      edit_url: edit-testint-mobile.tsa.gov
+      edit_alias: edit-testint-mobile.tsa.gov
+      docroot: testint.tsanews_gov_build
+
+
+  uscert:
+    name: uscert
+    testint:
+      tenant_alias: uscert
+      drupal_version: 7
+      site_url: test.us-cert.gov
+      site_alias: test.us-cert.gov
+      edit_url: edit.test.us-cert.gov
+      edit_alias: edit.test.us-cert.gov
+      docroot: testint.uscert_gov_build
+
+
+  uscertd8:
+    name: uscertd8
+    testint:
+      tenant_alias: uscertd8
+      drupal_version: 8
+      site_url: test.us-certd8.gov
+      site_alias: test.us-certd8.gov
+      edit_url: edit.test.us-certd8.gov
+      edit_alias: edit.test.us-certd8.gov
+      docroot: testint.uscertd8_gov_build
+
+
+  uscis:
+    name: uscis
+    testint:
+      tenant_alias: uscis
+      drupal_version: 7
+      site_url: testint.uscis.gov
+      site_alias: beta-testint.uscis.gov
+      edit_url: edit.testint.uscis.gov
+      edit_alias: edit.beta-testint.uscis.gov
+      docroot: testint.uscis_gov_build
+

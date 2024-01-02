@@ -1,0 +1,26 @@
+Task: Merge Pull Request for {{ site_alias }}
+
+----------------------------------------------------------------------------------------------
+Job ID: {{ tower_job_id }}
+Job Status: {{ task_status }}
+
+----------------------------------------------------------------------------------------------
+Job Runtime Variables:
+    site_alias={{ site_alias }}
+    source_branch=master
+    target_branch=security
+    latest_commit_source={{ from_commit }}
+    latest_commit_target={{ to_commit }}
+
+----------------------------------------------------------------------------------------------
+PULL REQUEST #{{ merge_id }}: {{ task_message }}
+STATE: {{ merge_state }}
+CLOSED: {{ closed }}
+COMMIT ID: {{ merge_commit }}
+{% if security_update_warning is defined %}
+{{ security_update_warning }}
+
+{% for item in security_updates_final %}
+[{{ item }}]
+{% endfor %}
+{% endif %}

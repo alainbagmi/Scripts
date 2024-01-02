@@ -1,0 +1,7 @@
+---
+# defaults file for roles/db_mgmt
+MYSQL_REPO: mysql57-community-release-el7-9.noarch.rpm
+EPEL_REPO: epel-release-latest-7.noarch.rpm
+DEPENDENCY_PACKAGES:
+  - mysql-community-client
+  - MySQL-python

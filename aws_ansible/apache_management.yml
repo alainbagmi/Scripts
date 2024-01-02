@@ -1,0 +1,6 @@
+- name: Run apache configuartion 
+  hosts: wcm_new_prod_webheads
+  roles:
+    - apache_management
+  become: yes 
+

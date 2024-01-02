@@ -1,0 +1,10 @@
+---
+- name: Fix all the findings from Nessus scans
+  hosts: 172.22.58.15
+  #hosts: wcm_new_staging_webheads:wcm_staging_db_galera:wcm_staging_db_failover:daip_staging
+  #hosts: wcm_new_prod_webheads_philly:daip_prod
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+  roles: 
+    - rhel7_hardening

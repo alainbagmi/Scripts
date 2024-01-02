@@ -1,0 +1,59 @@
+---
+- include: roles/common/tasks/get_database_name.yml
+  when: 
+    - database is not defined
+    - inventory_hostname in groups['prod_web']
+    #- 'webhosts in group_names'
+
+#***Copy database backup .sql.gz file to DB Host and gunzip file
+- name: Sync Pre-Deployment Database from Jumpbox to DB Host
+  synchronize:
+    src: "{{ db_backup }}"
+    dest: "/home/bamboo/"
+    mode: push
+  delegate_to: "{{ groups['tower'][0] }}"
+  when: 
+    - inventory_hostname in groups['prod_database']
+    #- 'dbhosts in group_names'
+    - rollback_deploy is defined
+  become: no
+
+- name: Gunzip Database Backup
+  command: "gunzip -f /home/bamboo/{{ clean_db_backup }}.sql.gz"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+#***Replace Current database with backup/rollback database (backup created prior to deployment)
+- name: Drop Database
+  mysql_db:
+    state: absent
+    name: "{{ database }}"
+    login_user: root
+    login_password: "{{ root_pass }}"
+    login_host: localhost
+  tags:
+    - real
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+  
+- name: Recreate Database
+  mysql_db:
+    state: present
+    name: "{{ database }}"
+    login_user: root
+    login_password: "{{ root_pass }}"
+    login_host: localhost
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+- name: Import Database File
+  mysql_db:
+    state: import
+    name: "{{ database }}"
+    login_user: root
+    login_password: "{{ root_pass }}"
+    login_host: localhost
+    target: "/home/bamboo/{{ clean_db_backup }}.sql"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+

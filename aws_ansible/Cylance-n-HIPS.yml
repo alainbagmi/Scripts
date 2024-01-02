@@ -1,0 +1,64 @@
+# Generates csv file for ingestion into Security Team Continuum tool. 
+# Before delivering csv to Security Team update Cylance Version number to the Release date for that version.
+
+- hosts: aws_all
+
+  tasks:
+    - name: Get Cylance Version
+      shell: "/opt/cylance/desktop/cylance -vs | grep version | cut -d ':' -f 2"
+      register: cylance
+
+    - name: Get IP
+      shell: "hostname -I"
+      register: myip_raw
+
+    - name: Get Date
+      shell: "date -u '+ %m/%d/%Y %H:%M'"
+      register: the_date_raw
+
+    #  - name: Get Tripwire Status
+    #    file:
+    #      path: /usr/sbin/tripwire
+    #      state: file
+    #    register: tripwire
+
+    #  - name: Get firewalld Status
+    #    shell: "systemctl status firewalld | grep active"
+    #    #become: true
+    #    register: firewalld
+
+    - name: Show Cylance Version
+      debug:
+        msg: "{{cylance.stdout}}"
+      register: cylance_version
+
+    - name: Show IP
+      debug:
+        msg: "{{myip_raw.stdout}}"
+      register: myip
+
+    - name: Show Date
+      debug:
+        msg: "{{the_date_raw.stdout}}"
+      register: the_date
+
+
+    - name: Show Finished IP
+      debug:
+        msg: "{{myip.msg}}"
+
+    #  - name: Show HIPS status
+    #    debug:
+    #      msg: "TRUE"
+    #    when: firewalld is succeeded
+    #    register: HIPS
+
+    - name: Generate CSV output headers
+      shell: "echo 'IP address, FISMA ID, Host Name, Time, DAT File Version, HIPS' > continuum.csv; "
+      run_once: true
+      delegate_to: localhost
+
+    - name: Generate CSV output
+      shell: "echo {{myip.msg}}, 'DHQ-06630-MAJ-06630', {{ansible_hostname}}, {{the_date.msg}}, {{cylance.stdout}}, 'ENABLED' >> continuum.csv"
+      #when: firewalld is succeeded
+      delegate_to: localhost

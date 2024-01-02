@@ -1,0 +1,8 @@
+<?php
+# confluence_site_audit_report_id=
+require(__DIR__ . '/aliases_common.php');
+    $aliases['testint']['root'] = '/var/www/html/wwwroot/testint.{{ site_alias }}_gov_build/docroot/';
+    $aliases['testint']['l'] = 'https://{{ edit_url }}';
+    $aliases['testint']['c'] = '/var/www/html/wwwroot/testint.{{ site_alias }}_gov_build/docroot/sites/default/drush.yml';
+    #$REPLACEINITIAL
+    $aliases['d{{drupal_version}}_testint'] = $aliases['testint'];

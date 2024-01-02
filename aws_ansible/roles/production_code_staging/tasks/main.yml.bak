@@ -1,0 +1,30 @@
+---
+
+- name: Testing a print statement
+  debug:
+     msg: "{{ tenant_name }}"
+     msg: "{{ test_var2 }}"
+
+
+- name: Create a directory if it does not exist
+  file:
+    path: "/home/bamboo/quan/{{ tenant_name }}"
+    state: directory
+    mode: '0750'        
+
+
+- name: CLone the repository
+  environment:
+    TMPDIR: "/home/bamboo/quan"
+    TMP: "/home/bamboo/quan"
+
+  git:
+    repo: "ssh://git@172.22.58.11:7999/{{ project_name }}/{{ tenant_name }}_gov.git"
+    dest: "/home/bamboo/quan/{{ tenant_name }}"
+    version: "security"
+    track_submodules: yes
+    force: yes
+    depth: 1
+  become: yes
+  run_once: yes
+  environment: "{{ proxy_env }}"

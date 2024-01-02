@@ -1,0 +1,17 @@
+---
+- hosts: "{{ source_env }}_web[0]"
+  become: yes
+  become_method: sudo
+  remote_user: bamboo
+
+  roles:
+    - config_export
+  
+  pre_tasks:
+    - include: roles/common/tasks/get_tenant_vars.yml
+    - include: roles/common_refresh/tasks/main.yml
+ 
+  vars:
+    in_progress: "0"
+    config_export: true
+    target_env: "netstorage"

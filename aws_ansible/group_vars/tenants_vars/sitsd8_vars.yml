@@ -1,0 +1,29 @@
+sitsd8:
+  project_name: SITS
+  alias: sitsd8
+  drupal_version: 8
+  akamai_group: 20466
+  akamai_path: /183946/study_in_the_states
+  newrelic_id: 140720931
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint-studyinthestates.dhs.gov
+      public: testint-studyinthestates.dhs.gov
+    akamai_cpcode:
+      edit: 271386
+      public: 271388
+  staging:
+    site_urls:
+      edit: edit-staging-studyinthestates.dhs.gov
+      public: staging-studyinthestates.dhs.gov
+    akamai_cpcode:
+      edit: 271386
+      public: 271388
+  prod:
+    site_urls:
+      edit: edit-studyinthestates.dhs.gov
+      public: studyinthestates.dhs.gov
+    akamai_cpcode:
+      edit: 271385
+      public: 135567

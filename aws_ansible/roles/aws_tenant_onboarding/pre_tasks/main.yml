@@ -1,0 +1,63 @@
+---
+- name: Pretasks for tenant onboarding/onboard test 
+  block:
+    - include: tower_precheck.yml
+
+    - include: set_env_specific.yml
+
+    - name: Stop/Terminate ASGs
+      include_tasks: roles/aws_common/tasks/terminate_asg.yml
+      run_once: yes
+      args:
+        apply:
+          delegate_to: 127.0.0.1
+
+    - include: env_precheck.yml
+      delegate_to: "{{ delegate_host }}"
+
+  rescue:
+    - name: Resume the ASG's
+      include_tasks: roles/aws_common/tasks/resume_asg.yml
+      run_once: yes
+      args:
+        apply:
+          delegate_to: 127.0.0.1
+
+- name: Attempt to make/update tenant vars and drush aliases
+  block:
+    - name: Create a tenant var file
+      template:
+        src: "../templates/initial_vars.j2"
+        dest: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        owner: awx
+        group: awx
+        mode: 0776
+      register: tenant_vars_output
+      when: vars_flag == "initial"
+
+    - name: Show template
+      debug:
+        var: tenant_vars_output
+      when: vars_flag== "initial"
+    
+    # - name: Create initial drush alias file
+    #   template:
+    #     src: "../templates/alias_testint.j2"
+    #     dest: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+    #     owner: awx
+    #     group: awx
+    #     mode: 0776
+    #   register: drush_alias_output
+    #   when: drush_flag == "absent"
+    
+
+    - include: get_vars.yml
+      when: vars_flag == "update"
+    
+    - include: update_vars.yml
+      when: vars_flag == "update"
+    
+    # - include: update_drush.yml
+    #   when: drush_flag == "present"
+
+

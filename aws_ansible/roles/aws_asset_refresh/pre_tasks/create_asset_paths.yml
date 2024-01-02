@@ -1,0 +1,169 @@
+---
+- name: Create Initial Directories regardless of what is run
+  block:
+    - name: Set Docking Path
+      set_fact:
+        aws_docking_path: "/data/adhoc_tasks/{{ tenant }}_files"
+        netstorage_path: "{{ akamai_path }}"
+        target_tenant: "{{ tenant }}"
+        path_type: ""
+
+    - name: Set Target Site Alias when Different
+      set_fact:
+        target_tenant: "{{ related_alias }}"
+      when:
+        - target_env is defined
+        - target_env != "netstorage"
+        - target_site is defined
+        - target_site == "alternative"
+
+    - name: Set Paths
+      set_fact:
+        aws_docking_assets: "/data/adhoc_tasks/{{ tenant }}_files/asset_files/files"
+        netstorage_asset_tar_path: "/data/adhoc_tasks/{{ target_tenant }}_files/adhoc_files/asset_files"
+        target_asset_backup_path: "/data/adhoc_tasks/{{ target_tenant }}_files/adhoc_files/asset_files"
+
+    - name: Set Akamai Paths
+      set_fact:
+        akamai_asset_path: "{{ akamai_path }}/adhoc_files/{{ target_tenant }}_files/asset_files"
+
+    - name: Set Paths list for creation
+      set_fact:
+        create_list:
+          - "{{ aws_docking_path }}/"
+          - "{{ aws_docking_assets }}/"
+          - "{{ netstorage_asset_tar_path }}/"
+
+    - name: Get Docking Path Stats
+      stat:
+        path: "{{ aws_docking_path }}/"
+      register: aws_docking_stat
+
+    - name: Get Asset Path Stats
+      stat:
+        path: "{{ aws_docking_assets }}/"
+      register: aws_asset_stat
+
+    - name: Set Creation Flag
+      set_fact:
+        path_type: "initial_creation"
+        create_list:
+          - "{{ aws_docking_path }}/"
+          - "{{ aws_docking_assets }}/"
+          - "{{ netstorage_asset_tar_path }}/"
+      when: aws_docking_stat.stat.isdir is not defined
+      
+    - name: Set Creation Flag
+      set_fact:
+        path_type: "initial_creation"
+        create_list:
+          - "{{ aws_docking_assets }}/"
+          - "{{ netstorage_asset_tar_path }}/"
+      when: 
+        - aws_docking_stat.stat.isdir is defined
+        - aws_asset_stat.stat.isdir is not defined
+
+    - name: Make All Adhoc paths 
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: ansible_tower
+        group: ansible_tower
+        mode: 0776
+        recurse: yes
+      with_items: "{{ create_list }}"
+      when: path_type == "initial_creation"
+
+    - name: Change owner and group for Asset Paths
+      file:
+        path: "{{ item }}"
+        owner: apache
+        group: apache
+        mode: 0776
+        recurse: yes
+      with_items: 
+        - "{{ aws_docking_assets }}/"
+        - "{{ netstorage_asset_tar_path }}/"
+
+    - name: Set Asset Paths to Path list for clean up
+      set_fact:
+        asset_path_list:
+          - "{{ aws_docking_assets }}/"
+          - "{{ netstorage_asset_tar_path }}/"
+
+- name: Create and Sync paths to Akamai if initial run
+  block:
+    - name: Check if adhoc_files directory exists
+      shell: "ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss sshacs@dhswcms.upload.akamai.com ls {{ akamai_path }} | grep adhoc_files | echo $?"
+      register: adhoc_check
+      # when: tenant == "wcmdemod8"
+
+    - name: Create all dir if adhoc doesn't exist
+      shell: "ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss sshacs@dhswcms.upload.akamai.com mkdir {{ item }}"
+      with_items:
+        - "{{ akamai_path }}/adhoc_files"
+        - "{{ akamai_path }}/adhoc_files/{{ target_tenant }}_files"
+        - "{{ akamai_path }}/adhoc_files/{{ target_tenant }}_files/asset_files"
+      when: adhoc_check == "1"
+        # - tenant == "wcmdemod8"
+        # - adhoc_check == "1"
+
+    - name: Check if tenant specific directory exists
+      shell: "ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss sshacs@dhswcms.upload.akamai.com ls {{ akamai_path }}/adhoc_files | grep {{ target_tenant }}_files | echo $?"
+      register: tenantdir_check
+      when: adhoc_check == "0"
+        # - tenant == "wcmdemod8"
+        # - adhoc_check == "0"
+
+    - name: Create all tenant dir and asset_files dir
+      shell: "ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss sshacs@dhswcms.upload.akamai.com mkdir {{ item }}"
+      with_items:
+        - "{{ akamai_path }}/adhoc_files/{{ target_tenant }}_files"
+        - "{{ akamai_path }}/adhoc_files/{{ target_tenant }}_files/asset_files"
+      when: tenantdir_check == "1"
+        # - tenant == "wcmdemod8"
+        # - tenantdir_check == "1"
+
+    - name: Check if asset_files dir exist
+      shell: "ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss sshacs@dhswcms.upload.akamai.com ls {{ akamai_path }}/adhoc_files/{{ target_tenant }}_files | grep asset_files | echo $?"
+      register: assetdir_check
+      when: tenantdir_check == "0"
+        # - tenant == "wcmdemod8"
+        # - tenantdir_check == "0"
+
+    - name: Create asset_files dir
+      shell: "ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss sshacs@dhswcms.upload.akamai.com mkdir {{ akamai_path }}/adhoc_files/{{ target_tenant }}_files/asset_files"
+      when: assetdir_check == "1"
+        # - tenant == "wcmdemod8"
+        # - assetdir_check == "1"
+
+    # - name: Set Temp Akamai Paths
+    #   set_fact:
+    #     akamai_temp_sync: "/data/adhoc_tasks/akamai_temp/adhoc_files"
+    #     akamai_temp_assets: "/data/adhoc_tasks/akamai_temp/adhoc_files/{{ target_tenant }}_files/asset_files"
+
+    # - name: Attempt to make the adhoc directory on netstorage
+    #   shell: "ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss sshacs@dhswcms.upload.akamai.com mkdir {{ item }}"
+    #   with_items: 
+    #     - "/data/adhoc_tasks/akamai_temp/adhoc_files"
+    #     - "/data/adhoc_tasks/akamai_temp/adhoc_files/{{ target_tenant }}_files"
+    #     - "/data/adhoc_tasks/akamai_temp/adhoc_files/{{ target_tenant }}_files/asset_files"
+    #   register: adhoc_output
+
+    # - name: Make a Temp directory for apache to rsync over to netstorage
+    #   file:
+    #     path: "{{ akamai_temp_assets }}/"
+    #     state: directory
+    #     owner: apache
+    #     group: apache
+    #     mode: 0776
+    #     recurse: yes
+
+    # - name: Sync Paths to Netstorage
+    #   shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ akamai_temp_sync }} sshacs@dhswcms.upload.akamai.com:{{ akamai_path }}"
+    
+    # - name: Remove the Akamai Temp Path
+    #   file:
+    #     path: "/data/adhoc_tasks/akamai_temp"
+    #     state: absent
+    #   become: yes

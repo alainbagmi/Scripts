@@ -1,0 +1,46 @@
+---
+
+#- name: Creates directory /home/bamboo/quan/cbp_gov_build/docroot/profiles/Rhel1000
+#  file:
+#    path: "/home/bamboo/quan/{{ tenant_name }}_gov_build/docroot/profiles/Rhel{{ code_release }}"
+#    state: directory
+#    owner: bamboo
+#    group: bamboo
+#    mode: 0775
+#    recurse: yes
+#
+#
+- name: Copy cbp_gov_build to cbp_gov_build_pre
+  shell: |
+    cp -rpf /home/bamboo/quan/cbp_gov_build {{ cbp_gov_build_pre }}
+  register: shell_output
+- debug:
+    msg: "{{ shell_output }}"
+
+- name: Rename directory cbp_gov to Rhel###
+  shell: |
+    mv {{ cbp_gov_build_pre }}/docroot/profiles/cbp_gov {{ cbp_gov_build_pre}}/docroot/profiles/cbp_gov.bak
+    cp -rpf /home/bamboo/quan/cbp_gov {{ cbp_gov_build_pre }}/docroot/profiles/
+  register: shell_output
+- debug:
+    msg: "{{ shell_output }}"
+
+- name: Remove .git directory and conents
+  file:
+    path: /home/bamboo/quan/cbp_gov_build/docroot/profiles/cbp_gov/.git/
+    state: absent
+
+- name: Remove .gitignore file
+  file:
+    path: /home/bamboo/quan/cbp_gov_build/docroot/profiles/cbp_gov/.gitignore
+    state: absent
+#
+#
+- name: Copy settings files to sites/default
+  shell: |
+    cp -rpf /home/bamboo/quan/cbp_gov_build/docroot/sites/default /home/bamboo/quan/cbp_gov_build/docroot/sites/default.bak
+    cp -rpf /home/bamboo/quan/cbp_settings/prod/setting* /home/bamboo/quan/cbp_gov_build/docroot/sites/default/
+  register: shell_output
+- debug:
+    msg: "{{ shell_output }}"
+#

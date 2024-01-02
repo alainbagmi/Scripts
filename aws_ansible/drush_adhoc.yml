@@ -1,0 +1,33 @@
+---
+- hosts: "{{ env }}_web[0]"
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+
+  roles:
+    - drush_adhoc
+  
+  vars:
+    in_progess: "0"
+    task_status: ""
+    pretask_status: ""
+    spec_type: "drush_command"
+    email_address: "antonio.punzo@associates.hq.dhs.gov"
+    
+  pre_tasks:
+    - name: Attempt to get variables from group_vars/tenants
+      block:
+        - include: roles/common/tasks/get_tenant_vars.yml
+        - name: Set Pretask Status
+          set_fact:
+            pretask_status: "OK"
+      rescue:
+        - set_fact:
+            pretask_status: "Ansible Pre-Task Failed"
+            task_status: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/drush_adhoc/tasks/email_tenant.yml
+          when: email_address is defined
+        
+        - name: Fail Task because of Pre-Task Errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"

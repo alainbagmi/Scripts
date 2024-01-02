@@ -1,0 +1,33 @@
+Task: Asset Refresh Self-Service for {{ tenant }}
+
+----------------------------------------------------------------------------------------------
+Job Runtime Variables:
+    site_alias={{ tenant }}
+    source_env={{ source_env }}
+    target_env={{ target_env }}
+    target_site={{ target_site }}
+    target_backup={{ target_backup }}
+    exclude_files_var={{ exclude_files }}
+    
+
+
+----------------------------------------------------------------------------------------------
+Pretask Status: {{ email_pretask }}
+Job Status: {{ email_task }}
+
+----------------------------------------------------------------------------------------------
+      Refresh Source: 
+            Site Alias: {{ tenant }} 
+            Environment: {{ source_env }}
+
+      Refresh Target: 
+            Site Alias: {{ target_tenant }} 
+            Environment: {{ target_env }}
+
+       Files Excluded: 
+      {% for item in exclude_message %}
+        {{ item }}
+      {% endfor %}
+
+----------------------------------------------------------------------------------------------
+{{ netstorage_file_message }}

@@ -1,0 +1,11 @@
+---
+- name: Failover MariaDB 
+  hosts: "{{ master_candidate }}"
+  become: yes
+  become_method: sudo
+  remote_user: bamboo
+  roles: 
+    - mariadb_failover
+  vars:
+    db_user: mysqlrepl
+    db_pass: F1ng3rF00d

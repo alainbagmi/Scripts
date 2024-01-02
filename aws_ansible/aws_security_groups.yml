@@ -1,0 +1,11 @@
+---
+- name: Maintain Security Groups
+  hosts: local
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+
+  roles:
+    - aws_set_security_groups
+

@@ -1,0 +1,26 @@
+Task:  Rsync Daily Database Backup to Netstorage
+
+----------------------------------------------------------------------------------------------
+Job Details:
+    Problem Rsyncing MySQL:
+
+----------------------------------------------------------------------------------------------
+
+Error Details:
+{% if rsync_status == "failed" %}
+    A FATAL ERROR OCCURRED WHILE ATTEMPTING TO RSYNC TO NETSTORAGE
+{% for item in rsync_command.stderr_lines %}
+   {{ item }}
+{% endfor %}
+{% endif %}
+{% if prod_list | length > 0 %}
+    THE FOLLOWING TENANTS DID NOT HAVE A DATABASE BACKUP CREATED
+    IN THE LAST 24H IN THE DAILY BACKUP PATH:
+
+{% for item in prod_list %}
+    {{ item }}
+{% endfor %}
+{% endif %}
+
+
+----------------------------------------------------------------------------------------------

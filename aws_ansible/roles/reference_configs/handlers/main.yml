@@ -1,0 +1,7 @@
+---
+- name: File Added
+  debug:
+    msg: "File Added! This handler can be used to write to the settings file created by the task that called me"
+  listen: "ive-added-a-file"
+
+

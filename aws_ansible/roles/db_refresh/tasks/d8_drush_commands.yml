@@ -1,0 +1,21 @@
+---
+- name: Get the Drupal version of the site, run drush cr if d8
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_target }} cr"
+  delegate_to: "{{ target_web_ip[0] }}"
+  register: drush_cr_result
+  retries: 3
+  until: drush_cr_result.rc == 0
+  ignore_errors: yes
+
+- name: Run Drush updb (d8)
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_target }} updb -y"
+  delegate_to: "{{ target_web_ip[0] }}"
+  register: drush_updb_result
+  retries: 2
+  until: drush_updb_result.rc == 0
+  ignore_errors: yes
+
+
+- name: Output of Drush updb (d8) 
+  debug:
+    var: drush_updb_result

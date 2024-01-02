@@ -1,0 +1,30 @@
+---
+- name: Configure CW and Create Alarms
+  block:    
+    - include: appliance_alarms.yml
+      when: env == "appliance"
+
+    - include: install_and_config.yml
+      delegate_to: "{{ private_ip }}"
+      when: 
+        - env != "appliance"
+        - env != "wcmlab"
+    
+    - include: web_alarms.yml
+      when: 
+        - ec2_purpose == "webApp"
+        - alarm_error | length == 0
+
+    - include: mgmt_alarms.yml
+      when: 
+        - env == "management"
+        - alarm_error | length == 0
+   
+  always:
+    - name: Send Email
+      include_tasks: roles/aws_create_alarms/send_email.yml
+      args:
+        apply:
+          delegate_to: 127.0.0.1
+      when: alarm_error | length > 0
+

@@ -1,0 +1,90 @@
+---  
+#TEST FILE DELET WHEN DONE 
+- name: Show Variables 
+  debug:
+    msg: "Running Directory Setup Web: Host: {{ inventory_hostname }} - {{ host_ip }} Environment: {{ env }} Site Alias: {{ tenant }}"
+
+- name: Get wwwroot path
+  stat:
+    path: "/var/www/html/wwwroot/wcmlab_{{ env }}.{{ tenant }}_gov_build"
+  register: docroot_path
+
+# - name: Create tenant docroots
+#   file:
+#     path: /var/www/html/wwwroot/wcmlab_{{ env }}.{{ tenant }}_gov_build
+#     owner: apache
+#     group: apache
+#     mode: 0770
+#     state: directory
+#   become: yes
+#   become_user: root
+#   when: docroot_path.stat.isdir is not defined
+
+- name: Clone the combo repo
+  git:
+    accept_hostkey: yes
+    repo: "https://maestro.dhs.gov/stash/scm/wcmaws/{{ combo_repo }}.git"
+    dest: "/var/www/html/wwwroot/wcmlab_{{ env }}.{{ tenant }}_gov_build"
+    version: "develop"
+    force: yes
+    umask: "007"
+  become: yes
+  become_user: apache
+  when: docroot_path.stat.isdir is not defined
+
+- name: Change file ownership, group and permissions
+  file:
+    path: "/var/www/html/wwwroot/wcmlab_{{ env }}.{{ tenant }}_gov_build/"
+    owner: apache
+    group: apache
+    mode: '0770'
+    recurse: yes
+  become: yes
+  become_user: root
+  when: docroot_path.stat.isdir is not defined
+
+# - name: Clone the combo repo
+#   shell: "cd /var/www/html/wwwroot && git clone https://maestro.dhs.gov/stash/scm/wcmaws/{{ combo_repo }}.git {{ env }}.{{ combo_repo }}"
+#   become: yes
+#   become_user: apache
+#   when: docroot_path.stat.isdir is not defined
+  
+- name: Set the config
+  shell: "cd /var/www/html/wwwroot/wcmlab_{{ env }}.{{ tenant }}_gov_build && {{ item }}"
+  with_items:
+    #- git checkout {{ clone_branch }}
+    - git config core.fileMode false
+    - git commit --allow-empty -m "Updating git config filemode"
+    - git push origin develop
+  #loop_control:
+  #  loop_var: git_command
+  become: yes
+  become_user: apache
+  when: docroot_path.stat.isdir is not defined
+    # - clone_branch != "master"
+
+
+
+# - name: Create the branch and set the config
+#   shell: "cd {{ wwwroot_path }} && {{ item }}"
+#   become: yes
+#   become_user: apache
+#   with_items:
+#     - git config core.fileMode false
+#     - git commit --allow-empty -m "Updating git config filemode"
+#     - git push origin {{ clone_branch }}
+#   when: 
+#     - docroot_path.stat.isdir is not defined
+#     - clone_branch == "master"
+
+- name: Git Check if we are on the correct branch
+  shell: "cd /var/www/html/wwwroot/wcmlab_{{ env }}.{{ tenant }}_gov_build && git name-rev --name-only HEAD"
+  become: yes
+  become_user: apache
+  register: git_combo_branch_name
+  when: docroot_path.stat.isdir is defined
+
+- name: Show git branch
+  debug:
+    msg: "{{ git_combo_branch_name.stdout }}"
+  when: docroot_path.stat.isdir is defined

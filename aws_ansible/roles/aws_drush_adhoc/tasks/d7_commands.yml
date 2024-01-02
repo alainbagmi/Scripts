@@ -1,0 +1,67 @@
+---
+- name: Run Drush Status Drupal 7
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} status"
+  when: drush_status == "Yes" or drush_status == "yes"
+  register: drush7_status_result
+  retries: 2
+  until: drush7_status_result.rc == 0
+  ignore_errors: yes
+
+- name: Output of Drush Status
+  debug:
+    var: drush7_status_result
+  when: drush_status == "Yes" or drush_status == "yes"
+  
+- name: Run Drush updb Drupal 7
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} updb -y"
+  when: drush_updb == "Yes" or drush_updb == "yes"
+  register: drush7_updb_result
+  retries: 2
+  until: drush7_updb_result.rc == 0
+  ignore_errors: yes
+
+- name: Output of Drush updb D7
+  debug:
+    var: drush7_updb_result
+  when: drush_updb == "Yes" or drush_updb == "yes"
+
+- name: Run Drush RR if Drupal 7
+  block:
+    - name: Get the Drupal version of the site, run drush dl registry_rebuild for D&
+      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} dl registry_rebuild -y"
+      when: drush_clear == "Yes" or drush_clear == "yes"
+      register: drush_dl_result
+      retries: 2
+      until: drush_dl_result.rc == 0
+      ignore_errors: yes
+
+    - name: Output of Drush DL
+      debug:
+        var: drush_dl_result
+      when: drush_clear == "Yes" or drush_clear == "yes"
+
+    - name: Run Drush RR if Drupal 7
+      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --root={{ docroot_path }} rr"
+      when: drush_clear == "Yes" or drush_clear == "yes"
+      register: drush7_clear_result
+      retries: 3
+      until: drush7_clear_result.rc == 0
+      ignore_errors: yes
+
+    - name: Output of Drush cc all/RR
+      debug:
+        var: drush7_clear_result
+      when: drush_clear == "Yes" or drush_clear == "yes"
+  #when: env == "staging" or env == "testint"
+
+#- name: Run Drush Check Security Updates
+#  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_path }} ups --check-disabled --security-only"
+#  register: security_update_result
+#  ignore_errors: yes
+#  delegate_to: 172.22.81.16
+#  when: env == staging
+
+#- name: Output of Drush Check security Updates
+#  debug:
+#    var: security_update_result
+#  when: drush_security_check == "Yes" or drush_security_check == "yes"

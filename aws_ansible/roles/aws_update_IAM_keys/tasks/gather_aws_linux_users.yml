@@ -1,0 +1,63 @@
+---
+- name: get iam users with keys
+  shell: aws iam get-group --group-name 'Administrators' --query 'Users[].[UserName]' --output text
+  register: users
+- set_fact:
+    iam_users: "{{users.stdout_lines}}"
+
+- name: get iam keys
+  shell: aws iam list-ssh-public-keys --user-name {{ item }} --query "SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]" --max-items 1 --output text --no-paginate
+  register: key_list
+  with_items: "{{ iam_users }}"
+
+- set_fact:
+    iam_key_list: "{{ iam_key_list|default({}) | combine( {item.item: item.stdout} ) }}"
+  when: item.stdout != ""
+  with_items: "{{ key_list.results }}"
+
+- name: get SSH keys
+  command: aws iam get-ssh-public-key --user-name {{ item.key }} --ssh-public-key-id {{ item.value }} --encoding SSH --query 'SSHPublicKey.SSHPublicKeyBody' --output text
+  register: raw_ssh_list
+  with_dict: "{{ iam_key_list }}"
+
+- set_fact:
+    user_ssh_list: "{{ user_ssh_list|default({}) | combine( {item.item.key: item.stdout} ) }}"
+  with_items: "{{ raw_ssh_list.results }}"
+
+- name: get Linux Users on the Machine
+  shell: "getent passwd | awk -F: '$3 > 1000 {print $1}'"
+  register: raw_linux_list
+
+- set_fact:
+    linux_list: "{{ raw_linux_list.stdout_lines }}"
+
+#- copy:
+#    content: "{{ linux_list }}"
+#    dest: "{{ role_path }}/tasks/linux_list.data"
+
+#- copy:
+#    content: "{{ user_ssh_list }}"
+#    dest: "{{ role_path }}/tasks/ssh_list.data"
+
+- debug:
+    var: linux_list
+- debug:
+    var: user_ssh_list
+
+- name: run user manager python
+  command: python "{{ role_path }}/tasks/user_manager.py"
+
+- name: load the delete data
+  include_vars:
+    file: "{{ role_path }}/tasks/delete_users.yml"
+    name: delete_users
+
+- name: load the create data
+  include_vars:
+    file: "{{ role_path }}/tasks/create_users.yml"
+    name: create_users
+
+- name: load the update data
+  include_vars:
+    file: "{{ role_path }}/tasks/update_users.yml"
+    name: update_users

@@ -1,0 +1,5 @@
+    $aliases['staging']['root'] = '/var/www/html/wwwroot/staging.{{ site_alias }}_gov_build/docroot/';
+    $aliases['staging']['l'] = 'https://{{ edit_url }}';
+    #$REPLACESTAGE
+    $aliases['d{{drupal_version}}_testint'] = $aliases['testint'];
+    $aliases['d{{drupal_version}}_staging'] = $aliases['staging'];

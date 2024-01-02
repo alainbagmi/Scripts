@@ -1,0 +1,14 @@
+ProxyPass /jira/ http://{{IP_ADDRESS}}:{{PORT}}/jira/
+ProxyPassReverse /jira/ http://{{IP_ADDRESS}}:{{PORT}}/jira/
+<Location /jira>
+    Order allow,deny
+    Allow from all
+    AuthType Shibboleth
+    Header set X-Forwarded-Proto "https"
+    ShibUseHeaders On
+    ShibRequestSetting requireSession true
+    <RequireAny>
+      Require shib-attr AuthType "standard, securePlus2, securePlus3, piv"
+      Require shib-attr AppAuth true
+    </RequireAny>
+</Location>

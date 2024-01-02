@@ -1,0 +1,42 @@
+---
+
+- name: Check if {{ item.env }} DB exists
+  shell: mysql -uroot -p"{{ root_pass }}" -P3306 -h "{{ item.env }}-db-reader.wcm.com" -Ns -e "show databases like '{{ item.db_name }}'"> /tmp/db;cat /tmp/db|wc -l
+  register: db_check
+    
+- name: Throw flag if db already exists
+  debug: 
+    msg: " Database {{ item.db_name }} Exists "
+  when: db_check.stdout|int >= 1
+
+- name: Create the {{ item.env }} database
+  mysql_db:
+    name: "{{ item.db_name }}"
+    state: present
+    login_host: "{{ item.env }}-db.wcm.com"
+    login_user: root
+    login_password: "{{ root_pass }}"
+  when: db_check.stdout|int == 0
+
+- name: Check if {{ item.env }} User Exist
+  shell: mysql -uroot -p"{{ root_pass }}" -P3306 -h "{{ item.env }}-db-reader.wcm.com" -Ns -e  "select user from mysql.user WHERE user='{{ item.db_name }}'" > /tmp/db;cat /tmp/db|wc -l
+  register: user_check
+
+- name: Show message if user exists
+  debug:
+    msg: " User {{ item.db_name }} Exists "
+  when: user_check.stdout|int >=1
+
+- name: Create the user inside  {{ item.env }} the database
+  mysql_user:
+    login_user: root
+    login_password: "{{ root_pass }}"
+    name: "{{ item.db_name }}"
+    login_host: "{{ item.env }}-db.wcm.com"
+    password: "{{ db_pass }}"
+    priv: "{{ item.db_name }}.*:ALL"
+    state: present
+  when: user_check.stdout|int == 0
+  
+
+      

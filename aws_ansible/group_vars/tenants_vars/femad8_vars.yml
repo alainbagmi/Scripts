@@ -1,0 +1,29 @@
+femad8:
+  project_name: FEMA_BASE
+  alias: femad8
+  drupal_version: 8
+  akamai_group: 4750
+  akamai_path: /183946/fema
+  newrelic_id: 140456369
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit.testint.fema.gov
+      public: testint.fema.gov
+    akamai_cpcode:
+      edit: 160132
+      public: 160132
+  staging:
+    site_urls:
+      edit: edit.staging.fema.gov
+      public: staging.fema.gov
+    akamai_cpcode:
+      edit: 160132
+      public: 160132
+  prod:
+    site_urls:
+      edit: edit.fema.gov
+      public: www.fema.gov
+    akamai_cpcode:
+      edit: 170463
+      public: 7953

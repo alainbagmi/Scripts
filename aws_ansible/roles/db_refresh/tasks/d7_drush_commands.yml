@@ -1,0 +1,28 @@
+---
+
+- name: Run Drush RR if Drupal 7
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_target }} rr"
+  delegate_to: "{{ target_web_ip[0] }}"
+  register: drush_rr_result
+  retries: 3
+  until: drush_rr_result.rc == 0
+  ignore_errors: yes
+
+
+- name: Output of Drush RR
+  debug:
+    var: drush_rr_result
+
+
+- name: Run Drush updb (D7)
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_target }} updb -y"
+  delegate_to: "{{ target_web_ip[0] }}"
+  register: drush7_updb_result
+  retries: 2
+  until: drush7_updb_result.rc == 0
+  ignore_errors: yes
+
+
+- name: Output of Drush updb (D7)
+  debug:
+    var: drush7_updb_result

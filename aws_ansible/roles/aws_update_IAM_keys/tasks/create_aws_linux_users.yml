@@ -1,0 +1,59 @@
+---
+- name: load the delete data
+  include_vars:
+    file: "{{ role_path }}/tasks/delete_users.yml"
+    name: delete_users
+
+- name: load the create data
+  include_vars:
+    file: "{{ role_path }}/tasks/create_users.yml"
+    name: create_users
+
+- name: load the update data
+  include_vars:
+    file: "{{ role_path }}/tasks/update_users.yml"
+    name: update_users
+
+
+- name: Create users
+  user:
+    name: "{{ item.key }}"
+    state: present
+    expires: -1
+    shell: /bin/bash
+    groups: ec2-user, adm, wheel, systemd-journal, root, bamboo
+    #gid: 0
+    comment: "IAM User"
+  with_dict: "{{ create_users }}"
+
+- name: create user keys
+  authorized_key:
+    user: "{{ item.key }}"
+    state: present
+    key: "{{ item.value }}"
+  with_dict: "{{ create_users }}"
+
+- name: get current linux users
+  shell: "getent passwd | awk -F: '$3 > 1000 {print $1}'"
+  register: temp_username_list
+
+- name: get current linux user ids
+  shell: "getent passwd | awk -F: '$3 > 1000 {print $3}'"
+  register: temp_userid_list
+
+- set_fact:
+    linux_user_and_id_list: "{{ linux_user_and_id_list | default([]) | combine( {item[0]: item[1]} ) }}"
+  loop: "{{ temp_username_list.stdout_lines | zip(temp_userid_list.stdout_lines) | list }}"
+
+- debug:
+    var: linux_user_and_id_list
+
+- name: sudo without password for new user
+  blockinfile:
+    create: yes
+    path: "/etc/sudoers.d/{{ item.value }}-{{ item.key }}"
+    block: |
+
+      {{ item.key }}         ALL=(ALL)       NOPASSWD: ALL,!/bin/su,!/usr/sbin/visudo
+    mode: 0440
+  with_dict: "{{ linux_user_and_id_list }}"

@@ -1,0 +1,29 @@
+dhs:
+  project_name: DHS
+  alias: dhs
+  drupal_version: 7
+  akamai_group: 4764
+  akamai_path: /183946/dhs
+  newrelic_id: 140456413
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint.dhs.gov
+      public: testint.dhs.gov
+    akamai_cpcode:
+      edit: 164064
+      public: 164064
+  staging:
+    site_urls:
+      edit: edit.staging1.dhs.gov
+      public: staging1.dhs.gov
+    akamai_cpcode:
+      edit: 164064
+      public: 164064
+  prod:
+    site_urls:
+      edit: edit.dhs.gov
+      public: www.dhs.gov
+    akamai_cpcode:
+      edit: 175354
+      public: 26930

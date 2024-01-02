@@ -1,0 +1,58 @@
+---
+# NOTE: If running these plays from the command line (not tower or Bamboo) and you would like to provide the user with a prompt to confirm the database name, 
+# include "cli: true" in the vars of your playbook or "cli=true" within the --extra-vars flag of your command. 
+
+- name: Get Database Name
+  shell: grep -w database /var/www/html/wwwroot/{{docroot_path_suffix}}{{ tenant }}_gov_build/docroot/sites/default/settings.local.inc
+  register: databasename
+  run_once: true
+
+- name: Show output
+  debug: 
+    var: databasename
+  tags:
+    - databasetest
+  run_once: true
+
+
+- name: Return Database Name
+  set_fact:
+    database: "{{ databasename.stdout | regex_search(pattern, '\\2') | first }}"
+  vars:
+    pattern: "'database'(.*)'(.*)'"
+  run_once: true
+
+
+- name: Show Database
+  debug:
+    var: database
+  tags:
+    - databasetest
+  run_once: true
+
+
+- name: Confirm Database
+  pause:
+    prompt: "Confirm that {{ database }} is the correct database name, else type the correct database name (note that you will not be able to see what you type)"
+  when: cli is defined
+  register: new_database
+  run_once: true
+
+
+- name: New Database if User Specified
+  debug:
+    var: new_database.user_input
+  when: 
+    - cli is defined
+    - new_database.user_input
+  ignore_errors: yes
+
+
+- name: Correct Database if User Specified
+  set_fact:
+    database: "{{ new_database.user_input }}"
+  when: 
+    - cli is defined
+    - new_database.user_input
+  run_once: true
+

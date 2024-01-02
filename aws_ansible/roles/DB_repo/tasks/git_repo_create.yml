@@ -1,0 +1,31 @@
+---
+
+- name: Set the git remote and push the changes 
+  shell: "{{ item }}"
+  become: yes
+  become_user: bamboo
+  with_items:
+    - git init
+    - git remote add origin https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ tenant_alias }}_gov.git
+    - git add -A
+    - git commit -m 'Initial Profile commit'
+    - git push origin master
+  run_once: yes
+  args:
+   chdir: "{{ dir_name }}/{{ stashprofile }}"
+
+
+- name: Set the git remote and push the changes
+  shell: "{{ item }}"
+  become: yes
+  become_user: bamboo
+  with_items:
+    - git init
+    - git remote add origin https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ tenant_alias }}_gov_build.git
+    - git add -A
+    - git commit -m 'Initial Profile commit'
+    - git push origin master
+  run_once: yes
+  args:
+   chdir: "{{ dir_name }}/{{ stashbuildrepo }}"
+

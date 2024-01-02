@@ -1,0 +1,34 @@
+---
+
+- name: Remove the previous configuration (if it exists) 8
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot cdel update.settings -y"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush update 8"
+
+
+- name: Uninstall previous update module 8 (Ignore if already uninstalled)
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot pmu update -y"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush update 8"
+   
+
+- name: Turn on the update module
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot cdel update.settings -y"
+#  ignore_errors: yes
+  run_once: true
+  listen: "drush update 8"
+  
+
+- name: Set the notification threshold 8
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ tenant }}_gov_build/docroot cset update.settings notification.threshold security -y"
+#  ignore_errors: yes
+  run_once: true
+  listen: "drush update 8"
+
+
+- name: Check disabled D8 modules / extensions
+  command: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ target_env }}.{{ site_alias }}_gov_build/docroot cset update.settings check.disabled_extensions true -y"
+  run_once: true
+  listen: "drush update 8"

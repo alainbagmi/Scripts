@@ -1,0 +1,86 @@
+---
+- name: Show Job ID
+  debug:
+    msg: "{{ tower_job_id }}"
+
+- name: Show email address
+  debug:
+    msg: "{{ email_address }}"
+
+- name: Set empty Email Message
+  set_fact:
+    email_clear: []
+    email_updb: []
+
+- name: Email Message For PreTask Status
+  set_fact:
+    email_pretask: "{{ pretask_status }}"
+    email_task: "{{ task_status }}"
+    netstorage_message: ""
+
+
+- name: Send Error Email
+  mail:
+    host: 10.50.4.94
+    port: 25
+    to:
+      - <{{ email_address }}>
+    from: esdowcmmonitoring@hq.dhs.gov
+    subject: "Self-Service Database Refresh Results for Job: {{ tower_job_id }}"
+    body: "{{ lookup('template', 'roles/db_refresh/templates/email_error.j2') }}"
+  when:
+    - pretask_status == "Ansible Pre-Task Failed" or task_status == "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+- name: Email When Netstorage Set as Target Env
+  set_fact:
+    email_netstorage: "{{ akamai_path }}/{{ source_db_file }}"
+  when: 
+    - task_status == "Ansible Task Finished Successfully"
+    - netstorage_target_flag == 1
+    - target_env == "netstorage"
+
+- name: Email Message for Drush RR Drupal 7
+  set_fact:
+    email_clear: "{{ email_clear + drush_rr_result.stderr_lines }}"
+  when:
+    - task_status == "Ansible Task Finished Successfully"
+    - drupal_version == "7"
+    - netstorage_target_flag == 0
+
+- name: Email Message for Drush UPDB D7
+  set_fact:
+    email_updb: "{{ email_updb + drush7_updb_result.stderr_lines }}"
+  when:
+    - task_status == "Ansible Task Finished Successfully"
+    - drupal_version == "7"
+    - netstorage_target_flag == 0
+
+- name: Email Message for Drush CR Drupal 8
+  set_fact:
+    email_clear: "{{ email_clear + drush_cr_result.stderr_lines }}"
+  when:
+    - task_status == "Ansible Task Finished Successfully"
+    - drupal_version == "8"
+    - netstorage_target_flag == 0
+
+- name: Email Message for Drush UPDB D8
+  set_fact:
+    email_updb: "{{ email_updb + drush_updb_result.stderr_lines }}"
+  when:
+    - task_status == "Ansible Task Finished Successfully"
+    - drupal_version == "8"
+    - netstorage_target_flag == 0
+
+- name: Send an email
+  mail:
+    host: 10.50.4.94
+    port: 25
+    to:
+      - <{{ email_address }}>
+    from: esdowcmmonitoring@hq.dhs.gov
+    subject: "Self-Service Database Refresh Results for Job: {{ tower_job_id }}"
+    body: "{{ lookup('template', 'roles/db_refresh/templates/email_body.j2') }}"
+  when:
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully"
+    - email_address is defined

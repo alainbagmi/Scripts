@@ -1,0 +1,24 @@
+---
+   - name: Ensure /opt/zenoss/libexec exists or make it
+     file: 
+       state: directory 
+       owner: zenoss
+       group: zenoss 
+       mode: 0700 
+       path: /opt/zenoss/libexec 
+       recurse: yes
+   
+#   - name: Ensure /data/metrics_collection exists or make it
+#     file: 
+#       state: directory 
+#       owner: zenoss
+#       group: zenoss
+#       mode: 0700 
+#       path: /data/metrics_collection 
+#       recurse: yes 
+
+   - name: Rsync the monitoring scripts
+     synchronize: 
+       src: /home/bamboo/ansible/roles/zenoss/files 
+       dest: /opt/zenoss/libexec/
+

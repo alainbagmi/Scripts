@@ -1,0 +1,32 @@
+---
+# NOTE: If running these tasks from the command line (NOT tower or bamboo)
+# include "cli: true" in the playbook that runs these tasks or "cli=true" in the --extra-vars flag of your command
+# if you wish to prompt the user for confirmation
+
+- name: Identify Edit Site Config File to be Locked
+  debug:
+    msg: '/etc/httpd/conf.d/{{ tenant }}-edit.conf'
+  tags:
+    - databasetest
+
+
+- name: Lock Edit Sites
+  file:
+    path: /etc/httpd/conf.d/{{ tenant }}-{{ item }}
+    state: absent
+  with_items:
+    - edit.conf
+  tags:
+    - real
+  notify: "restart apache"
+
+
+- name: Flush Handlers to Restart Apache
+  meta: flush_handlers
+
+
+- name: Status Update
+  pause:
+    prompt: The edit sites are locked, importing previous database from backup and rolling back the deploy, press enter to begin deployment
+  when: cli is defined
+  run_once: true

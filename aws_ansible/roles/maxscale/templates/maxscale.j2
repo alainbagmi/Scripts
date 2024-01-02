@@ -1,0 +1,105 @@
+## Number of worker threads in MaxScale
+
+[maxscale]
+threads=4
+
+
+## Define a monitor that can be used to determine the state and role of the server
+
+module=mysqlmon
+{% set comma = joiner(",") %}
+servers={% for host in groups[database_servers] %}{{ comma() }}{{ hostvars[host].server_name }}{% endfor %}
+
+user={{ db_user }}
+passwd={{ max_pass }}
+monitor_interval=10000
+
+
+## Galera monitor-specific options:
+
+[MySQL Monitor]
+type=monitor
+module=galeramon
+disable_master_failback=1
+{% set comma = joiner(",") %}
+servers={% for host in groups[database_servers] %}{{ comma() }}{{ hostvars[host].server_name }}{% endfor %}
+
+user={{ db_user }}
+passwd={{ max_pass }}
+monitor_interval=10000
+
+
+## Filter definition
+
+[qla]
+type=filter
+module=qlafilter
+filebase=/tmp/SqlQueryLog
+
+[fetch]
+type=filter
+module=regexfilter
+match=fetch
+replace=select
+
+[hint]
+type=filter
+module=hintfilter
+
+
+## Read/Write Split Router specific options. 
+
+[Read Connection Router]
+type=service
+router=readconnroute
+{% set comma = joiner(",") %}
+servers={% for host in groups[database_servers] %}{{ comma() }}{{ hostvars[host].server_name }}{% endfor %}
+
+user={{ db_user }}
+passwd={{ max_pass }}
+router_options=synced
+
+
+[Debug Interface]
+type=service
+router=debugcli
+
+[CLI]
+type=service
+router=cli
+
+
+## Listener definitions for the services
+
+[Read Connection Listener]
+type=listener
+service=Read Connection Router
+protocol=MySQLClient
+address=127.0.0.1
+port=4006
+
+
+[Debug Listener]
+type=listener
+service=Debug Interface
+protocol=telnetd
+address=127.0.0.1
+port=4442
+
+[CLI Listener]
+type=listener
+service=CLI
+protocol=maxscaled
+port=6603
+
+
+## Definition of the servers
+
+{% for host in groups[database_servers] %}
+[{{ hostvars[host].server_name }}]
+type=server
+address={{ hostvars[host].inventory_hostname }}
+port=3306
+protocol=MySQLBackend
+
+{% endfor %}

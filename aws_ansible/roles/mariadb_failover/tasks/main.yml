@@ -1,0 +1,101 @@
+---
+# Should we add logic to dynamically determine who the master and slave are at the time?
+
+- name: Stop slave on old Slave
+  mysql_replication:
+    mode: stopslave
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_pass }}"
+    login_host: "{{ master_candidate }}"
+
+- name: Get the binlog position of the slave
+  command: /usr/bin/mysql -u{{ db_user }} -e "select @@gtid_slave_pos;" -p{{ db_pass }}
+  delegate_to: "{{ master_candidate }}"
+  register: binlog_pos
+
+#- name: Debug statement to show progress
+#  debug: 
+#    var: binlog_pos.stdout_lines[1]
+
+
+- name: Reset slave on old Slave
+  mysql_replication:
+    mode: resetslaveall
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_pass }}"
+    login_host: "{{ master_candidate }}"
+
+- name: Show slave status on old Slave
+  mysql_replication:
+    mode: getslave
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_pass }}"
+    login_host: "{{ master_candidate }}"
+  register: old_slave_status
+  ignore_errors: True
+  
+# Double check the output is blank once a slave is diabled and below sytax is right for None
+- name: Debug statement to show progress
+  debug: 
+    var: old_slave_status
+
+- name: Validate ouput of slave status and exit if bad
+  fail:
+    msg: "{{ old_slave_status }}"
+  when: "{{ old_slave_status.failed }} == true"
+
+# not sure if master_auto_position is correct -- need to verify
+# Use Ansible Vault for the master password
+
+# Redo this once ansible mysql module support mariadb
+#- name: Change master to new slave on old master
+#  mysql_replication:
+#    mode: changemaster
+#    login_user: "{{ db_user }}"
+#    login_password: "{{ db_pass }}"
+#    master_host: "{{ master_candidate }}"
+#    master_port: 3306
+#    master_user: "{{ db_user }}" 
+#    master_password: "{{ db_pass }}"
+#    master_auto_position: yes
+#    login_host: "{{ master_failed }}" 
+#
+
+- name: Set the GTID value from earlier on the new slave
+  command: /usr/bin/mysql -u{{ db_user }} -e "set global gtid_slave_pos = \"{{ binlog_pos.stdout_lines[1] }}\";" -p{{ db_pass }}
+  delegate_to: "{{ master_failed }}"
+
+- name: Command to change master to 
+  command: /usr/bin/mysql -u{{ db_user }} -e "CHANGE MASTER TO MASTER_HOST=\"{{ master_candidate }}\", MASTER_USER=\"{{ db_user }}\", MASTER_PASSWORD=\"{{ db_pass }}\", MASTER_PORT=3306, MASTER_USE_GTID=slave_pos" -p{{ db_pass }}
+  delegate_to: "{{ master_failed }}"
+
+- name: Start slave on old master
+  mysql_replication:
+    mode: startslave
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_pass }}"
+    login_host: "{{ master_failed }}" 
+  delegate_to: "{{ master_failed }}"
+
+- name: Show slave status on old master to ensure everything is working
+  mysql_replication:
+    mode: getslave
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_pass }}"
+    login_host: "{{ master_failed }}" 
+  register: new_slave_status
+  delegate_to: "{{ master_failed }}"
+
+- name:
+  debug:
+    var: new_slave_status 
+
+#Adding wait since it is sometimes preparing instead of being ready
+- pause:
+    seconds: 13
+
+- name: Validate ouput of slave status and exit if bad
+  fail:
+    msg: new_slave_status   
+  when: new_slave_status.Slave_IO_Running != 'Yes'
+  delegate_to: "{{ master_failed }}"

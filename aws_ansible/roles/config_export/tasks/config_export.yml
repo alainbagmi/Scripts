@@ -1,0 +1,111 @@
+---
+- name: Start of Config Export
+  debug:
+    msg: "Exporting Config files for {{ site_alias }} from {{ source_env }} to NetStorage {{ akamai_path }}"
+
+
+- name: Config Export Failed with Errors
+  fail:
+    msg: "drush config-export is not valid for a Drupal 7 site!!"
+  when: drupal_version == "7"
+
+#-------------------- Set Paths --------------------
+- name: Get Time Stamp
+  shell: 'date +%Y-%m-%d-%Hh%Mm%Ss'
+  register: current_date
+
+- name: Set Source Path for config_exports
+  set_fact:
+    source_path: "/tmp/{{ site_alias }}_config_export"
+    jump_path: "/data/transit_files/config_exports/{{ site_alias }}/config_export/"
+    rsync_path: "/data/transit_files/config_exports/{{ site_alias }}/"
+    tar_file: "{{ site_alias }}_{{ source_env }}_config_export-{{ current_date.stdout }}.tar.gz"
+
+- name: Show information
+  debug:
+    msg: "Source Path: {{ source_path }}"
+
+- name: Get Source Path stats
+  stat:
+    path: "{{ source_path }}"
+  register: source_stats
+
+- name: Get Jump Path stats
+  stat:
+    path: "{{ jump_path }}"
+  register: jump_stats
+
+- name: Make Source Path if not exist
+  file:
+    path: "{{ source_path }}"
+    state: directory
+    owner: apache
+    group: apache
+    mode: 0777
+    recurse: yes
+  when: 
+    - source_stats.stat.isdir is not defined
+
+- name: Run Drush CR
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_source }} cr"
+  register: drush_cr_result
+  retries: 3
+  until: drush_cr_result.rc == 0
+  ignore_errors: yes
+
+- name: Run Drush config-export
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_source }} config-export --destination={{ source_path }}"
+  register: drush_config_exp_result
+  retries: 0
+
+- name: Output of Drush config export 
+  debug:
+    var: drush_config_exp_result
+
+#- name: Run Drush Command
+#  shell: "sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ docroot_source }} config-export --destination={{ source_path }}"
+
+- name: Make Jump Path if not exist
+  file:
+    path: "{{ jump_path }}"
+    state: directory
+    owner: bamboo
+    group: bamboo
+    mode: 0775
+    recurse: yes
+  delegate_to: "{{ jump_ip }}"
+
+- name: Archive Export
+  archive:
+    path:
+      - "{{ source_path }}/*"
+    dest: "{{ source_path }}/{{ tar_file }}"
+    format: gz
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+
+- name: Pull tar file to Jump
+  synchronize:
+    src: "{{ source_path }}/{{ tar_file }}"
+    dest: "{{ jump_path }}"
+    mode: pull
+    delete: yes
+  delegate_to: "{{ jump_ip }}"
+  become: no
+
+- name: Sync Tar File to Netstorage
+  shell: "rsync -av -e 'ssh -i /home/bamboo/.ssh/id_rsa2 -p 8002' {{ rsync_path }} sshacs@172.22.84.11:{{ akamai_path }}"
+  delegate_to: "{{ jump_ip }}"
+  become: no
+
+- name: Cleanup Source Export Files
+  file:
+    path: "{{ source_path }}"
+    state: absent
+
+- name: Cleanup Jump 
+  file:
+    path: "{{ jump_path }}/{{ tar_file }}"
+    state: absent
+  delegate_to: "{{ jump_ip }}"

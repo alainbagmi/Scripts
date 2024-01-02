@@ -1,0 +1,60 @@
+--- 
+
+- name: Create symlink to site-files
+  file:
+    src: '{{ sitefiles_root }}{{ env }}.{{ tenant }}_gov_build/files'
+    dest: '{{ local_repo }}docroot/sites/default/files'
+    state: link
+    group: apache
+    owner: apache
+    force: yes
+    follow: no
+  run_once: yes
+
+- name: Bypassing Ansible slowness tax with mv because Ansible module is painfully slow
+  command: "cp -Rp {{ local_repo }}docroot {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/"
+  become: yes
+  run_once: yes 
+
+- name: Remove .git directory in profile because it messes up our git push later
+  file:
+    path: "{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/docroot/profiles/{{ tenant }}_gov/.git"
+    state: absent
+  run_once: yes
+
+
+- name: Push combined repo to Stash (testint)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:
+    - "git add docroot"
+    - "git commit -m 'Latest code for tenant deployment' --quiet"
+    - "git push origin develop --quiet"
+  run_once: yes
+  when: env == "testint"
+#  ignore_errors: yes
+
+- name: Push combined repo to Stash (staging)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:    
+    - "git add docroot"
+    - "git commit -m 'Latest code for tenant deployment' --quiet"
+    - "git push origin master --quiet"
+  run_once: yes
+  when: env == "staging"
+
+
+- name: Push combined repo to Stash (prod)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:    
+    - "git add docroot"
+    - "git commit -m 'Latest code for tenant deployment' --quiet"
+    - "git push origin live --quiet"
+  run_once: yes
+  when: env == "production"
+

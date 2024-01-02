@@ -1,0 +1,28 @@
+---
+docroot_prefix: /var/www/html/wwwroot/testint.
+target_db_ip: 172.22.83.11
+web_server_drush: 172.22.81.18
+site_root: /var/www/html/wwwroot/
+sitefiles_root: /var/www/sites-files/
+
+
+
+drupal_sites:
+
+  - site_name: precheck
+    site_url: testint-dhsprecheck.dhs.gov
+    site_alias: testint-dhsprecheck.dhs.gov
+    edit_url: edit-testint-dhsprecheck.dhs.gov
+    edit_alias: edit-testint-dhsprecheck.dhs.gov
+
+  - site_name: tsa2
+    site_url: testint.tsa.gov
+    site_alias: testint-dhsprecheck.dhs.gov
+    edit_url: edit-testint-dhsprecheck.dhs.gov
+    edit_alias: edit-testint-dhsprecheck.dhs.gov
+
+  - site_name: dhs
+    site_url: testint.dhs.gov
+    site_alias: testint.dhs.gov
+    edit_url: edit.testint.dhs.gov
+    edit_alias: edit.testint.dhs.gov

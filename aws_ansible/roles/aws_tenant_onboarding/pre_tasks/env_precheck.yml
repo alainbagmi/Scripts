@@ -1,0 +1,79 @@
+---
+- name: Check the vhosts paths and symlinks
+  block:  
+    - name: Get Tenant directory
+      stat:
+        path: "{{ vhost_path }}/tenants"
+      register: tenant_path
+      become: yes
+      become_user: root
+
+    - name: Get public vhosts .conf
+      stat:
+        path: "{{ vhost_path }}/tenants/{{ tenant }}-public.conf"
+      register: vhost_public
+      become: yes
+      become_user: root
+
+    - name: Get public vhosts symlink
+      stat:
+        path: "{{ vhost_path }}/{{ tenant }}-public.conf"
+      register: public_link
+      become: yes
+      become_user: root
+
+    - name: Get edit vhosts .conf
+      stat:
+        path: "{{ vhost_path }}/tenants/{{ tenant }}-edit.conf"
+      register: vhost_edit
+      become: yes
+      become_user: root
+
+    - name: Get edit vhosts link
+      stat:
+        path: "{{ vhost_path }}/{{ tenant }}-edit.conf"
+      register: edit_link
+      become: yes
+      become_user: root
+
+    - name: Set vhost flag
+      set_fact:
+        vhost_flag: "absent"
+      when: public_link.islnk is not defined or edit_link.islnk is not defined
+
+    - name: Set vhost file flag
+      set_fact:
+        vhost_file: "present"
+      when: 
+        - vhost_public.stat.exists == True
+        - vhost_edit.stat.exists == True
+
+# - name: Link vhosts if that is all that needs to happen
+#   block:
+
+#     - name: Setup Public Vhost Symlink
+#       file:
+#         src: "{{ vhost_path }}/tenants/{{ tenant }}-public.conf"
+#         path: "{{ vhost_path }}/{{ tenant }}-public.conf"
+#         state: link
+#       when: public_link.islnk is not defined
+#       become: yes
+#       become_user: root
+
+#     - name: Setup Edit Vhost Symlink
+#       file:
+#         src: "{{ vhost_path }}/tenants/{{ tenant }}-public.conf"
+#         path: "{{ vhost_path }}/{{ tenant }}-public.conf"
+#         state: link
+#       when: edit_link.islnk is not defined
+#       become: yes
+#       become_user: root
+
+#     - name: Do Graceful restart
+#       command: "service httpd graceful"
+#       become: yes
+#       become_user: root
+#   when:
+#     - link_hosts == "link"
+#     - vhost_flag == "absent"
+#     - vhost_file == "present"

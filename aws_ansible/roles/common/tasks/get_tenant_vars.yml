@@ -1,0 +1,26 @@
+---   
+- name: Include group vars
+  include_vars:
+    file: group_vars/tenants
+    name: tenants
+
+
+- name: Set Tenant Vars
+  set_fact:
+    tenantvars: "{{ tenants[vars['site_alias']] }}"
+
+- name: Set Vars
+  set_fact:
+    project_name: "{{ tenantvars.project_name }}"
+    drupal_version: "{{ tenantvars.drupal_version }}"
+    akamai_path: "{{ tenantvars.akamai_path }}"
+    related_alias: "{{ tenantvars.related_alias }}"
+    prod_vars: "{{ tenantvars.prod }}"
+    staging_vars: "{{ tenantvars.staging }}"
+    testint_vars: "{{ tenantvars.testint }}"
+    prod_edit: "{{ tenantvars.prod.site_urls.edit }}"
+    prod_public: "{{ tenantvars.prod.site_urls.public }}"
+    staging_edit: "{{ tenantvars.staging.site_urls.edit }}"
+    staging_public: "{{ tenantvars.staging.site_urls.public }}" 
+    testint_edit: "{{ tenantvars.testint.site_urls.edit }}"
+    testint_public: "{{ tenantvars.testint.site_urls.public }}"

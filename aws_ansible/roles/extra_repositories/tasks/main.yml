@@ -1,0 +1,7 @@
+- include: epel.yml
+  when: respository == "epel" or
+        repository == "both"
+- include: ius.yml
+  when: respository == "ius" or
+        repository == "both"
+

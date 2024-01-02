@@ -1,0 +1,7 @@
+---
+# handlers file for bamboo_agent_install
+- name: restart bamboo_agent
+  service:
+    name: bamboo-agent
+    state: restarted
+    enabled: yes

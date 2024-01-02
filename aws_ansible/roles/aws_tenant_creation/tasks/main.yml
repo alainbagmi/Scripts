@@ -1,0 +1,16 @@
+---
+
+- include: new_tenant_creation.yml
+
+- include: gov_creation.yml
+  when: '"gov_absent" in repo_status'
+- include: govbuild_creation.yml
+  when: '"govbuild_absent" in repo_status'
+- include: settings_repo.yml
+  when: '"settings_absent" in repo_status'
+- include: git_repo_create.yml
+
+
+   
+
+

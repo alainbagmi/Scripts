@@ -1,0 +1,38 @@
+---
+
+- name: Drupal 7 Settings File
+  template:
+    src: "../templates/drupal_settings/{{ hostgroup }}_7_settings.j2"
+    dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/settings_7_example.php
+    backup: yes
+    owner: apache
+    group: apache
+  when: drupal_version == 7
+  notify:
+  - ive-added-a-file
+
+
+- name: Drupal 8 Settings File
+  template:
+    src: "../templates/drupal_settings/all_8_settings.j2"
+    dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/settings_8_example.php
+    backup: yes 
+    owner: apache
+    group: apache
+  when: drupal_version == 8
+  notify:
+  - ive-added-a-file
+
+
+- name: Drupal 8 Service File
+  template:
+    src: "../templates/drupal_settings/all_8_services.j2"
+    dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/services_example.yml
+    backup: yes
+    owner: apache
+    group: apache
+  when: drupal_version == 8
+  notify:
+  - ive-added-a-file
+
+

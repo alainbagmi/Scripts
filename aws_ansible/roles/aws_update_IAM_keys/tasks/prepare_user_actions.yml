@@ -1,0 +1,4 @@
+---
+- name: run user manager python
+  command: python "{{ role_path }}/tasks/user_manager.py"
+

@@ -1,0 +1,17 @@
+- name: Add ius repository
+  yum_repository:
+    name: ius
+    description: ius YUM repo
+    baseurl: https://rhel7.iuscommunity.org/ius-release.rpm 
+    enabled: yes
+  when: enabled == "yes" or
+        enabled == "Yes"
+
+- name: Remove repository (and clean up left-over metadata)
+  yum_repository:
+    name: ius
+    state: absent
+  notify: yum-clean-metadata
+  when: enabled == "no" or
+        enabled == "No"
+

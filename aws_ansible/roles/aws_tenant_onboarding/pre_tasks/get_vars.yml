@@ -1,0 +1,28 @@
+---
+- name: Set Vars
+  set_fact:
+    project_name: "{{ tenantvars.project_name }}"
+    drupal_version: "{{ tenantvars.drupal_version }}"
+    akamai_path: "{{ tenantvars.akamai_path }}"
+    prod_vars: "{{ tenantvars.prod }}"
+    staging_vars: "{{ tenantvars.staging }}"
+    testint_vars: "{{ tenantvars.testint }}"
+    prod_edit: "{{ tenantvars.prod.site_urls.edit }}"
+    prod_public: "{{ tenantvars.prod.site_urls.public }}"
+    staging_edit: "{{ tenantvars.staging.site_urls.edit }}"
+    staging_public: "{{ tenantvars.staging.site_urls.public }}" 
+    testint_edit: "{{ tenantvars.testint.site_urls.edit }}"
+    testint_public: "{{ tenantvars.testint.site_urls.public }}"
+    daily_db_backup: "{{ tenantvars.daily_db }}"
+
+- name: Set condition to determine if aws branch should be updated
+  set_fact: 
+    aws_push: "no_push"
+  when: 
+    - daily_db_backup is defined
+    - daily_db_backup == daily_db_check
+
+- name: Try to set the daily db backup string
+  set_fact:
+    daily_db_backup_full: "db_backup: {{ daily_db_backup }}"
+

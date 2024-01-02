@@ -1,0 +1,12 @@
+---
+- include: set_refresh_envs.yml
+
+#- include: get_tenants_info.yml
+#  when: db_refresh is defined or config_export is defined
+
+- include: sync_excludes.yml
+  when: asset_refresh is defined
+
+- include: get_db_name.yml
+  when: db_refresh is defined
+

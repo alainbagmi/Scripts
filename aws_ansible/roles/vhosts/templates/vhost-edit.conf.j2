@@ -1,0 +1,34 @@
+<VirtualHost *:80>
+    ServerName {{ item['value'][ENV]['site_urls']['edit']}}
+{% if ENV == 'prod' %}
+    ErrorLog logs/{{ item['value']['alias']}}_gov_build.gov-error_log
+    CustomLog logs/{{ item['value']['alias']}}_gov_build.gov-access_log common
+    DocumentRoot /var/www/html/wwwroot/{{ item['value']['alias']}}_gov_build/docroot
+{% else %}
+    ErrorLog logs/{{ ENV }}.{{ item['value']['alias']}}_gov_build.gov-error_log
+    CustomLog logs/{{ ENV }}.{{ item['value']['alias']}}_gov_build.gov-access_log common
+    DocumentRoot /var/www/html/wwwroot/{{ ENV }}.{{ item['value']['alias']}}_gov_build/docroot
+{% endif %}
+    CustomLog "|/usr/bin/logger -t httpd -p local6.info" combined
+</VirtualHost>
+
+<VirtualHost  {{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:443>
+    SSLEngine on
+    SSLProtocol -ALL +TLSv1.1 +TLSv1.2
+    SSLCipherSuite HIGH:!aNULL:!MD5:!EXP:!EDH
+    SSLCertificateFile      /etc/pki/tls/certs/server.crt
+    SSLCertificateKeyFile   /etc/pki/tls/certs/server.key
+    ServerName {{ item['value'][ENV]['site_urls']['edit']}}
+{% if ENV == 'prod' %}
+    ErrorLog logs/{{ item['value']['alias']}}_gov_build.gov-error_log
+    CustomLog logs/{{ item['value']['alias']}}_gov_build.gov-access_log common
+    DocumentRoot /var/www/html/wwwroot/{{ item['value']['alias']}}_gov_build/docroot
+{% else %}
+    ErrorLog logs/{{ ENV }}.{{ item['value']['alias']}}_gov_build.gov-error_log
+    CustomLog logs/{{ ENV }}.{{ item['value']['alias']}}_gov_build.gov-access_log common
+    DocumentRoot /var/www/html/wwwroot/{{ item['value']['alias']}}_gov_build/docroot
+{% endif %}
+    CustomLog "|/usr/bin/logger -t httpd -p local6.info" combined
+    php_value newrelic.appname "{{ item['value'][ENV]['site_urls']['edit']}}"
+    php_admin_flag allow_url_fopen on
+</VirtualHost>

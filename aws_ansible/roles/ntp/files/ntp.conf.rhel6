@@ -1,0 +1,18 @@
+# for vmware guests
+tinker panic 0
+restrict default nomodify kod notrap ignore
+restrict 127.0.0.1
+restrict 172.22.4.124 mask 255.255.255.255 nomodify notrap noquery
+restrict 172.22.4.125 mask 255.255.255.255 nomodify notrap noquery
+restrict 172.22.4.139 mask 255.255.255.255 nomodify notrap noquery
+restrict 172.22.4.140 mask 255.255.255.255 nomodify notrap noquery
+server 172.22.4.124
+server 172.22.4.125
+server 172.22.4.139
+server 172.22.4.140
+driftfile /var/lib/ntp/drift
+broadcastdelay  0.008
+keys        /etc/ntp/keys
+restrict -4 default kod nomodify notrap nopeer noquery
+restrict -6 default kod nomodify notrap nopeer noquery
+

@@ -1,0 +1,19 @@
+---
+
+- name: Maxscale Config File
+  template:
+    src: maxscale.j2
+    dest: /etc/maxscale.cnf 
+    owner: root
+    group: root
+    mode: 0755
+
+- name: AES Encrypted Password File
+  template: 
+    src: secrets.j2
+    dest: /var/lib/maxscale/.secrets 
+    owner: maxscale
+    group: maxscale
+    mode: 0400
+  notify: "start maxscale"
+

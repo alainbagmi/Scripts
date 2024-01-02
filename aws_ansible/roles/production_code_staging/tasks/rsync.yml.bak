@@ -1,0 +1,46 @@
+---
+
+#- name: Rsync stuffs over to the prod web server
+#  #delegate_to: 172.22.84.20
+#  shell: |
+#    rsync -ravz --no-motd /home/bamboo/quan/testdir 172.22.84.20:/var/www/html/quan
+#    mv testdir testdir2
+#  register: remote_output
+#
+#- debug:
+#    msg: "{{ remote_output }}"
+
+- name: Rsync file to prod web test
+  become: no
+  shell: rsync -ravz --no-motd testdir {{ item | quote }}:/var/www/html/quan
+  environment:
+    webroot: "/home/bamboo/quan"
+  register: shell_output
+  args:
+    chdir: $webroot
+  loop:
+    - 172.22.84.20
+- debug:
+    msg: "{{ shell_output }}"
+#
+
+#- name: Creates directory /home/bamboo/quan/cbp_gov_build/docroot/profiles/Rhel1000
+#  file:
+#    path: "/home/bamboo/quan/{{ tenant_name }}_gov_build/docroot/profiles/Rhel{{ code_release }}"
+#    state: directory
+#    owner: bamboo
+#    group: bamboo
+#    mode: 0775
+#    recurse: yes
+#
+
+#- name: Synchronize passing in extra rsync options
+#  delegate_to: 172.22.84.20
+#  synchronize:
+#    src: /home/bamboo/quan/cbp_gov_build_pre
+#    dest: /var/www/html/quan
+#    rsync_opts:
+#      - "-avz"
+#      - "--no-motd"
+#      - "--exclude=.git"
+#      - "--exclude=.gitignore"

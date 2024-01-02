@@ -1,0 +1,16 @@
+---
+- name: Sync Pre-Deployment Database from Jumpbox to DB Host
+  synchronize:
+    src: "/data/bamboo_scripts/deploy/test/autodumps/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+    dest: "/home/bamboo/"
+  delegate_to: 172.22.58.21
+  when: 
+    - 'dbhosts in group_names'
+    - rollback is defined
+
+- name: Pre Deployment Release
+  debug:
+    var: pre_deployment_release
+  when:
+    - 'webhosts in group_names'
+    - rollback is defined

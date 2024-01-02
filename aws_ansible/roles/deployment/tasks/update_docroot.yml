@@ -1,0 +1,81 @@
+---
+# NOTE: If running these tasks from the command line (NOT tower or bamboo)
+# include "cli: true" in the playbook that runs these tasks or "cli=true" in the --extra-vars flag of your command
+# if you wish to prompt the user for confirmation and allow them to specify another release number
+
+- name: Get Current Release
+  shell: "ls -l /var/www/html/wwwroot/{{ tenant }}_gov_build/ | grep docroot"
+  register: current_docroot
+  when: initial_deployment == "no" or initial_deployment == "No"
+
+- name: Set Pre-Deployment Release Fact
+  set_fact:
+    pre_deployment_release: "{{ current_docroot.stdout | regex_search(pattern, '\\1')  }}"
+  vars:
+    pattern: "docroot -> (.*)"
+  when: initial_deployment == "no" or initial_deployment == "No"
+
+
+- name: Show Pre-Deployment Release
+  debug:
+    msg: "Note the current release number: {{ pre_deployment_release }} in case of rollback"
+  when: initial_deployment == "no" or initial_deployment == "No"
+
+
+- name: Find Latest Release Path
+  find:
+    paths: "/var/www/html/wwwroot/{{ tenant }}_gov_build/"
+    file_type: directory
+    patterns: "Rel*"
+  register: found_files
+
+
+- name: Set Latest Release as a Fact
+  set_fact:
+    latest_file: "{{ found_files.files | sort(attribute='mtime',reverse=true) | first }}"
+
+
+- name: Set Release Path as Fact
+  set_fact: 
+    release: "{{ latest_file['path'] }}"
+
+
+- name: Confirm Deployment Release
+  pause:
+    prompt: "Press enter if {{ release }} is correct, else type the correct release name in this format: Rel59"
+  register: correct_release
+  run_once: true
+  when: cli is defined
+
+
+- name: Correct Release when Specified by User Input
+  set_fact: 
+    release: "/var/www/html/wwwroot/{{ tenant }}_gov_build/{{ correct_release.user_input }}"
+  when:
+    - cli is defined 
+    - correct_release.user_input
+
+
+- name: Release
+  debug:
+    var: release
+
+
+- name: Reset Docroot Symlink
+  file:
+    dest: /var/www/html/wwwroot/{{ tenant }}_gov_build/docroot
+    src: "{{ release }}"
+    owner: apache
+    group: apache
+    state: link
+  tags:
+    - real
+  notify:
+    - "drush update database"
+    - "drush cache registry {{ drupal_version }}"
+
+
+- name: Flush Handlers to run Drush Commands
+  meta: flush_handlers
+
+

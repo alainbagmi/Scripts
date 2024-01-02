@@ -1,0 +1,64 @@
+---
+- hosts: localhost
+#- hosts: "tag_purpose_CGI_VPN"
+  become: yes
+  become_method: sudo
+  remote_user: ansible_tower
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+  
+  vars:
+    tenantvars: "{{ tenants[vars['tenant']] }}"
+    akamai_path: "{{ tenantvars.akamai_path }}"
+    drupal_version: "{{ tenantvars.drupal_version }}"
+    aws_dbuser: root
+    aws_dbpass: My%qL3sd0
+    cgi_dbuser: mysqlrepl
+    cgi_dbpass: F1ng3rF00d
+    db_refresh: true
+    in_progress: "0"
+    pretask_status: ""
+    task_status: ""
+    target_backup: ""
+    source_index: ""
+    target_index: ""
+    source_db: ""
+    target_db: ""
+
+  pre_tasks:
+    - name: Attempt to Perform PreTasks
+      block:
+        
+        - shell: 'date +%Y-%m-%d-%Hh%Mm%Ss'
+          register: current_run_timestamp
+        #- include: roles/aws_common/tasks/cgi_to_aws.yml
+        #  when: special_run == "migrate"
+        #- include: roles/aws_common/tasks/get_tenant_vars.yml
+        - name: Load tenant vars
+          include_vars:
+            dir: group_vars/tenants_vars
+            name: tenants
+
+        - include: roles/aws_db_refresh/pre_tasks/create_db_paths.yml
+        #- include: roles/aws_common/tasks/create_adhoc_paths.yml
+
+        - include: roles/aws_db_refresh/pre_tasks/aws_db_pretasks.yml
+        #- include: roles/aws_common/tasks/aws_db_pretasks.yml
+
+        - set_fact:
+            pretask_status: "OK"
+      rescue:
+        - set_fact:
+            pretask_status: "Ansible Pre-Task Failed"
+            task_status: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/aws_db_refresh/tasks/email_tenant.yml
+          when: email_address is defined
+        - name: Fail Task because of Pre-Task Errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+  roles:
+    - aws_db_refresh

@@ -1,0 +1,53 @@
+---
+# AWS-to-AWS DB Refresh
+- name: AWS DB to AWS DB Refresh
+  debug:
+    msg: 
+      - "Site: {{ tenant }}, Source Env: {{ source_env }}, Target Env: {{ target_env }}"
+
+- name: Set Source DB File
+  set_fact:
+    source_sql_file: "{{ tenant }}_{{ source_db_name }}_refresh-{{ current_run_timestamp.stdout }}.sql"
+
+- name: Dump {{ source_env }} SQL Database 
+  mysql_db:
+    name: "{{ source_db_name }}"
+    state: dump
+    single_transaction: yes
+    target: "{{ aws_db_path }}/{{ source_sql_file}}"
+    login_host: "{{ source_env }}-db-reader.wcm.com"
+    login_user: "{{ aws_dbuser  }}"
+    login_password: "{{ aws_dbpass }}"
+
+
+- name: Change Owner and Group to ansible_tower
+  file:
+    path: "{{ aws_db_path }}/{{ source_sql_file }}"
+    owner: ansible_tower
+    group: ansible_tower
+    mode: 0776
+
+- name: Drop Target Database
+  mysql_db:
+    name: "{{ target_db_name }}"
+    state: absent
+    login_host: "{{ target_env }}-db.wcm.com"
+    login_user: "{{ aws_dbuser }}"
+    login_password: "{{ aws_dbpass }}"
+
+- name: Re-Create Target Database
+  mysql_db:
+    name: "{{ target_db_name }}"
+    state: present
+    login_host: "{{ target_env }}-db.wcm.com"
+    login_user: "{{ aws_dbuser }}"
+    login_password: "{{ aws_dbpass }}"
+
+- name: Import Source DB
+  mysql_db:
+    name: "{{ target_db_name }}"
+    state: import
+    target: "{{ aws_db_path }}/{{ source_sql_file }}"
+    login_host: "{{ target_env }}-db.wcm.com"
+    login_user: "{{ aws_dbuser }}"
+    login_password: "{{ aws_dbpass }}"

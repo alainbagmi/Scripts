@@ -1,0 +1,14 @@
+---
+- name: "Cleaning up the logs"
+  debug:
+    msg: "The rsync command in the caadi forms script specifies its log file as /path-to-forms/logs/date_{{ formversion }}_log. This finds a log created yesterday and then moves it to the /path-to-forms/logs/year/month/ directory. The backup flag of the move command adds a ~number~ suffix to the log file if one already exists in there, because it is great. Be aware of this potential naming convention in case you are planning to do something with these logs"
+
+- name: "Get list of yesterday's logs"
+  find:
+    paths: "{{ formpath }}/logs"
+    patterns: "{{ yesterday.stdout }}_*"
+  register: yesterdays_logs
+
+- name: "Move yesterday's log into its respective date and month directory, without overwriting any existing"
+  command: mv --backup=t "{{ item.path }}" "{{ formpath }}/logs/{{ yesterday.stdout[:4] }}/{{ yesterday.stdout[4] }}{{ yesterday.stdout[5] }}/"
+  loop: "{{ yesterdays_logs.files }}"

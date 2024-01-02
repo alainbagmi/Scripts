@@ -1,0 +1,171 @@
+- hosts: localhost
+  become: yes
+
+  roles:
+    - production_code_staging
+
+  vars:
+    base_stash_project: "https://sharedservices.dhs.gov/stash/scm/{{ project_name }}/"
+    tenant_repo: "{{ tenant }}_gov_build.git"
+    tenant_settings: "{{ tenant }}_settings.git"
+
+    proxy_env:
+       GIT_SSL_NO_VERIFY: true
+
+  environment:
+    #----- Declaring variables and exporting
+    #
+    GIT_SSL_NO_VERIFY: TRUE
+    log_dir: data/bamboo_scripts/deploy/log
+    webroot: var/www/html/wwwroot
+    settingsroot: data/bamboo/xml-data/build-dir/settings
+    filesroot: /var/www/sites-files
+    
+
+#- name: Running shell commands
+#  shell: |
+#   ssh -q $server sudo chmod ug+rwx $webroot/$p_tn
+#   #ssh -q $server sudo chmod -R ug+rwx $webroot/p_tn/docroot
+#   echo $log_dir
+#   ssh -q $server w
+#   register: out
+#- debug: var=out.stdout_lines
+   #
+   #----- Transfer code to web servers using rsync
+   #
+   #shopt -s dotglob ## This will help copy the hidden files like .htaccess etc...
+   #rsync -rl --no-motd $p_dir/docroot/* $server:$webroot/$p_tn/Rel"$p_rc"
+   #
+   #----- Set settings.php under git version control
+   #
+   #echo "settings.php -> git pull (master)"
+   #cd $settingsroot/$p_tn
+   #git checkout master
+   #git pull --progress
+   #chmod 440 */setting*
+   #rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.php $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.php
+   #rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.env.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.env.inc
+   #rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.local.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.local.inc
+   #
+   #----- File permissions/owners
+   #ssh -q  $server sudo chmod -R ug+rwx $webroot/$p_tn/Rel"$p_rc"/sites/default
+   #ssh -q  $server sudo chown -R apache:apache $webroot/$p_tn/Rel"$p_rc"
+   #ssh -q  $server sudo -u apache ln -s $filesroot/$p_tn/files $webroot/$p_tn/Rel"$p_rc"/sites/default
+   #
+   #
+#  args:
+#    executable: /bin/bash
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#! /bin/bash
+#echo "Param1 is "$1
+#echo "P2 is "$2
+#echo "P3 is "$3
+#echo "P4 is "$4
+#echo "P5 is "$5
+#echo "P6 is "$6
+#echo "P7 is "$7
+#echo "P8 is "$8
+#echo "P9 is "$9
+#exit 0
+#---- Declaring variables and exporting
+#export GIT_SSL_NO_VERIFY=TRUE
+#export log_dir=/data/bamboo_scripts/deploy/log
+#export webroot=/var/www/html/wwwroot
+#export settingsroot=/data/bamboo/xml-data/build-dir/settings
+#export filesroot=/var/www/sites-files
+
+#export p_tn=$7
+#export p_dr=$8
+#export p_rc=$9
+
+#---- checkout gov repo code
+#cd $p_dr/docroot/profiles/`echo $p_tn |cut -d"_" -f1,2`
+#echo "# pwd" `pwd`
+#echo "# git checkout master"
+#git checkout master
+#echo "# git pull origin master"
+#git pull origin master
+#echo ""
+#echo ""
+#echo "lets look at the most recent commit we have"
+#echo "git log | head"
+#git log | head
+#echo ""
+#echo ""
+
+#function prod_cpcode()
+#{
+#    server=$1
+#    dbenv=$2
+#    echo $server "-> processing"
+
+#-- Checking if version already exists
+#         ssh -q  $server  sudo  test -d  $webroot/$p_tn/Rel"$p_rc"
+#         if [  $? -eq 0 ]
+#         then
+#         echo "This version already exists"
+#         exit
+#         fi
+
+
+
+
+
+    #---- permissions for bamboo user
+#    ssh -q  $server sudo chmod    ug+rwx $webroot/$p_tn
+#    ssh -q  $server sudo chmod -R ug+rwx $webroot/$p_tn/docroot
+#
+#    #---- transfer code to web servers using rsync
+#    shopt -s dotglob ## this will help copy the hidden files like .htaccess etc
+#    rsync -rl --no-motd $p_dr/docroot/* $server:$webroot/$p_tn/Rel"$p_rc"
+
+#    #---- settings.php under git version control
+#    echo "settings.php -> git pull (master)"
+#    cd $settingsroot/$p_tn
+#    git checkout master
+#    git pull --progress
+#    chmod 440 */setting*
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.php $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.php
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.env.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.env.inc
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.local.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.local.inc
+#
+#    #---- file permissions/owners
+#    ssh -q  $server sudo chmod -R ug+rwx $webroot/$p_tn/Rel"$p_rc"/sites/default
+#    ssh -q  $server sudo chown -R apache:apache $webroot/$p_tn/Rel"$p_rc"
+#    ssh -q  $server sudo -u apache ln -s $filesroot/$p_tn/files $webroot/$p_tn/Rel"$p_rc"/sites/default
+#}
+#
+######################################
+##---- process each production server
+#prod_cpcode $bamboo_ProdWebServer1 22
+#prod_cpcode $bamboo_ProdWebServer2 22
+#prod_cpcode $bamboo_ProdWebServer3 22
+#prod_cpcode $bamboo_ProdWebServer4 22
+#######################################
+#
+#
+# Process Avalability HTML file
+##/data/bamboo_scripts/deploy/bin/availability_check_placement.sh prod_phoenix $p_tn Rel"$p_rc"

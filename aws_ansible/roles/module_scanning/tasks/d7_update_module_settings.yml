@@ -1,0 +1,54 @@
+---
+#- name: Print Values
+#  debug:
+#    msg: "{{ site_alias }}"
+#    msg: "{{ drupal_version }}"
+#    msg: "{{ env }}"
+#    msg: "{{ docroot_prefix }}"
+
+#- name: Get the list of email users
+#  script: roles/common/files/get_jira_users.py "{{ site_alias }}" "{{ drupal_version }}"
+#  register: email_list
+#  delegate_to: localhost
+#  connection: local
+#  become: no
+
+- name: Remove the previous YAML for the update module (D7 only).
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases -y --root={{ docroot }} dis update && /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases -y --root={{ docroot }} pmu update"
+  #delegate_to: "{{ web_server_drush }}"
+  ignore_errors: yes
+
+
+- name: Enable the update, and wcm_tools modules (for security checking)
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot }} en {{ item }} -y"
+  #delegate_to: "{{ web_server_drush }}"
+  with_items:
+    - update
+    - wcm_tools
+  ignore_errors: yes
+
+
+- name: Enable the chr module (D7 only)
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot }} en chr -y"
+  #delegate_to: "{{ web_server_drush }}"
+  ignore_errors: yes
+
+- name: Pass in the required options for the crl module (D7 only)
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot }} vset {{ item }}"
+  #delegate_to: "{{ web_server_drush }}"
+  with_items:
+    - drupal_http_request_function chr_curl_http_request
+    - chr_override_drupal_http_request 1
+  ignore_errors: yes
+
+- name: D7 - Set the update module to only check for Security updates (Rather than all updates)
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot }} vset {{ item }}"
+  #delegate_to: "{{ web_server_drush }}"
+  with_items:
+    - update_notification_threshold security
+  ignore_errors: yes
+
+- name: Drupal 7 emails
+  shell: "php -r 'print json_encode(array({{ email_list.stdout }}));' | sudo -u apache /usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/staging.{{ site_alias }}_gov_build/docroot vset --format=json update_notify_emails -"
+  #delegate_to: "{{ web_server_drush }}"
+  ignore_errors: yes

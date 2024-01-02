@@ -1,0 +1,11 @@
+---
+service_users:
+  - "ec2-user"
+  - "ssm-user"
+  - "splunk"
+  - "postfix"
+  - "nobody"
+  - "operator"
+  - "nfsnobody"
+  - "bamboo"
+  - "apache"

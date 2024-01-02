@@ -1,0 +1,8 @@
+- name: Public Site Vhost Configuration File
+  template:
+    src: default-public-vhost.j2
+    dest: /etc/httpd/conf.d/tenants/{{ tenants[vars['tenant']]['name'] }}-public.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: "{{ backup_mode }}"

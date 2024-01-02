@@ -1,0 +1,62 @@
+---
+- name: Show Job ID
+  debug:
+    msg: "{{ tower_job_id }}"
+  
+- name: Attempt to send Error Email
+  block:
+    - name: Show Email address if it exists
+      debug:
+        msg: "{{ email_address }}"
+      when: branch is defined and branch == "security"
+    
+    - name: Set Email address if no commit email is found
+      set_fact:
+        email_address:  "antonio.punzo@associates.hq.dhs.gov"
+      when: branch is defined and branch != "security"
+      
+    - name: Send Error Email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <{{ email_address }}>
+          - <alain.bagmi@associates.hq.dhs.gov>
+          - <kyle.day@associates.hq.dhs.gov>
+          - <mohammad.minaie@associates.hq.dhs.gov>
+          - <antonio.punzo@associates.hq.dhs.gov>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "{{ site_alias }} Merge Pull Request Job #{{ tower_job_id }}"
+        body: "{{ lookup('template', 'roles/aws_merge_pull_request/templates/email_error.j2') }}"
+      when: task_status == "FAILED" 
+
+    - name: Send Success Email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <{{ email_address }}>
+          - <antonio.punzo@associates.hq.dhs.gov>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "{{ site_alias }} Merge Pull Request Job #{{ tower_job_id }}"
+        body: "{{ lookup('template', 'roles/aws_merge_pull_request/templates/email_body.j2') }}"
+      when: task_status == "OK"
+  rescue:
+    - name: Overwrite Task Status if Fail
+      set_fact:
+        task_status: "FAILED EMAIL TASK"
+        task_message: "FATAL - ERROR OCCURIED TRYING TO SEND EMAIL TO TENANT"
+  always:
+    - name: Send Error Email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <alain.bagmi@associates.hq.dhs.gov>
+          - <kyle.day@associates.hq.dhs.gov>
+          - <mohammad.minaie@associates.hq.dhs.gov>
+          - <antonio.punzo@associates.hq.dhs.gov>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "ANSIBLE JOB FAILED: {{ site_alias }} Merge Pull Request Job #{{ tower_job_id }}"
+        body: "{{ lookup('template', 'roles/aws_merge_pull_request/templates/email_error.j2') }}"
+      when: task_status == "FAILED EMAIL TASK"

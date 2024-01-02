@@ -1,0 +1,25 @@
+#--- Edit Vhost -- Ansible managed -- changes to this file may be overwritten
+{% set tenant_edit_vhosts = tenants[vars['tenant']][vars['hostgroup']]['vhosts']['edit'] %}
+{% for vhost in tenant_edit_vhosts %}
+{% if vhost  == 'https' %}
+<VirtualHost {{ inventory_hostname }}:443>
+{% include "ssl_conf.j2" %}
+
+    DocumentRoot /var/www/html/wwwroot/{{ tenant_edit_vhosts['https']['docroot'] }}/docroot
+    ServerName {{ tenant_edit_vhosts['https']['server_name'] }}
+{% if tenant_edit_vhosts['https']['server_alias'] is defined %}    ServerAlias {{ tenant_edit_vhosts['https']['server_alias'] }}
+{% endif %}
+    ErrorLog logs/{{ tenant_edit_vhosts['https']['server_name'] }}-error_log
+    CustomLog logs/{{ tenant_edit_vhosts['https']['server_name'] }}-access_log common
+    CustomLog "|/usr/bin/logger -t httpd -p local6.info" combined
+    {% if tenant_edit_vhosts['https']['extras'] is defined %}{{ tenant_edit_vhosts['https']['extras'] }}{% endif %}
+php_value newrelic.appname '{{ tenant_edit_vhosts["https"]["newrelic_name"] }}'
+</VirtualHost>
+{% endif %}
+{% endfor %}
+{% if tenants[vars['tenant']][vars['hostgroup']]['extra_vhosts'] is defined %}
+{% if tenants[vars['tenant']][vars['hostgroup']]['extra_vhosts']['edit'] is defined %}
+{% include "default-edit-extra.j2" %}
+{% endif %}
+{% endif %}
+#{{ ansible_managed }} -- changes to this file may be overwritten

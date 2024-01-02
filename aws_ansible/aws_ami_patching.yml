@@ -1,0 +1,32 @@
+---
+##################################################################################################
+#                               BASE AND WEB AMI PATCHING 
+# ################################################################################################
+- hosts: localhost
+  remote_user: ansible_tower
+  gather_facts: yes
+  any_errors_fatal: true
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: False
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+
+  roles:
+    - { role: aws_createinstance_base, tags: base }
+    - { role: aws_createinstance_web, tags: web }
+
+  vars:
+    region: "us-gov-west-1"
+    aws_owner_id: "626894281569"
+    base_ami_name: "platinum*"
+    vpc_id: "vpc-6668f802"
+    inst_type: "t2.medium"
+    ami_subnet: "subnet-b88cdfdc"
+    s_grp: "sg-dac291bc"
+    base_inst_name: "patching_server_base"
+    web_inst_name: "patching_server_web"
+    base_new_ami: "platinum-base-ami"
+    web_new_ami: "pyrite-web-ami"
+    AWS_repo: "https://maestro.dhs.gov/stash/scm/apb/aws_scripts.git"
+    email: "wcmengineering@hq.dhs.gov"

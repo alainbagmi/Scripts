@@ -1,0 +1,9 @@
+- hosts: testint
+  
+  remote_user: bamboo
+  become: yes 
+  become_method: sudo
+
+  tasks:
+  - name: Copy drush.ini
+    copy: src=../files/drush.ini dest=/etc/drush/drush.ini owner=root group=root mode=0644

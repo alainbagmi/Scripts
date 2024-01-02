@@ -1,0 +1,40 @@
+---
+- name: Get alarms by tags
+  block:
+  - name: Get alarms by ec2 id
+    command: aws cloudwatch describe-alarms --alarm-name-prefix "{{ ec2_id }}" --query 'MetricAlarms[*].AlarmName'
+    register: alarm_names
+    retries: 2
+    until: alarm_names.rc == 0
+
+  - name: End the play if no alarms
+    meta: end_play
+    when:
+      - alarm_names is defined 
+      - alarm_names.stdout[0] | length == 0
+
+  - name: Attempt to delete the alarms
+    ec2_metric_alarm:
+      state: absent
+      region: "us-gov-west-1"
+      name: "{{ item }}"
+    ignore_errors: yes
+    with_items: "{{ alarm_names.stdout }}"
+    when: 
+      - alarm_names is defined
+      - alarm_names.stdout[0] | length>0
+
+  - name: End the play once all alarms are deleted
+    meta: end_play
+    when: 
+      - alarm_names is defined
+      - alarm_names.stdout[0] | length>0
+
+
+  # - name: Fail here if status was failed to ensure nothing else gets run
+  #   fail:
+  #     msg: "{{ delete_status.msg }}"
+  #   when: 
+  #     - delete_status is defined
+  #     - alarm_names.stdout[0] | length>0
+  #     - delete_status.rc != 0

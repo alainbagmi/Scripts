@@ -1,0 +1,32 @@
+---
+- name: Attempt Asset Refresh Tasks
+  block:
+    - include: perform_asset_refresh.yml
+      when: prod_password is not defined or prod_password == "ignore"
+
+    - include: perform_asset_refresh_to_prod.yml
+      when:
+        - prod_password is defined
+        - prod_password == "PullThePin"
+        - target_index == "upper_env"
+
+    - name: Set Success Flag Target Tasks
+      set_fact:
+        task_status: "Ansible Task Finished Successfully"
+      when: asset_refresh_status == "OK"
+    
+  rescue:
+    - name: Overwrite Flags if FAIL
+      set_fact:
+        task_status: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+    - include: clean_up.yml
+    - name: Fail Task Target Tasks
+      fail:
+        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+  always:
+    - include: clean_up.yml
+    - include: email_tenant.yml
+      when:
+        - email_address is defined    
+    

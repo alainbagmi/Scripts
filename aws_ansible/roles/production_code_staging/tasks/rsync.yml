@@ -1,0 +1,61 @@
+---
+
+- name: Synchronize cbp_gov_build/docroot to Rhelxxx
+#  delegate_to: 172.22.84.20
+  synchronize:
+    src: "{{ cbp_gov_build }}/docroot/"
+    dest: "/var/www/html/wwwroot/quan_gov_build/Rel{{ code_release }}"
+    delete: yes
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+      - "-avz"
+      - "--no-motd"
+      - "--exclude=cbp_gov"
+      - "--exclude=.git*"
+      - "--no-motd"
+      - "--quiet"
+      - "--log-file=/home/bamboo/quan/synctestlog"
+      - "--chown=apache:apache"
+      - "--chmod=F770,D770"
+  become: no
+#
+- name: Synchronize cbp_gov to Relxxx/profiles/cbp_gov
+  synchronize:
+    src: "{{ cbp_gov }}"
+    dest: "/var/www/html/wwwroot/quan_gov_build/Rel{{ code_release }}/profiles/"
+    delete: yes
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+      - "-avz"
+      - "--no-motd"
+      - "--exclude=.git*"
+      - "--no-motd"
+      - "--quiet"
+      - "--log-file=/home/bamboo/quan/synctestlog"
+      - "--chown=apache:apache"
+      - "--chmod=F770,D770"
+  become: no
+#
+- name: Synchronize cbp_settings to sites/default/
+  synchronize:
+    src: "{{ cbp_settings }}"
+    dest: "/var/www/html/wwwroot/quan_gov_build/Rel{{ code_release }}/sites/default/"
+    delete: yes
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+      - "-avz"
+      - "--no-motd"
+      - "--exclude=.git*"
+      - "--no-motd"
+      - "--quiet"
+      - "--log-file=/home/bamboo/quan/synctestlog"
+      - "--chown=apache:apache"
+      - "--chmod=F770,D770"
+  become: no
+#

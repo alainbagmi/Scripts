@@ -1,0 +1,12 @@
+---
+#Create required folders for deployment on Tower server
+#  - include: prod_iac.yml
+#    run_once: yes
+#    delegate_to: localhost
+
+- include: prod_rds_and_elasticache.yml
+#- include: prod_elasticache.yml
+#- include: web_autoscaling.yml
+#- include: prod_elb.yml
+#- include: prod_efs.yml
+#- include: prod_asg.yml

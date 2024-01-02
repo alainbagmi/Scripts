@@ -1,0 +1,411 @@
+---
+#- name: Git clone / combining / pushing
+#  block:
+- name: Stop Launching / Terminating of instances in ASG
+  command: "aws autoscaling suspend-processes --auto-scaling-group-name {{ env }}-as-group --scaling-processes {{ item }}" 
+  loop:
+    - Terminate
+    - Launch
+  become: no
+  run_once: yes
+#  become_user: awx
+
+#Create / test if all required folders already exist and if they have correct perms
+
+- name: Make the directory where tenant site code will be stored (if it doesn't already exist)
+  file:
+    path: /data/site_code/
+    owner: awx
+    group: awx
+    state: directory
+    mode: 0770
+  run_once: yes
+  become: yes
+
+- name: Create the specific tenant folder in site_code if it doesnt exist
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+
+
+- name: Change everything in tenant dir to 770 if they already have stuff there
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}"
+    mode: 0770
+    owner: awx
+    group: awx
+  become: yes
+
+
+- name: Create the specific tenant env (prod,stage,test) folder in site_code/tenant after removing it in previous step
+  file:
+    dest: "{{ local_repo }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+
+- name: Create compiled code directory
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+
+#Clone required repositories (_gov_build, _gov, _settings, and the current combined (has all 3 in working site) repo in AWS (WCMAWS project)
+
+- name: Clone into compiled code directory for testint
+  environment:
+    TMPDIR: "/data/site_code/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ aws_stash_project }}'
+    dest: '{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}'
+    version: "develop"
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "testint"
+  run_once: yes
+
+
+- name: Clone into compiled code directory for staging
+  environment:
+    TMPDIR: "/data/site_code/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ aws_stash_project }}'
+    dest: '{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}'
+    version: "master"
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "staging"
+  run_once: yes
+
+
+- name: Clone into compiled code directory for production
+  environment:
+    TMPDIR: "/data/site_code/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ aws_stash_project }}'
+    dest: '{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}'
+    version: "live"
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "production"
+  run_once: yes
+
+
+- name: Remove old docroot directory in combined repos since it messes up mv later
+  file:
+    path: '{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/docroot'
+    state: absent
+  run_once: yes 
+
+
+- name: Git Repo clone if deploying to testint (_gov_build)
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+  environment:
+    TMPDIR: "/data/site_code/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ base_stash_project }}{{ tenant_repo }}'
+    dest: '{{ local_repo }}'
+    version: "develop"
+    track_submodules: yes
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "testint"
+  run_once: yes
+
+
+- name: Update the Submodule (if the submodule code is in the server for testint)
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  when: env == "testint"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout develop
+    - git reset --hard origin/develop
+  run_once: yes
+
+
+ 
+- name: Git Repo clone if deploying to staging and repo is empty
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ base_stash_project }}{{ tenant_repo }}'
+    dest: '{{ local_repo }}'
+    version: "master"
+    track_submodules: yes
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "staging"  
+  run_once: yes
+
+
+- name: Update the Submodule (if the submodule code is in the server for staging)
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  when: env == "master"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout master
+    - git reset --hard origin/master
+  run_once: yes
+
+
+
+# Production Code Refactored
+- name: Git Repo clone if repo is empty
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ base_stash_project }}{{ tenant_repo }}'
+    dest: '{{ local_repo }}'
+    version: "security"
+    track_submodules: yes
+    force: yes
+#    depth: 1  
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "prodiuction" 
+  run_once: yes
+
+
+- name: Update the Submodule
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout security
+    - git reset --hard origin/security
+  when: env == "production"
+  run_once: yes
+
+- name: Git checkout live
+  shell: "cd {{ local_repo }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout live
+    - git reset --hard origin/live
+  when: env == "production"
+  run_once: yes
+
+- name: Git checkout live submodule
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git checkout live
+    - git reset --hard origin/live
+  when: env == "production"
+  run_once: yes
+
+
+- name: Merge security to live
+  shell: "cd {{ local_repo }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git merge security
+    - "git tag {{ git_tag_name }}"
+    - "git push origin live {{ git_tag_name }}"
+  when: env == "production" 
+  run_once: yes
+
+- name: Merge security to live submodule
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git merge security
+    - "git tag {{ git_tag_name }}"
+    - "git push origin live {{ git_tag_name }}"
+  when: env == "production"
+  run_once: yes
+# End Of Production Code Refactored
+
+
+- name: Git Settings
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    repo: '{{ base_stash_project }}{{ tenant_settings }}'
+    executable: "{{ git_binary_path }}"
+    dest: '{{ local_settings }}'
+    version: "master"
+    update: yes
+    force: yes
+    umask: "007"
+  become: yes
+  become_user: awx
+  run_once: yes
+#  ignore_errors: yes
+
+- name: Copy settings into sites/default
+  copy:
+    src: '{{ local_settings }}/{{ env }}/'
+    dest: "{{ local_repo }}/docroot/sites/default/"
+    owner: awx
+    group: awx
+    mode: '0700'
+  run_once: yes
+
+# check if multisite
+- name: check the location of sites.php file
+  stat:
+    path: "{{ local_settings }}multisite/sites.php"
+  register: sites_file
+
+
+- name: git_repo_and_settings.yml - set multisite fact if multisite is TRUE
+  set_fact:
+    multisite: True
+  when: sites_file.stat.exists == True
+
+
+- name: git_repo_and_settings.yml - set multisite fact if multisite is FALSE
+  set_fact:
+    multisite: False
+  when: sites_file.stat.exists == False
+
+
+- name: get a list of multisite directories
+  find:
+    paths: "{{ local_settings }}multisite/"
+    patterns: "*"
+    recurse: no
+    file_type: directory
+  register: multisite_dirs
+  when: multisite|bool == True
+
+#Create Symlinks and push the code into Repository 
+
+- name: Create symlink to site-files
+  file:
+    src: '{{ sitefiles_root }}{{ env }}.{{ tenant }}_gov_build/files'
+    dest: '{{ local_repo }}docroot/sites/default/files'
+    state: link
+    group: apache
+    owner: apache
+    force: yes
+    follow: no
+  run_once: yes
+
+- name: Bypassing Ansible slowness tax with mv because Ansible module is painfully slow
+  command: "cp -Rp {{ local_repo }}docroot {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/"
+  become: yes
+  run_once: yes 
+
+- name: Remove .git directory in profile because it messes up our git push later
+  file:
+    path: "{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/docroot/profiles/{{ tenant }}_gov/.git"
+    state: absent
+  run_once: yes
+
+
+- name: Push combined repo to Stash (testint)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:
+    - "git add docroot"
+    - "git add docroot/sites/default/settings.php"
+    - "git commit -m 'Latest code for tenant deployment' --quiet"
+    - "git push origin develop --quiet"
+  run_once: yes
+  when: env == "testint"
+#  ignore_errors: yes
+
+- name: Push combined repo to Stash (staging)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:    
+    - "git add docroot"
+    - "git commit -m 'Latest code for tenant deployment' --quiet"
+    - "git push origin master --quiet"
+  run_once: yes
+  when: env == "staging"
+
+
+- name: Push combined repo to Stash (prod)
+  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+  become: yes
+  become_user: awx
+  loop:    
+    - "git add docroot"
+    - "git commit -m 'Latest code for tenant deployment' --quiet"
+    - "git push origin live --quiet"
+  run_once: yes
+  when: env == "production"
+
+
+- name: Resume Launching / Terminating of instances in ASG 
+  command: "aws autoscaling resume-processes --auto-scaling-group-name {{ env }}-as-group --scaling-processes {{ item }}" 
+  loop:
+    - Terminate
+    - Launch
+  become: no
+  run_once: yes 
+#  become_user: awx

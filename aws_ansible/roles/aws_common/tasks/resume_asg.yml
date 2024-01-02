@@ -1,0 +1,20 @@
+---
+- name: Resume Launching / Terminating of instances in ASG
+  command: "aws autoscaling resume-processes --auto-scaling-group-name {{ env }}-as-group --scaling-processes {{ item }}"
+  loop:
+    - Terminate
+    - Launch
+  become: no
+  run_once: yes
+  when: target is not defined
+
+- name: Resume Launching / Terminating of instances in ASG
+  command: "aws autoscaling resume-processes --auto-scaling-group-name wcmlab-as-group --scaling-processes {{ item }}"
+  loop:
+    - Terminate
+    - Launch
+  become: no
+  run_once: yes
+  when: 
+    - target is defined
+    - target == "wcmlab"

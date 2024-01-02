@@ -1,0 +1,53 @@
+---
+- name: Attempt Drush Commands
+  block:
+    - name: Set Docroot paths Lower Environments
+      set_fact:
+        docroot_path: "/var/www/html/wwwroot/{{ env }}.{{ tenant }}_gov_build/docroot/"
+      #when: env == "testint" or env == "staging"
+    
+    #- name: Set Docroot paths Upper Environments
+    #  set_fact:
+    #    docroot_path: "/var/www/html/wwwroot/{{ tenant }}_gov_build/docroot/"
+    #  when: env == "prod"
+
+    - name: Show Docroot Path
+      debug:
+        msg: "{{ docroot_path }}"
+
+    - include: d7_commands.yml
+      when: drupal_version == "7"
+
+    - include: d8_commands.yml
+      when: drupal_version == "8"
+
+    - name: Set Success Flag
+      set_fact:
+        task_status: "Ansible Task Finished Successfully"
+    
+    #- name: Show hostvars
+    #  debug:
+    #    msg: "{{ hostvars.keys[0] }}"
+
+    #- name: Dump Info
+    #  syslogger:
+    #    msg: "{{ tenant }} {{ tower_job_template_id }}"
+    #    priority: "info"
+    #    facility: "daemon"
+    #    log_pid: true
+
+  rescue:
+    - name: Overwrite Task Status if Fail
+      set_fact: 
+        task_status: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+    - name: Fail task if we are here
+      fail:
+        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+  always:
+    - include: email_tenant.yml
+      when: email_address is defined
+
+
+    
+    

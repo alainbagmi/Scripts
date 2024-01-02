@@ -1,0 +1,56 @@
+---
+#**********Get database backup file name based on Tenant name and timestamp**********
+#***Look for db backup file by tenant name
+- name: Get database backup .gz for tenant
+  find:
+    paths: "/data/bamboo_scripts/deploy/test/autodumps/"
+    file_type: file
+    patterns: "{{ tenant }}*"
+  register: found_files
+  delegate_to: "{{ groups['tower'][0] }}"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+- name: Show File Found of Type .gz for Tenant
+  debug:
+    msg: "{{ found_files }}"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+- name: Set Path as Fact
+  set_fact:
+    tenant_db: "{{ found_files.files  | first }}"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+- name: Set File path as Fact
+  set_fact:
+    db_backup: "{{ tenant_db['path'] }}"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+- name: Show File path
+  debug:
+    msg: "{{ db_backup }}"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+- name: Get File Name
+  shell: "basename ${{ db_backup }}"
+  register: db_backup_name
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+#***Set As Fact DB backup name and timestamp
+- name: Get backup name without suffix
+  set_fact: 
+    clean_db_backup: "{{ db_backup_name.stdout.split('.')[0] }}"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+
+- name: Show clean DB name 
+  debug: 
+    msg: "{{ clean_db_backup }}"
+  when: inventory_hostname in groups['prod_database']
+  #when: 'dbhosts in group_names'
+

@@ -1,0 +1,30 @@
+---
+
+- name: Get MariaDB Repo
+  shell: "curl -sS https://downloads.mariadb.com/MariaDB/mariadb_repo_setup | sudo bash -s -- --skip-key-import"
+  environment: "{{ proxy_env }}"
+  register: output
+
+- name: Show MariaDB Repo Setup Output
+  debug:
+    var: output
+
+- name: Install MaxScale
+  yum:
+    name: maxscale
+    state: latest
+    disable_gpg_check: yes
+  environment: "{{ proxy_env }}"
+
+- name: Remove MariaDB Repos
+  yum_repository:
+    name: "{{ item }}"
+    file: mariadb
+    state: absent
+  with_items:
+    - mariadb-main
+    - mariadb-maxscale
+    - mariadb-tools
+  notify: "yum clean metadata"
+
+

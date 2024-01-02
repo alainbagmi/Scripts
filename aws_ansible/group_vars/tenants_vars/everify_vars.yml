@@ -1,0 +1,29 @@
+everify:
+  project_name: USCIS
+  alias: everify
+  drupal_version: 8
+  akamai_group: 4935
+  akamai_path: /183946/everify_gov
+  newrelic_id: 140456418
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint.e-verify.gov
+      public: testint.e-verify.gov
+    akamai_cpcode:
+      edit: 582876
+      public: 582875
+  staging:
+    site_urls:
+      edit: edit-staging.e-verify.gov
+      public: staging.e-verify.gov
+    akamai_cpcode:
+      edit: 582876
+      public: 582875
+  prod:
+    site_urls:
+      edit: edit.e-verify.gov
+      public: www.e-verify.gov
+    akamai_cpcode:
+      edit: 582874
+      public: 582873

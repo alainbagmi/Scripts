@@ -1,0 +1,25 @@
+---
+
+- name: Push ntp.conf RHEL 6
+  copy:
+    src: ntp.conf.rhel6
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_distribution_major_version == "6"
+
+- name: Push ntp.conf RHEL 7
+  copy:
+    src: ntp.conf.rhel7
+    dest: /etc/ntp.conf
+    owner: root
+    group: root
+    mode: 0644
+  when: ansible_distribution_major_version == "7"
+
+- name: Restart NTPD
+  service:
+    name: ntpd
+    state: restarted
+    enabled: yes

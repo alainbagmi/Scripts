@@ -1,0 +1,126 @@
+---
+- name: Make the directory where repo clone will be put if it doesn't exist
+  file:
+    path: /data/tenant_onboarding/onboarding_repos/
+    owner: awx
+    group: awx
+    state: directory
+    mode: 0770
+  become: yes
+
+- name: Clone Repo and check branch we are on is correct ansible branch and if vars exists and set flags
+  block:
+    - name: Clone the Repo aws repo
+      git:
+        accept_hostkey: yes
+        repo: "https://maestro.dhs.gov/stash/scm/apb/aws_ansible.git"
+        dest: "{{ aws_ansible_path }}"
+        version: "{{ ansible_repo }}"
+        force: yes
+        umask: "007"
+      become_user: awx
+
+    - name: Git Check if we are on the correct branch
+      shell: "cd {{ aws_ansible_path }} && git name-rev --name-only HEAD"
+      register: git_ansible_branch
+
+    - name: Show git branch
+      debug:
+        msg: "{{ git_ansible_branch.stdout }}"
+
+- name: Check tenant has group_vars tenants
+  block:
+    - name: Check if tenant is on the group_vars file
+      debug:
+        msg: "Tenant vars returns: [{{ tenantvars }}]"
+      ignore_errors: yes
+  
+    - name: Set flag if tenant doesn't exist
+      set_fact:
+        vars_flag: "initial"
+      when: tenantvars == "empty_key"
+
+    - name: Set flag if tenant does exist
+      set_fact:
+        vars_flag: "update"
+      when: tenantvars != "empty_key"
+
+    - name: Get files directory stats
+      stat:
+        path: "{{ asset_path }}/files"
+      register: files_path
+
+    - name: Get temp directory stats
+      stat:
+        path: "{{ asset_path }}/tmp"
+      register: temp_path
+
+    - name: Get private directory
+      stat:
+        path: "{{ asset_path }}/private"
+      register: private_path
+
+
+- name: Check/Clone Settings
+  block:
+    - name: Check If Settings Repo Exist
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ settings_repo }}.git >/dev/null ;echo $?"
+      register: settings_repo_result
+
+    - name: Check if settings repo is empty
+      shell: "git ls-remote {{ git_stash_url }}/{{ stash_project }}/{{ settings_repo }}.git | wc -l"
+      register: settings_branch_result
+
+    - name: Clone the Settings Repo
+      git:
+        accept_hostkey: yes
+        repo: "https://maestro.dhs.gov/stash/scm/{{stash_project}}/{{ settings_repo }}.git"
+        dest: "{{ settings_onboard }}"
+        version: "master"
+        force: yes
+        umask: "007"
+      become_user: awx
+
+    - name: Search for the DB Password
+      shell: grep -w password {{ settings_onboard }}/testint/settings.local.inc
+      register: pass_word_string
+      
+    - name: Set password as fact
+      set_fact:
+        password_out: "{{ pass_word_string.stdout | regex_search(pattern, '\\2') | first }}"
+      vars:
+        pattern: "'password'(.*)'(.*)'"
+
+    - name: Show the password
+      debug:
+        var: password_out
+
+  when: env != "testint"
+
+# - name: Check/Clone drush aliases stuff
+#   block:
+#     - name: Clone the drush repo
+#       git:
+#         accept_hostkey: yes
+#         repo: "https://maestro.dhs.gov/stash/scm/apb/aws_scripts.git"
+#         dest: "{{ drush_repo_path }}"
+#         version: "{{ drush_repo }}"
+#         force: yes
+#         #depth: 1
+#         umask: "007"
+#       become_user: awx
+
+#     - name: Check if drush alias file already exists
+#       stat:
+#         path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+#       register: drush_file
+
+#     - name: Set File doesn't exist flag
+#       set_fact:
+#         drush_flag: "absent"
+#       when: drush_file.stat.exists == false
+
+#     - name: Set File exists flag
+#       set_fact:
+#         drush_flag: "present"
+#       when: drush_file.stat.exists

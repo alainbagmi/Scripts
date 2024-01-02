@@ -1,0 +1,89 @@
+---
+- name: Netstorage to AWS DB Refresh 
+  debug:
+    msg:
+      - "Site: {{ tenant }}, Source Env: {{ source_env }}, Target Env: {{ target_env }}"
+
+- name: Set Source Facts
+  set_fact:
+    netstorage_source_path: "{{ akamai_path }}/refresh_files/{{ tenant }}/database/*"
+
+- name: Sync Gzip File from Netstorage
+  shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' sshacs@dhswcms.upload.akamai.com:{{ netstorage_source_path }} {{ aws_db_path }}/"
+
+
+- name: Get DB Refresh Path Count
+  shell: "ls {{ aws_db_path }}/ | wc -l"
+  register: db_refresh_count
+
+- name: Show DB Refresh Path Count
+  debug:
+    msg: "{{ db_refresh_count.stdout }}"
+
+- name: Fail Task 
+  fail:
+    msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+  when: db_refresh_count.stdout != "1"
+
+- name: Get File Name
+  shell: "ls {{ aws_db_path }}/"
+  register: gz_file_name
+
+- name: Show File Name
+  debug:
+    msg: "{{ gz_file_name.stdout }}"
+
+- name: Check File Size
+  shell: "du -sh * {{ aws_db_path }}/"
+  register: netstorage_source_size
+
+- name: Show file size
+  debug:
+    msg: "{{ netstorage_source_size.stdout }}"
+
+- name: Set Source GZ file name
+  set_fact:
+    source_sql_file: "{{ gz_file_name.stdout }}"
+
+
+- name: Show File Name
+  debug:
+    msg: "{{ source_sql_file }}"
+
+
+- name: Change Owner and Group to ansible_tower
+  file:
+    path: "{{ aws_db_path }}/{{ source_sql_file }}"
+    owner: ansible_tower
+    group: ansible_tower
+    mode: 0776
+    
+
+- name: Set sql File Name for Email
+  set_fact:
+    from_netstorage_file: "{{ source_sql_file }}"
+
+- name: Drop Target Database
+  mysql_db:
+    name: "{{ target_db_name }}"
+    state: absent
+    login_host: "{{ target_env }}-db.wcm.com"
+    login_user: "{{ aws_dbuser }}"
+    login_password: "{{ aws_dbpass }}"
+
+- name: Re-Create Target Database
+  mysql_db:
+    name: "{{ target_db_name }}"
+    state: present
+    login_host: "{{ target_env }}-db.wcm.com"
+    login_user: "{{ aws_dbuser }}"
+    login_password: "{{ aws_dbpass }}"
+
+- name: Import Source DB
+  mysql_db:
+    name: "{{ target_db_name }}"
+    state: import
+    target: "{{ aws_db_path }}/{{ source_sql_file }}"
+    login_host: "{{ target_env }}-db.wcm.com"
+    login_user: "{{ aws_dbuser }}"
+    login_password: "{{ aws_dbpass }}"

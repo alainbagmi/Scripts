@@ -1,0 +1,245 @@
+---
+- name: Create Memory alarms 
+  block:  
+  - name: Set Facts for main memory
+    set_fact:
+      alarm_type: "memoryUsed"
+      alarm_metric: "mem_used_percent"
+      alarm_stat: "Average"
+      alarm_cat: "memory_utilization"
+
+  - name: Create Main Memory Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/req_alarms.json.j2') | to_json }}'
+    register: web_mem_out
+    retries: 3
+    until: web_mem_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      mem_dict:
+        ERROR_NAME: "memory_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_mem_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_mem_out.stderr }}"
+        RC: "{{ web_mem_out.rc }}"
+    when: web_mem_out.rc != 0
+
+  - name: Add Dict to list if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ mem_dict ] }}"
+    when: web_mem_out.rc != 0
+
+  - name: Set Facts for Swap memory alarm
+    set_fact:
+      alarm_type: "swapMemoryUsed"
+      alarm_metric: "swap_used_percent"
+
+  - name: Create Swap Memory Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/req_alarms.json.j2') | to_json }}'
+    register: web_swap_out
+    retries: 3
+    until: web_swap_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      swap_dict:
+        ERROR_NAME: "swap_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_swap_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_swap_out.stderr }}"
+        RC: "{{ web_swap_out.rc }}"
+    when: web_swap_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ swap_dict ] }}"
+    when: web_swap_out.rc != 0
+
+- name: Create CPU alarms 
+  block:
+  - name: Set Facts for cpu user
+    set_fact:
+      alarm_type: "userCPU"
+      alarm_metric: "cpu_usage_user"
+      alarm_stat: "Average"
+      alarm_cat: "cpu_utilization"
+
+  - name: Create cpu user Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/req_alarms.json.j2') | to_json }}'
+    register: web_user_out
+    retries: 3
+    until: web_user_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      user_dict:
+        ERROR_NAME: "cpu_user_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_user_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_user_out.stderr }}"
+        RC: "{{ web_user_out.rc }}"
+    when: web_user_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ user_dict ] }}"
+    when: web_user_out.rc != 0
+
+  - name: Set Facts for cpu system
+    set_fact:
+      alarm_type: "systemCPU"
+      alarm_metric: "cpu_usage_system"
+
+  - name: Create Main Memory Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/req_alarms.json.j2') | to_json }}'
+    register: web_sys_out
+    retries: 3
+    until: web_sys_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      sys_dict:
+        ERROR_NAME: "cpu_sys_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_sys_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_sys_out.stderr }}"
+        RC: "{{ web_sys_out.rc }}"
+    when: web_sys_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ sys_dict ] }}"
+    when: web_sys_out.rc != 0
+
+- name: Create Disk alarms 
+  block:
+  - name: Set Facts for Web Root Disk
+    set_fact:
+      alarm_type: "rootDiskUsed"
+      alarm_metric: "disk_used_percent"
+      alarm_stat: "Maximum"
+      alarm_cat: "disk_utilization"
+      alarm_path: "/"
+
+  - name: Create Web Root Disk Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/req_alarms.json.j2') | to_json }}'
+    register: web_root_out
+    retries: 3
+    until: web_root_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      root_dict:
+        ERROR_NAME: "root_disk_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_root_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_root_out.stderr }}"
+        RC: "{{ web_root_out.rc }}"
+    when: web_root_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ root_dict ] }}"
+    when: web_root_out.rc != 0
+  
+  - name: Set Facts for HTML/Data Disk
+    set_fact:
+      alarm_type: "dataDiskUsed"
+      alarm_path: "/data"
+    when: env == "wcmlab"
+  
+  - name: Set Facts for HTML/Data Disk
+    set_fact:
+      alarm_type: "htmlDiskUsed"
+      alarm_path: "/var/www/html"
+    when: env != "wcmlab"
+
+  - name: Create HTML/Data Disk Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/req_alarms.json.j2') | to_json }}'
+    register: web_mount_out
+    retries: 3
+    until: web_mount_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      mount_dict:
+        ERROR_NAME: "mount_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_mount_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_mount_out.stderr }}"
+        RC: "{{ web_mount_out.rc }}"
+    when: web_mount_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ mount_dict ] }}"
+    when: web_mount_out.rc != 0
+
+- name: Create EFS alarms 
+  block:
+  - name: Set Facts for Asset EFS Mount Alarm
+    set_fact:
+      # alarm_type: "Asset"
+      alarm_metric: "{{ web_asset_metric }}"
+      # alarm_cat: "efs_heartbeat"
+  
+  - name: Create Assets EFS Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/efs_alarms.json.j2') | to_json }}'
+    register: web_asset_out
+    retries: 3
+    until: web_asset_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      asset_dict:
+        ERROR_NAME: "assets_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_asset_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_asset_out.stderr }}"
+        RC: "{{ web_asset_out.rc }}"
+    when: web_asset_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ asset_dict ] }}"
+    when: web_asset_out.rc != 0
+  
+  - name: Set Facts for Vhosts EFS Mount Alarm
+    set_fact:
+      # alarm_type: "Vhost"
+      alarm_metric: "{{ web_vhost_metric }}"
+  
+  - name: Create VHosts EFS Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/efs_alarms.json.j2') | to_json }}'
+    register: web_vhost_out
+    retries: 3
+    until: web_vhost_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      vhost_dict:
+        ERROR_NAME: "vhosts_alarm_error"
+        COMMAND_ATTEMPTS: "{{ web_vhost_out.attempts }}"
+        ERROR_MESSAGE: "{{ web_vhost_out.stderr }}"
+        RC: "{{ web_vhost_out.rc }}"
+    when: web_vhost_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ asset_dict ] }}"
+    when: web_vhost_out.rc != 0
+  
+  - name: Run mount_efs.sh on server to set alarms
+    command: sh /usr/local/bin/mount_efs.sh
+    become: yes
+    delegate_to: "{{ private_ip }}"
+  when: env != "wcmlab"

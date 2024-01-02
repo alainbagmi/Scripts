@@ -1,0 +1,14 @@
+---
+- name: Check SSH known hosts for a new hosts
+  local_action: shell ssh-keygen -F {{ delegate_host }}
+  register: check_known_host
+  failed_when: false
+  changed_when: false
+  ignore_errors: yes
+
+- name: Add New Host to Host Automatically
+  when: check_known_host.rc == 1
+  changed_when: check_known_host.rc == 1
+  set_fact:
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+  ignore_errors: yes

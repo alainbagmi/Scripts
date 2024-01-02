@@ -1,0 +1,51 @@
+---
+- name: Make the directory where tenant site code will be stored (if it doesn't already exist)
+  file:
+    path: /data/site_code/
+    owner: awx
+    group: awx
+    state: directory
+    mode: 0770
+  run_once: yes
+  become: yes
+
+- name: Create the specific tenant folder in site_code if it doesnt exist
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+
+
+- name: Change everything in tenant dir to 770 if they already have stuff there
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}"
+    mode: 0770
+    owner: awx
+    group: awx
+  become: yes
+
+
+- name: Create the specific tenant env (prod,stage,test) folder in site_code/tenant after removing it in previous step
+  file:
+    dest: "{{ local_repo }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+
+- name: Create compiled code directory
+  file:
+    dest: "{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}"
+    mode: 0770
+    owner: awx
+    group: awx
+    state: directory
+  run_once: yes
+  become: yes
+

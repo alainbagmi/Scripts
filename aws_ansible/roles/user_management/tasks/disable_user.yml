@@ -1,0 +1,13 @@
+---
+- name: disable accounts
+  user:
+    name: "{{ item }}"
+    shell: /sbin/nologin
+  with_items: 
+    - mwilkins
+
+
+- name: lock accounts
+  command: passwd -l {{ item }}
+  with_items:
+    - mwilkins

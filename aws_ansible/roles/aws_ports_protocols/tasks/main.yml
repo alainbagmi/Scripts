@@ -1,0 +1,22 @@
+- name: Gather facts on listening ports
+  listen_ports_facts:
+
+# - name: Show hostvars
+#   debug:
+#     msg: "{{ ansible_facts.tcp_listen + ansible_facts.udp_listen | selectattr('port', 'protocol', 'user', 'name') }}"
+
+
+- name: TCP whitelist violation
+  debug:
+    msg: TCP port {{ item.port }} by pid {{ item.pid }} violates the whitelist
+  vars:
+    tcp_listen_violations: "{{ ansible_facts.tcp_listen + ansible_facts.udp_listen | selectattr('port', 'protocol', 'user', 'name') | list }}"
+  loop: "{{ tcp_listen_violations }}"
+
+# - name: List TCP ports
+#   ansible.builtin.debug:
+#     msg: "{{ ansible_facts.tcp_listen  | map(attribute='port') | sort | list }}"
+
+# - name: List UDP ports
+#   ansible.builtin.debug:
+#     msg: "{{ ansible_facts.udp_listen | map(attribute='port') | sort | list }}"

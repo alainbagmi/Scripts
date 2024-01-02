@@ -1,0 +1,34 @@
+--- 
+
+- name: Create symlink to docroot when release number is defined
+  file:
+    src: '{{ site_root }}{{ env }}.{{ tenant }}_gov_build/Rel{{ release_number }}'
+    dest: '{{ site_root }}{{ env }}.{{ tenant }}_gov_build/docroot'
+    state: link
+    owner: apache
+    group: apache
+  when: env == "testint" or env == "staging"
+
+
+- name: Create symlink to site-files and notify drush updb, cache clear, and apache graceful
+  file:
+    src: '{{ sitefiles_root }}{{ env }}.{{ tenant }}_gov_build/files'
+    dest: '{{ sitefiles_link }}'
+    state: link
+    group: apache
+    owner: apache
+  notify: 
+    - drush update database
+    - drush cache registry {{ drupal_version }}
+    - restart apache
+  when: env == "testint" or env == "staging"
+
+
+- name: Create symlink to site-files without notifying restart/cache clear handlers
+  file:
+    src: '{{ sitefiles_root }}{{ env }}.{{ tenant }}_gov_build/files' 
+    dest: '{{ sitefiles_link }}'
+    state: link
+    group: apache
+    owner: apache
+  when: env == "production"

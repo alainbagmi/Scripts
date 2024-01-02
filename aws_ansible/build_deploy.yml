@@ -1,0 +1,57 @@
+---
+- hosts: "{{ env }}_web"
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+
+# NOTE: vars to pass:
+#   tenant, env (testint, staging, prod), release number (usually passed from bamboo)
+#
+#  variables pulled from sources, can be overwritten: 
+#    drupal_version: (group_vars/tenants)
+
+  pre_tasks:
+  #- name: Load in tenant vars
+  #  include_vars:
+  #    file: group_vars/tenants
+  #    name: tenants
+  - name: Set site alias from tenant for get_tenant_vars
+    set_fact:
+      site_alias: "{{ tenant }}"
+  
+  - include: roles/common/tasks/get_tenant_vars.yml
+  
+  - name: Set Path Prefix Lower environments
+    set_fact:
+      tenant_prefix: "{{ env }}.{{ tenant }}_gov_build/"
+    when: env == "testint" or env == "staging"
+  
+  - name: Set Path Prefix for Production
+    set_fact:
+      tenant_prefix: "{{ tenant }}_gov_build/"
+    when: env == "prod"
+  
+  vars:
+    release_number: "{{ bamboo_build_number }}"
+    #tenant_path: "{{ site_root }}{{ env }}.{{ tenant }}_gov_build/docroot" 
+    tenant_path: "{{ site_root }}{{ tenant_prefix }}docroot"
+    #tenantvars: "{{ tenants[vars['tenant']] }}" 
+    #drupal_version: "{{ tenantvars.drupal_version }}"
+    local_repo: '{{ local_checkouts }}{{ tenant }}/{{ env }}/'
+    local_settings: '{{ local_checkouts }}{{ tenant }}/settings/'
+    base_stash_project: "https://maestro.dhs.gov/stash/scm/{{ project_name }}/"
+    tenant_repo: "{{ tenant }}_gov_build.git"
+    tenant_settings: "{{ tenant }}_settings.git"
+    sitefiles_link: "{{ tenant_path }}/sites/default/files"
+    submodule_path: "{{ local_repo }}docroot/profiles/{{ tenant }}_gov"
+    git_tag_name: "{{ tenant }}.{{ release_number }}.{{ ansible_date_time.date }}"
+    git_binary_path: "/opt/rh/rh-git29/root/usr/bin/git"
+
+  roles:
+    - build_deploy
+
+
+  handlers:
+    - include: roles/common/handlers/env_aware_commands.yml
+      when: env != 'prod' 
+

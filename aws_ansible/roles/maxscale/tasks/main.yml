@@ -1,0 +1,4 @@
+---
+# tasks file for maxscale_install
+  - include: install.yml
+  - include: config.yml

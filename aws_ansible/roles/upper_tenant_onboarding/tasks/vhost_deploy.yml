@@ -1,0 +1,41 @@
+---
+#Keep in mind when deploying the vhosts to production that the URL will be live after this plan runs.  Make sure you are passing in ONlY the preview URL's as hostnames.  They can be overwritten later during the tenants actual go-live in prod.
+
+- name: deploy public vhosts /etc/httpd/conf.d
+  template:
+    src: staging.public-vhost.conf
+    dest: /etc/httpd/conf.d/tenants/{{ tenant_alias }}-public.conf
+    owner: root
+    group: root
+    mode: 0644
+  delegate_to: web_server_group
+
+
+- name: setup the public vhost symlink
+  file:
+    src: /etc/httpd/conf.d/tenants/{{ tenant_alias }}-public.conf
+    path: /etc/httpd/conf.d/{{ tenant_alias }}-public.conf
+    state: link
+  delegate_to: web_server_group
+
+
+- name: deploy edit vhosts /etc/httpd/conf.d
+  template:
+    src: staging.edit-vhost.conf
+    dest: /etc/httpd/conf.d/tenants/{{ tenant_alias }}-edit.conf
+    owner: root
+    group: root
+    mode: 0644
+  delegate_to: web_server_group
+
+
+- name: setup the edit vhost symlink
+  file:
+    src: /etc/httpd/conf.d/tenants/{{ tenant_alias }}-edit.conf
+    path: /etc/httpd/conf.d/{{ tenant_alias }}-edit.conf
+    state: link
+  delegate_to: web_server_group
+
+- name: Gracefully restart apache
+  command: service httpd graceful
+  delegate_to: web_server_group

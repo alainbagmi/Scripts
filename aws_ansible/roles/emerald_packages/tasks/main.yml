@@ -1,0 +1,36 @@
+---
+
+- name: Install the Epel Repo
+  yum:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+  environment: "{{ proxy_env }}"
+
+- name: Install the Fussion Repo
+  yum:
+    name: https://download1.rpmfusion.org/free/el/rpmfusion-free-release-7.noarch.rpm
+    state: present
+  environment: "{{ proxy_env }}"
+
+- name: enable epel yum repo
+  command: yum-config-manager --enable "{{ item }}"
+  with_items:
+    - epel
+    - rhel-7-server-optional-rpms
+    - rpmfusion-free-updates
+    - rhel-7-server-optional-rpms
+
+- name: Install Packages
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - ffmpeg
+    - perl-Image-ExifTool.noarch
+  environment: "{{ proxy_env }}"
+
+- name: Disable epel yum repos
+  command: yum-config-manager --disable "{{ item }}"
+  with_items:
+    - epel
+    - rpmfusion-free-updates

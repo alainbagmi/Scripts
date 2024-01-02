@@ -1,0 +1,17 @@
+---
+
+- name: Unlock the edit sites
+  file:
+    path: /etc/httpd/conf.d/{{ tenant }}-{{ item }}
+    state: link
+    src: /etc/httpd/conf.d/tenants/{{ tenant }}-{{ item }}
+  with_items:
+    - edit.conf
+  tags:
+    - real
+  notify: 'restart apache'
+
+- name: Update Status
+  debug:
+    msg: "The edit sites have been unlocked, proceed with testing"
+

@@ -1,0 +1,21 @@
+Task:  AWS Daily Database Backups 
+
+----------------------------------------------------------------------------------------------
+Job Details:
+    Problem Performing MySQL AutoBackup:
+    Command: "/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"
+    ServerIP: 10.0.10.40
+
+----------------------------------------------------------------------------------------------
+
+Error Details:
+{% for item in mysql_backup_proc.stdout_lines %}
+  {{ item }}
+{% endfor %}
+
+
+{% for item in mysql_backup_proc.stderr_lines %}
+  {{ item }}
+{% endfor %}
+
+----------------------------------------------------------------------------------------------

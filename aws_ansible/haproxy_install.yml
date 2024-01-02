@@ -1,0 +1,9 @@
+---
+- name: Install and Configure HAProxy
+  hosts: 172.22.84.11
+  #hosts: 172.22.84.11
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+  roles: 
+    - haproxy

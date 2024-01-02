@@ -1,0 +1,33 @@
+---
+- hosts: localhost
+  become: yes
+  become_method: sudo
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+
+  pre_tasks:
+  - shell: 'date +%Y-%m-%d'
+    register: current_run_timestamp
+
+  - include: roles/aws_daily_db/tasks/one_off_lowerenv.yml
+    when: run_cmd == "rsync_backup"
+
+  - name: Load in tenant vars
+    include_vars:
+      file: group_vars/tenants
+      name: tenants
+  
+  vars:
+    aws_env: ""
+    rsync_status: ""
+    in_progress: "0"
+    email_flag: ""
+    prod_list: []
+    
+
+  roles:
+    - aws_daily_db
+

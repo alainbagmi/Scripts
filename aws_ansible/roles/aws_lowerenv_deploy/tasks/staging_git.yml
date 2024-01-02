@@ -1,0 +1,187 @@
+---
+
+- name: Stop Launching / Terminating of instances in ASG
+  command: "aws autoscaling suspend-processes --auto-scaling-group-name {{ env }}-as-group --scaling-processes {{ item }}"
+  loop:
+    - Terminate
+    - Launch
+  become: no
+  run_once: yes
+#  become_user: awx
+
+
+- name: Clone into compiled code directory for staging
+  environment:
+    TMPDIR: "/data/site_code/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ aws_stash_project }}'
+    dest: '{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}'
+    version: "master"
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "staging"
+  run_once: yes
+
+
+- name: Remove old docroot directory in combined repos since it messes up mv later
+  file:
+    path: '{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/docroot'
+    state: absent
+  run_once: yes
+
+
+- name: Git Repo clone if deploying to staging and repo is empty
+#Needs to be set since it tries to exec things in /tmp, which is not allowed based on security settings in /etc/fstab
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    accept_hostkey: yes
+    executable: "{{ git_binary_path }}"
+    repo: '{{ base_stash_project }}{{ tenant_repo }}'
+    dest: '{{ local_repo }}'
+    version: "master"
+    track_submodules: yes
+    force: yes
+    depth: 1
+    umask: "007"
+  become: yes
+  become_user: awx
+  when: env == "staging"
+  run_once: yes
+
+
+- name: Update the Submodule (if the submodule code is in the server for staging)
+  shell: "cd {{ submodule_path }} && {{ item }}"
+  when: env == "master"
+  become: yes
+  become_user: awx
+  with_items:
+    - git fetch --all
+    - git checkout master
+    - git reset --hard origin/master
+  run_once: yes
+
+
+- name: Git Settings
+  environment:
+    TMPDIR: "/home/bamboo/tmp"
+    PATH: "{{ ansible_env.PATH }}:/opt/rh/rh-git29/root/usr/bin:/opt/rh/httpd24/root/usr/lib64"
+    LD_LIBRARY_PATH: "/opt/rh/httpd24/root/usr/lib64"
+
+  git:
+    repo: '{{ base_stash_project }}{{ tenant_settings }}'
+    executable: "{{ git_binary_path }}"
+    dest: '{{ local_settings }}'
+    version: "master"
+    update: yes
+    force: yes
+    umask: "007"
+  become: yes
+  become_user: awx
+  run_once: yes
+#  ignore_errors: yes
+
+- name: Copy settings into sites/default
+  copy:
+    src: '{{ local_settings }}/{{ env }}/'
+    dest: "{{ local_repo }}/docroot/sites/default/"
+    owner: awx
+    group: awx
+    mode: '0700'
+  run_once: yes
+
+- name: check if drush.yml exist in settings
+  stat:
+    path: '{{ local_repo }}/docroot/sites/default/drush.yml'
+  register: drush_yml_file
+
+- name: Creates directory for drush.yml file
+  file:
+    path: '{{ local_repo }}/docroot/sites/all/drush'
+    state: directory
+  when: drush_yml_file.stat.exists
+
+- name: copy drush.yml
+  copy:
+    src: '{{ local_repo }}/docroot/sites/default/drush.yml'
+    dest: '{{ local_repo }}/docroot/sites/all/drush/'
+    owner: awx
+    group: awx
+    mode: '0700'
+  when: drush_yml_file.stat.exists
+
+# check if multisite
+- name: check the location of sites.php file
+  stat:
+    path: "{{ local_settings }}multisite/sites.php"
+  register: sites_file
+
+
+- name: git_repo_and_settings.yml - set multisite fact if multisite is TRUE
+  set_fact:
+    multisite: True
+  when: sites_file.stat.exists == True
+
+- name: git_repo_and_settings.yml - set multisite fact if multisite is FALSE
+  set_fact:
+    multisite: False
+  when: sites_file.stat.exists == False
+
+- name: Create symlink to site-files
+  file:
+    src: '{{ sitefiles_root }}{{ env }}.{{ tenant }}_gov_build/files'
+    dest: '{{ local_repo }}docroot/sites/default/files'
+    state: link
+    group: apache
+    owner: apache
+    force: yes
+    follow: no
+  run_once: yes
+
+- name: Bypassing Ansible slowness tax with mv because Ansible module is painfully slow
+  command: "cp -Rp {{ local_repo }}docroot {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/"
+  become: yes
+  run_once: yes
+
+- name: Remove .git directory in profile because it messes up our git push later
+  file:
+    path: "{{ local_checkouts }}{{ tenant }}/combined_code/{{ env }}/docroot/profiles/{{ tenant }}_gov/.git"
+    state: absent
+  run_once: yes
+
+#- name: Push combined repo to Stash (staging)
+#  shell: "cd {{ local_checkouts }}{{ tenant }}/combined_code/{{ env }} && {{ item }}"
+#  become: yes
+#  become_user: awx
+#  loop:
+#    - "git add -A"
+#    - "git add -f docroot/sites/default/settings.php"
+#    - "git add -A -f docroot/.*"
+#    - "git add -A -f docroot/*"
+#    - "git add -u docroot"
+#    - "git commit -m 'Latest code for tenant deployment' --quiet"
+#    - "git push origin master --quiet"
+#  run_once: yes
+#  when: env == "staging"
+#  ignore_errors: yes
+
+#- name: Resume Launching / Terminating of instances in ASG
+#  command: "aws autoscaling resume-processes --auto-scaling-group-name {{ env }}-as-group --scaling-processes {{ item }}"
+#  loop:
+#    - Terminate
+#    - Launch
+#  become: no
+#  run_once: yes
+#  become_user: awx
+

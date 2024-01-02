@@ -1,0 +1,38 @@
+Task: Drush Self-Service for {{ tenant }}
+
+----------------------------------------------------------------------------------------------
+Job Runtime Variables:
+    site_alias={{ tenant }}
+    environment={{ env }}
+    drush_status={{ drush_status }}
+    drush_updb={{ drush_updb }}
+    drush_clear={{ drush_clear }}
+    
+----------------------------------------------------------------------------------------------
+Pretask Status: {{ pretask_status }}
+Job Status: {{ task_status }}
+
+----------------------------------------------------------------------------------------------
+Drush Status Results:
+{% for item in email_status %}
+  {{ item }}
+{% endfor %}
+
+----------------------------------------------------------------------------------------------
+Drush Clear Results:
+{% for item in email_clear %}
+  {{ item }}
+{% endfor %}
+
+----------------------------------------------------------------------------------------------
+Drush UPDB Results:
+{% for item in email_updb %}
+  {{ item }}
+{% endfor %}
+
+----------------------------------------------------------------------------------------------
+Drush DL Results:
+{% for item in email_dl %}
+  {{ item }}
+{% endfor %}
+----------------------------------------------------------------------------------------------

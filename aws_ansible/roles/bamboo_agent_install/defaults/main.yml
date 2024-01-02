@@ -1,0 +1,8 @@
+---
+# defaults file for bamboo_agent_install
+BAMBOO_SERVER: 192.168.43.223
+BAMBOO_PORT: 8085
+BAMBOO_SERVER_URL: http://{{ BAMBOO_SERVER }}:{{ BAMBOO_PORT }}/agentServer
+VERSION: 6.9.1
+DEPENDENCY_PACKAGES:
+  - java

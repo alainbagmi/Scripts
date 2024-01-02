@@ -1,0 +1,136 @@
+---
+- copy:
+    src: "{{ role_path }}/files/inactive_users.py"
+    dest: "inactive_users.py"
+    owner: ansible_tower
+    group: ansible_tower
+    mode: '0770'
+
+
+- name: run inactive_users.py
+  command: python inactive_users.py
+
+
+- name: Fetch Inactive Users
+  fetch:
+    src: disabled_users.yml
+    dest: "{{ role_path }}/vars/"
+    flat: yes
+
+- name: Load the disabled_users
+  include_vars:
+    file: "disabled_users.yml"
+
+- name: List SSH Public Keys
+  shell: aws iam list-ssh-public-keys --user-name {{ item }}
+  with_items: "{{ disabled_users }}"
+  become: no
+
+- name: get SSH Keys
+  shell: aws iam list-ssh-public-keys --user-name {{ item }} --query "SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]" --max-items 1 --output text --no-paginate
+  register: user_ssh_keys
+  with_items: "{{ disabled_users }}"
+
+- set_fact:
+    iam_ssh_key_list: "{{ iam_ssh_key_list|default({}) | combine( {item.item: item.stdout} ) }}"
+#  when: item.stdout != ""
+  with_items: "{{ user_ssh_keys.results }}"
+
+- debug:
+    var: iam_ssh_key_list
+
+- name: Set SSH Key Inactive
+  shell: aws iam update-ssh-public-key --user-name {{ item.key }} --ssh-public-key-id {{ item.value }} --status Inactive
+  when: "item.value != ''"
+  with_dict: "{{ iam_ssh_key_list }}"
+
+#######################################################################
+#### List of protected users: Administrator, ctracy, mminaie, ansible_tower
+
+- name: List User Profile
+  shell: aws iam get-user --user-name {{ item }}
+  with_items: "{{ disabled_users }}"
+  become: no
+
+- name: Remove User from Admin Group
+  shell: aws iam remove-user-from-group --user-name {{ item }} --group-name Administrators
+  with_items: "{{ disabled_users }}"
+  become: no
+
+
+- name: Delete Login Profile
+  shell: aws iam delete-login-profile --user-name {{ item }}
+  with_items: "{{ disabled_users }}"
+  ignore_errors: yes
+  become: no
+
+- name: Get Access Keys
+  shell: aws iam list-access-keys --user-name {{ item }} --query 'AccessKeyMetadata[*].AccessKeyId' --output text --no-paginate
+  register: user_access_keys
+  with_items: "{{ disabled_users }}"
+  become: no
+
+- set_fact:
+    iam_access_key_list: "{{ iam_access_key_list|default({}) | combine( {item.item: item.stdout} ) }}"
+  when: item.stdout != ""
+  with_items: "{{ user_access_keys.results }}"
+
+- debug:
+    var: iam_access_key_list
+
+- name: Set Access Key Inactive
+  shell: aws iam update-access-key --access-key-id {{ item.value }} --status Inactive --user-name {{ item.key }}
+  when: "item.value != ''"
+  with_dict: "{{ iam_access_key_list }}"
+
+- name: Show User and Access Key
+  debug:
+    msg: "{{ item.key }} {{ item.value }}"
+  with_dict: "{{ iam_access_key_list }}"
+
+- name: Move User to Locked
+  shell: aws iam add-user-to-group --user-name "{{ item }}" --group-name "Locked"
+  with_items: "{{ disabled_users }}"
+
+- name: delete remote files that were created
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - inactive_users.py
+    - disabled_users.yml
+
+- local_action: file path="{{ role_path }}/vars/disabled_users.yml" state=absent
+  become: false
+
+
+#****************************** To Add in Future **************************************
+
+# For Deleting instead of making inactive
+#- name: Delete Access Key
+#  shell: aws iam delete-access-key --access-key-id {{ item.value }} --user-name {{ item.key }}
+#  with_dict: "{{ iam_access_key_list }}"
+
+#- name: Delete SSH Key
+#  shell: aws iam delete-ssh-public-key --user-name {{ item.key }} --ssh-public-key-id {{ item.value }}
+#  with_dict: "{{ iam_ssh_key_list }}"
+
+#****************************** To Add in Future **************************************
+#- name: List Service Credentials
+#  shell: aws iam list-service-specific-credentials --user-name {{ item }}
+#  with_items: "{{ disabled_users }}"
+#  become: no
+#- name: List MFA Device
+#  shell: aws iam list-mfa-devices --user-name {{ item }}
+#  with_items: "{{ disabled_users }}"
+#  become: no
+
+#- name: List User Policy
+#  shell: aws iam list-user-policies --user-name {{ item }}
+#  with_items: "{{ disabled_users }}"
+#  become: no
+
+#- name: List Managed Policies
+#  shell: aws iam list-attached-user-policies --user-name {{ item }}
+#  with_items: "{{ disabled_users }}"
+#  become: no

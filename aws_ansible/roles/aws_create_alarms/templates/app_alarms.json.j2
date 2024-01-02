@@ -1,0 +1,31 @@
+{   
+    "AlarmName": "{{ ec2_id }}-{{ name }}-appliance-heartBeat",
+    "AlarmDescription": "Error-{{ name }}-statusUnresponsive",
+    "ActionsEnabled": true,
+    "AlarmActions": [
+        "arn:aws-us-gov:sns:us-gov-west-1:626894281569:WCMMonitoring"
+    ],
+    "MetricName": "applianceHeartBeat",
+    "Namespace": "ApplianceStatus",
+    "Statistic": "Minimum",
+    "Dimensions": [
+        {"Name": "InstanceId", "Value": "{{ ec2_id }}"},
+        {"Name": "Purpose", "Value": "{{ ec2_purpose|upper }}"}
+    ],
+    "Period": 60,
+    "Unit": "None",
+    "EvaluationPeriods": 1,
+    "DatapointsToAlarm": 1,
+    "Threshold": 1.0,
+    "ComparisonOperator": "LessThanThreshold",
+    "TreatMissingData": "ignore",
+    "Tags": [
+        {"Key": "ec2_name", "Value": "{{ name }}"},
+        {"Key": "ec2_id", "Value": "{{ ec2_id }}"},
+        {"Key": "image_id", "Value": "{{ image_id }}"},
+        {"Key": "Purpose", "Value": "{{ ec2_purpose }}"},
+        {"Key": "environment", "Value": "{{ env }}"},
+        {"Key": "fisma_id", "Value": "{{ fisma_id }}"},
+        {"Key": "project", "Value": "{{ project }}"}
+    ],
+}

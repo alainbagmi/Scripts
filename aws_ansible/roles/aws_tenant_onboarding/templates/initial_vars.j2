@@ -1,0 +1,29 @@
+{{ tenant }}:
+  project_name: {{ stash_project|upper }}
+  alias: {{ tenant }}
+  drupal_version: {{ drupal_version }}
+  akamai_group: {{ akamai_group }}
+  akamai_path: {{ akamai_path }}
+  newrelic_id: 0000000000
+  daily_db: test
+  testint:
+    site_urls: 
+      edit: {{ edit_url }} 
+      public: {{ site_url }}
+    akamai_cpcode:
+      edit: {{ edit_code }}
+      public: {{ public_code }}
+  staging:
+    site_urls:
+      edit: {{ stage_edit_holder }}
+      public: {{ stage_public_holder }}
+    akamai_cpcode:
+      edit: {{ edit_code }}
+      public: {{ public_code }}
+  prod:
+    site_urls: 
+      edit: {{ prod_edit_holder }}
+      public: {{ prod_public_holder }}
+    akamai_cpcode:
+      edit: {{ prod_edit_code }}
+      public: {{ prod_public_code }}

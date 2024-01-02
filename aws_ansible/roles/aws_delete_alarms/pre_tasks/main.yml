@@ -1,0 +1,10 @@
+---
+- name: Run the pretasks for alarm deletion
+  block:
+    - include: list_orphan_alarms.yml
+      when: run_cmd == "orphans"
+
+    - include: list_ec2_alarms.yml
+      when: run_cmd == "termination"
+
+  

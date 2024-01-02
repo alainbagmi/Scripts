@@ -1,0 +1,96 @@
+---
+- name: Run Pretasks
+  block:
+    - name: Set empty flag
+      set_fact:
+        auto_backup: ""
+        
+    - name: Run MySQL AutoBackup
+      shell: "/usr/local/bin/automysqlbackup /etc/automysqlbackup/myserver.conf"
+      register: mysql_backup_proc
+
+  rescue:
+    - name: Something went wrong, its most likely Kyle's fault
+      set_fact:
+        auto_backup: "failed"
+
+    
+  always:
+    - name: Send Process Error Email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <antonio.punzo@associates.hq.dhs.gov>
+          - <alain.bagmi@associates.hq.dhs.gov>
+          - <kyle.day@associates.hq.dhs.gov>
+          - <cathleen.tracy@hq.dhs.gov>
+          - <mohammad.minaie@associates.hq.dhs.gov>
+          - <sergei.ternovski@associates.hq.dhs.gov>
+          - <phucdat.nguyen@associates.hq.dhs.gov>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "DAILY DATABASE BACKUP PROCESS FAILED"
+        body: "{{ lookup('template', 'roles/aws_daily_db/templates/email_process.j2') }}"
+
+      when: auto_backup == "failed"
+  when: run_cmd == "auto_backup"
+
+
+  
+- name: Rsync backups to netstorage
+  block:
+    - name: Show time stamp
+      debug:
+        msg: "{{ current_run_timestamp }}"
+
+    - include: rsync_to_netstorage.yml
+      with_dict: "{{ tenants }}"
+      loop_control:
+        loop_var: first_item
+
+    - include: one_off_lowerenv.yml
+      
+
+  rescue:
+    - name: Set flag to send email
+      set_fact:
+        rsync_status: "failed"
+    
+    - name: Send Rsync Error Email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <antonio.punzo@associates.hq.dhs.gov>
+          - <alain.bagmi@associates.hq.dhs.gov>
+          - <kyle.day@associates.hq.dhs.gov>
+          - <cathleen.tracy@hq.dhs.gov>
+          - <mohammad.minaie@associates.hq.dhs.gov>
+          - <sergei.ternovski@associates.hq.dhs.gov>
+          - <phucdat.nguyen@associates.hq.dhs.gov>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "NO BACKUP TAKEN FOR TENANT/S"
+        body: "{{ lookup('template', 'roles/aws_daily_db/templates/email_missing.j2') }}"
+    
+  always:
+    - name: Send Tenant List Email
+      mail:
+        host: 10.0.10.87
+        port: 25
+        to:
+          - <antonio.punzo@associates.hq.dhs.gov>
+          - <alain.bagmi@associates.hq.dhs.gov>
+          - <kyle.day@associates.hq.dhs.gov>
+          - <cathleen.tracy@hq.dhs.gov>
+          - <mohammad.minaie@associates.hq.dhs.gov>
+          - <sergei.ternovski@associates.hq.dhs.gov>
+          - <phucdat.nguyen@associates.hq.dhs.gov>
+        from: esdowcmmonitoring@hq.dhs.gov
+        subject: "NO BACKUP TAKEN FOR TENANT/S"
+        body: "{{ lookup('template', 'roles/aws_daily_db/templates/email_missing.j2') }}"
+      when: prod_list | length > 0
+
+  when: run_cmd == "rsync_backup"
+
+
+

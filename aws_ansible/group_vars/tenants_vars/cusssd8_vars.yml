@@ -1,0 +1,29 @@
+cusssd8:
+  project_name: CUSSS
+  alias: cusssd8
+  drupal_version: 8
+  akamai_group: 10629
+  akamai_path: /183946/cusss
+  newrelic_id: 000000000
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint-careers.secretservice.gov
+      public: testint-careers.secretservice.gov
+    akamai_cpcode:
+      edit: 1082448
+      public: 1082446
+  staging:
+    site_urls:
+      edit: edit-staging-careers.secretservice.gov
+      public: staging-careers.secretservice.gov
+    akamai_cpcode:
+      edit: 1082448
+      public: 1082446
+  prod:
+    site_urls:
+      edit: edit-careers.secretservice.gov
+      public: www.careers.secretservice.gov
+    akamai_cpcode:
+      edit: 1082447
+      public: 1082445

@@ -1,0 +1,6 @@
+---
+
+- include: new_tenant.yml
+- include: drush_output.yml
+- include: htaccess_create.yml
+- include: git_repo_create.yml

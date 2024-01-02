@@ -1,0 +1,58 @@
+---
+- hosts: localhost
+  become: yes
+  become_method: sudo
+  remote_user: ansible_tower
+
+  roles:
+    - aws_asset_refresh
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+  
+  vars:
+    tenantvars: "{{ tenants[vars['tenant']] }}"
+    akamai_path: "{{ tenantvars.akamai_path }}"
+    in_progress: "0"
+    aws_asset_refresh: true
+    clean_up: ""
+    pretask_status: ""
+    task_status: ""
+    target_backup: ""
+    source_index: ""
+    target_index: ""
+
+  pre_tasks:
+    - name: Attempt to Perform PreTasks
+      block:
+        #- include: roles/aws_common/tasks/get_tenant_vars.yml
+        - name: Load tenant vars
+          include_vars:
+            dir: group_vars/tenants_vars
+            name: tenants
+
+        - shell: 'date +%Y-%m-%d-%Hh%Mm%Ss'
+          register: current_run_timestamp
+        - include: roles/aws_asset_refresh/pre_tasks/create_asset_paths.yml
+        - include: roles/aws_asset_refresh/pre_tasks/aws_asset_pretasks.yml
+        - name: Set target backup to no if netstorage is target
+          set_fact:
+            target_backup: 'no'
+          when: target_env == "netstorage"
+
+        - name: Set Pretask Status
+          set_fact:
+            pretask_status: "OK"
+      rescue:
+        - set_fact:
+            pretask_status: "Ansible Pre-Task Failed"
+            task_status: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/aws_asset_refresh/tasks/email_tenant.yml
+          when:
+            - email_address is defined
+        - name: Fail Task because of Errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+    

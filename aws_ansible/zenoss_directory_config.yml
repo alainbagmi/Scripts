@@ -1,0 +1,8 @@
+---
+- name: PUSH out the python scripts for MariaDB in order to capture info and metric
+  hosts: confluence_dc:jira_dc
+  remote_user: bamboo
+  become: yes 
+  become_method: sudo
+  roles: 
+    - zenoss

@@ -1,0 +1,56 @@
+---
+- name: Depoying code in try/catch
+  block:
+
+#Lock edit sites for prod
+  - include: lock_edit_sites.yml
+    when: env == "production" and (deployment_actions == "only_deploying_code" or deployment_actions == "both")
+
+#DB backup for prod
+  - include: db_backup.yml
+    run_once: yes
+    delegate_to: localhost
+    when: env == "production" and (deployment_actions == "only_staging_code" or deployment_actions == "both")
+
+#Create required folders for deployment on Tower server
+  - include: create_folders.yml
+    run_once: yes
+    delegate_to: localhost
+    when: deployment_actions == "only_staging_code" or deployment_actions == "both"
+
+#Clone and push for testint
+  - include: testint_git.yml
+    run_once: yes
+    delegate_to: localhost
+    when: env == "testint" and (deployment_actions == "only_staging_code" or deployment_actions == "both")
+
+#CLone and push for staging
+  - include: staging_git.yml
+    run_once: yes
+    delegate_to: localhost
+    when: env == "staging" and (deployment_actions == "only_staging_code" or deployment_actions == "both")
+
+#Clone/merge and push for prod
+  - include: prod_git.yml
+    run_once: yes
+    delegate_to: localhost
+    when: env == "production" and (deployment_actions == "only_staging_code" or deployment_actions == "both")
+
+#Only run these for multisites
+#  - include: multisite_tasks.yml
+#    when: multisite|bool == True and (deployment_actions == "only_deploying_code" or deployment_actions == "both")
+
+#Do a git pull on the web server
+  - include: deploy_code.yml
+    when: deployment_actions == "only_deploying_code" or deployment_actions == "both"
+
+
+  always:
+  - name: Resume the ASG's
+    include_tasks: resume_asg.yml
+    run_once: yes
+    args:
+      apply:
+        delegate_to: 127.0.0.1
+
+

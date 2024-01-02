@@ -1,0 +1,52 @@
+---
+- name: Make the release folder
+  file:
+    path: "{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}"
+    state: directory
+    mode: 0770
+    owner: apache
+    group: apache
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['philly_web'] }}"
+  run_once: yes
+
+
+- name: Sync Repo to the Release directory or to the docroot if release not defined
+  shell: "rsync -rv --exclude=.git* --no-motd --quiet {{ local_repo }}docroot/ bamboo@{{ item }}:{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}"
+  delegate_to: localhost
+  with_items: "{{ groups['philly_web'] }}"
+  run_once: yes
+  become: no
+
+
+- name: Sync settings to sites/default
+  shell: "rsync -rv --no-motd --quiet {{ local_settings }}{{ env }}/ bamboo@{{ item }}:{{ site_root }}{{ tenant_prefix }}/Rel{{ release_number }}/sites/default"
+  delegate_to: localhost
+  with_items: " {{ groups['philly_web'] }}"
+  run_once: yes
+  become: no
+
+- name: Change Owner and Group
+  shell: "sudo chown -R apache:apache {{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['philly_web'] }}"
+  run_once: yes
+  become: no
+
+- name: Change Permissions
+  shell: "sudo chmod -R 770 {{ site_root}}{{ tenant_prefix }}Rel{{ release_number }}/"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['philly_web'] }}"
+  run_once: yes
+  become: no
+  
+- name: Create symlink to site-files without notifying restart/cache clear handlers
+  file:
+    src: '{{ sitefiles_root }}{{ tenant_prefix }}files' 
+    dest: '{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/sites/default/files'
+    state: link
+    group: apache
+    owner: apache
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['philly_web'] }}"
+  run_once: yes

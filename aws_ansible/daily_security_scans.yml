@@ -1,0 +1,30 @@
+- name: Check module status
+  hosts: "all_staging_webheads[0]"
+
+  pre_tasks:
+  - name: var check
+    include_vars:
+      file: group_vars/tenants
+      name: tenants
+
+  vars_files:
+    - group_vars/wcm_staging
+  vars:
+    env: "staging"
+    #drupal_version:
+    
+  roles:
+    - daily_security_scans
+
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+
+  #pre_tasks:
+  #- name: Checking for current dir
+  #  shell: pwd
+  #  register: current_working_directory
+
+  #- name: Print Dir
+  #  debug:
+  #    msg: "{{ current_working_directory }}"

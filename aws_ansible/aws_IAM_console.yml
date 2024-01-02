@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  become: yes
+  become_method: sudo
+  remote_user: ansible_tower
+    
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+
+  vars:
+    ansible_host_key_checking: false
+
+  roles:
+    - role: aws_IAM_console

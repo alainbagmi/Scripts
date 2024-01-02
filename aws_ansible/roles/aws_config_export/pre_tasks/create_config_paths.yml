@@ -1,0 +1,102 @@
+---
+- name: Create Initial Directories regardless of what is run
+  block:
+    - name: Set Docking Path
+      set_fact:
+        aws_docking_path: "/data/adhoc_tasks/{{ tenant }}_files"
+        netstorage_path: "{{ akamai_path }}"
+        target_tenant: "{{ tenant }}"
+        path_type: ""
+        
+
+    - name: Set Target Site Alias when Different
+      set_fact:
+        target_tenant: "{{ related_alias }}"
+      when:
+        - target_env is defined
+        - target_env != "netstorage"
+        - target_site is defined
+        - target_site == "alternative"
+
+    - name: Set Paths
+      set_fact:
+        netstorage_config_tar_path: "/data/adhoc_tasks/{{ target_tenant }}_files/adhoc_files/config_exports"
+
+    - name: Set Akamai Paths
+      set_fact:
+        akamai_config_path: "{{ akamai_path }}/adhoc_files/{{ target_tenant }}_files/configs_exports"
+        
+    - name: Set Paths list for creation
+      set_fact:
+        create_list:
+          - "{{ aws_docking_path }}/"
+          - "{{ netstorage_config_tar_path }}/"
+          
+
+    - name: Get Docking Path Stats
+      stat:
+        path: "{{ aws_docking_path }}/"
+      register: aws_docking_stat
+
+    - name: Get Config Path Stats
+      stat:
+        path: "{{ netstorage_config_tar_path }}/"
+      register: aws_config_stat
+
+    - name: Set Creation Flag
+      set_fact:
+        path_type: "initial_creation"
+        create_list:
+          - "{{ aws_docking_path }}/"
+          - "{{ netstorage_config_tar_path }}/"
+      when: aws_docking_stat.stat.isdir is not defined
+
+    - name: Set Creation Flag
+      set_fact:
+        path_type: "initial_creation"
+        create_list:
+          - "{{ netstorage_config_tar_path }}/"
+      when: 
+        - aws_docking_stat.stat.isdir is defined
+        - aws_config_stat.isdir is not defined
+
+    - name: Make All Adhoc plan paths Related to a site
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: ansible_tower
+        group: ansible_tower
+        mode: 0776
+        recurse: yes
+      with_items: "{{ create_list }}"
+      when: path_type == "initial_creation"
+
+    - name: Set Config Exports Paths to list for clean up
+      set_fact:
+        config_path_list:
+          - "{{ netstorage_config_tar_path }}/"
+
+- name: Create and Sync paths to Akamai if initial run
+  block:
+    - name: Set Temp Akamai Paths
+      set_fact:
+        akamai_temp_sync: "/data/adhoc_tasks/akamai_temp/adhoc_files"
+        akamai_temp_config: "/data/adhoc_tasks/akamai_temp/adhoc_files/{{ target_tenant }}_files/configs_exports"
+
+    - name: Make a Temp directory to rsync over to netstorage
+      file:
+        path: "{{ akamai_temp_config }}/"
+        state: directory
+        owner: ansible_tower
+        group: ansible_tower
+        mode: 0776
+        recurse: yes
+
+    - name: Sync Paths to Netstorage
+      shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ akamai_temp_sync }} sshacs@dhswcms.upload.akamai.com:{{ akamai_path }}"
+    
+    - name: Remove the Akamai Temp Path
+      file:
+        path: "/data/adhoc_tasks/akamai_temp"
+        state: absent
+      become: yes

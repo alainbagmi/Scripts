@@ -1,0 +1,9 @@
+---
+
+- name: Deploy names to use proxy for TSA TIE
+  lineinfile:
+    line: "{{ item }}"
+    path: /etc/hosts
+  with_items:
+    - 172.22.58.17      tsa-tie-dtaas
+    - 172.22.58.17      tsa-tie-prod

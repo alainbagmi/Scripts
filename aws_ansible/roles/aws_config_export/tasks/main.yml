@@ -1,0 +1,38 @@
+---
+- name: Attempt Config Export
+  block:
+
+    - name: Show information
+      debug:
+        msg: >
+          "Tenant/Site_Alias: {{ tenant }}
+          Environment: {{ source_env }}
+          Environment Path: {{ env_path }}/
+          Export Path: {{ netstorage_config_tar_path }}/
+          Docroot Path: {{ docroot_path }}
+          tar_file_name: {{ tar_file }}"
+
+
+
+    - name: Config Export Failed with Errors
+      fail:
+        msg: "drush config-export is not valid for a Drupal 7 site!!"
+      when: drupal_version == "7"
+
+    #-------------------- Run Plays --------------------
+    - include: config_export.yml
+
+
+  rescue:
+    - include: clean_up.yml
+    - name: Fail Task since something went wrong
+      fail:
+        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+  always:
+    - include: clean_up.yml
+
+    - include: drush_output.yml
+
+
+

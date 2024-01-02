@@ -1,0 +1,6 @@
+---
+- name: Fix all the findings from Nessus scans
+  hosts: 172.22.58.22
+  become: yes
+  roles: 
+    - RHEL7-STIG

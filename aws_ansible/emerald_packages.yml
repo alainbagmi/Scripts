@@ -1,0 +1,8 @@
+---
+
+- name: Install Emerald Packages
+  hosts: wcm_new_prod_webheads:wcm_new_app_servers_philly
+  become: yes
+  become_method: sudo
+  roles: 
+    - emerald_packages

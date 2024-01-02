@@ -1,0 +1,17 @@
+---
+- hosts: localhost
+#- hosts: "tag_purpose_CGI_VPN"
+  become: yes
+  become_method: sudo
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+
+  # pre_tasks:
+  #   - include: roles/aws_delete_alarms/pre_tasks/main.yml
+
+  
+  roles:
+    - aws_delete_alarms

@@ -1,0 +1,29 @@
+wcmdemod8:
+  project_name: WIT
+  alias: wcmdemod8
+  drupal_version: 8
+  akamai_group: 23306
+  akamai_path: /183946/wcmdemo
+  newrelic_id: 000000000
+  daily_db: test
+  testint:
+    site_urls:
+      edit: edit-wcms-testint.dhs.gov
+      public: wcms-testint.dhs.gov
+    akamai_cpcode:
+      edit: 154913
+      public: 160692
+  staging:
+    site_urls:
+      edit: edit-wcmsstg1-demo.dhs.gov
+      public: wcmsstg1-demo.dhs.gov
+    akamai_cpcode:
+      edit: 154913
+      public: 160692
+  prod:
+    site_urls:
+      edit: edit-wcms-demo.dhs.gov
+      public: wcms-demo.dhs.gov
+    akamai_cpcode:
+      edit: 154913
+      public: 160692

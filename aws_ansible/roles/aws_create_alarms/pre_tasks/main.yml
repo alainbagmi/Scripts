@@ -1,0 +1,53 @@
+---
+- name: Run the alarm creation
+  block:
+    - include: get_instance_info.yml
+
+    - include: uninstall_and_delete.yml
+      delegate_to: "{{ private_ip }}"
+      when: 
+        - ec2_purpose ==  "webApp"
+
+    - include: '../tasks/appliance_alarms.yml'
+      when: 
+        - retry_alarm is defined
+        - retry_alarm == "yes"
+        - env == "appliance"
+
+    - include: '../tasks/web_alarms.yml'
+      when:
+        - retry_alarm is defined
+        - retry_alarm == "yes"
+        - ec2_purpose == "webApp"
+        
+    - include: '../tasks/mgmt_alarms.yml'
+      when:
+        - retry_alarm is defined
+        - retry_alarm == "yes"
+        - env == "management"
+        
+    - include: '../tasks/wcmlab_alarms.yml'
+      when:
+        - retry_alarm is defined
+        - retry_alarm == "yes"
+        - ec2_purpose == "wcm_lab"
+        - env == "wcm_lab"
+  always:
+    - name: Send Email
+      include_tasks: roles/aws_create_alarms/send_email.yml
+      args:
+        apply:
+          delegate_to: 127.0.0.1
+      when: 
+        - retry_alarm is defined
+        - retry_alarm == "yes"
+        - alarm_error | length > 0
+
+
+    - meta: end_play
+      when: 
+        - retry_alarm is defined
+        - retry_alarm == "yes"
+
+    
+

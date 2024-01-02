@@ -1,0 +1,9 @@
+# manage database on VM
+---
+- name: Manage database 
+  hosts: mysqllocal
+  become: yes 
+  #environment: "{{ PROXY_ENV }}"
+
+  roles: 
+    - db_mgmt

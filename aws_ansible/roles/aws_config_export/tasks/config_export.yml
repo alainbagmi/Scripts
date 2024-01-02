@@ -1,0 +1,112 @@
+---
+- name: Start of Config Export
+  block:
+    - name: Show Var info
+      debug:
+        msg: "Exporting Config files for {{ tenant }} from {{ source_env }} to NetStorage {{ akamai_path }}"
+
+    - name: Get Source Path stats
+      stat:
+        path: "{{ env_path }}"
+      register: source_stats
+      delegate_to: "{{ delegate_host }}"
+
+    - name: Make paths if not exists
+      file:
+        path: "{{ env_path }}"
+        state: directory
+        owner: apache
+        group: apache
+        mode: 0776
+        recurse: yes
+      become: yes
+      delegate_to: "{{ delegate_host }}"
+      when: source_stats.stat.isdir is not defined
+
+#    - name: Run Drush CR
+#      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_path }} cr"
+#      register: drush_cr_result
+#      retries: 3
+#      until: drush_cr_result.rc == 0
+#      ignore_errors: yes
+#      delegate_to: "{{ delegate_host }}"
+
+#    - name: Output of Drush CR
+#      debug:
+#        var: drush_cr_result
+#      delegate_to: "{{ delegate_host }}"
+
+    - name: Run Drush config-export
+      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_path }} config-export --destination={{ env_path }}"
+      register: drush_config_exp_result
+      retries: 0
+      delegate_to: "{{ delegate_host }}"
+
+      
+    - name: Output of Drush config export 
+      debug:
+        var: drush_config_exp_result
+      delegate_to: "{{ delegate_host }}"
+      when: drush_config_exp_result.rc == 0
+
+
+    - name: Archive Export
+      archive:
+        path:
+          - "{{ env_path }}/*"
+        dest: "{{ env_path }}/{{ tar_file }}"
+        format: gz
+        owner: ansible_tower
+        group: ansible_tower
+        mode: 0776
+      delegate_to: "{{ delegate_host }}"
+      when: drush_config_exp_result.rc == 0
+ 
+    - name: Set the owner and group to avoid permission denied errors
+      file:
+        path: "/data/{{ tenant }}"
+        owner: ansible_tower
+        group: ansible_tower
+        recurse: yes
+      become: yes
+      delegate_to: "{{ delegate_host }}"
+     
+    - name: Rsync Export
+      shell: "rsync -avz -e 'ssh -o StrictHostKeyChecking=no' ansible_tower@{{ delegate_host }}:{{ env_path }}/{{ tar_file }} {{ netstorage_config_tar_path }}/"
+      become: yes
+      become_method: sudo
+      become_user: ansible_tower
+      delegate_to: "{{ inventory_hostname }}"
+      when: drush_config_exp_result.rc == 0
+
+    - name: Sync Tar File to Netstorage
+      shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ netstorage_config_tar_path }}/{{ tar_file }} sshacs@dhswcms.upload.akamai.com:{{ akamai_config_path }}/{{ tar_file }}"
+      when: drush_config_exp_result.rc == 0
+
+    - name: Set Task Status
+      set_fact:
+        task_status: "OK"
+
+#  rescue:
+#    - name: Run Drush Status
+#      command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_path }} status"
+#      register: drush_status_result
+#      retries: 3
+#      until: drush_status_result.rc == 0
+#      ignore_errors: yes
+#      delegate_to: "{{ delegate_host }}"
+
+#    - name: Output of Drush Status 
+#      debug:
+#        var: drush_status_result
+
+#    - name: Fail Task since something went wrong
+#      fail:
+#        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+  always:
+    - name: Cleanup Source Export Files
+      file:
+        path: "{{ env_path }}"
+        state: absent
+      delegate_to: "{{ delegate_host }}"

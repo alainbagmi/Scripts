@@ -1,0 +1,38 @@
+---
+- hosts: tower:prod_web[1]:staging_web[0]:testint_web[0]
+  remote_user: bamboo
+  become: yes
+
+  roles:
+    - asset_refresh
+
+  vars:
+    in_progress: "0"
+    asset_refresh: true
+    pretask_status: ""
+    task_status: ""
+    target_backup: ""
+    #email_address: "antonio.punzo@associates.hq.dhs.gov"
+
+  pre_tasks:
+    - name: Attempt to Perform PreTasks
+      block:    
+        - include: roles/common/tasks/get_tenant_vars.yml
+        - include: roles/common_refresh/tasks/main.yml
+        #- include: roles/asset_management/tasks/main.yml
+        - shell: 'date +%Y-%m-%d-%Hh%Mm%Ss'
+          register: current_run_timestamp
+        - name: Set Pretask Status
+          set_fact:
+            pretask_status: "OK"
+      rescue:
+        - set_fact:
+            pretask_status: "Ansible Pre-Task Failed"
+            task_status: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/asset_refresh/tasks/email_tenant.yml
+          when: 
+            - email_address is defined
+            - inventory_hostname == groups['tower'][0]
+        - name: Fail Task because of Errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"

@@ -1,0 +1,12 @@
+---
+
+- include: lock_edit_sites.yml
+  when: "'all_prod_webheads' in group_names"
+
+- include: update_docroot.yml
+  when: "'all_prod_webheads' in group_names"
+
+- include: unlock_edit_sites.yml
+  when: "'all_prod_webheads' in group_names"
+
+

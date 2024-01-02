@@ -1,0 +1,85 @@
+---
+- name: Get latest Symlink Stats
+  stat:
+    path: "{{ latest_path }}"
+  register: sym_latest
+
+- name: Get rollback Symlink Stats
+  stat:
+    path: "{{ rollback_path }}"
+  register: sym_rollback
+
+#***************Show Current Symlinks Sources***************
+- name: Show latest Symlink Release PreDeploy
+  debug:
+    msg: "latest -> {{ sym_latest.stat.lnk_source }}"
+
+- name: Show rollback Symlink Release PreDeploy
+  debug: 
+    msg: "rollback -> {{ sym_rollback.stat.lnk_source }}"
+
+- name: Show Current Deploy Release
+  debug: 
+    msg: "Current Deploy Release {{ release }}"
+
+#***************Modify Symlinks***************\
+#***Set rollback -> Pre-Deploy/Previous latest Rel
+#***Set latest -> Current Deploy/Highest Rel
+#***Unchanged: docroot -> latest
+- name: Set rollback Symlink to Latest(Predeploy Rel)
+  file:
+    dest: "{{ sym_rollback.stat.path }}"
+    src: "{{ sym_latest.stat.lnk_source }}"
+    owner: apache
+    group: apache
+    state: link
+  when: 
+   - sym_latest.stat.lnk_source != release
+
+- name: Set latest Symlink to Current Deploy Rel
+  file: 
+    dest: "{{ sym_latest.stat.path }}"
+    src: "{{ release }}"
+    owner: apache
+    group: apache
+    state: link
+  when:
+    - sym_latest.stat.lnk_source != release
+  notify:
+    - "drush update database"
+    - "drush cache registry {{ drupal_version }}"
+    
+- name: Flush Handlers to run Drush Commands
+  meta: flush_handlers
+
+- name: Register latest PostDeploy
+  stat:
+    path: "{{ latest_path }}"
+  register: post_sym_latest
+
+- name: Register rollback PostDeploy
+  stat:
+    path: "{{ rollback_path }}"
+  register: post_sym_rollback
+
+#**********Print any Messages 
+- name: Print Message when Deploy is run multiple times without new Rel
+  debug: 
+    msg: "This code has already been deployed. The symlinks will not be modified"
+  when:
+   - sym_latest.stat.lnk_source == release
+
+- name: Show latest Symlink Release Post Deploy
+  debug: 
+    msg: "PostDeploy: latest source -> {{ post_sym_latest.stat.lnk_source }}"
+  when:
+    - sym_latest.stat.lnk_source != release
+
+- name: Show rollback Symlink Release Post Deploy
+  debug: 
+    msg: "PostDeploy: rollback source -> {{ post_sym_rollback.stat.lnk_source }}"
+  when:
+    - sym_latest.stat.lnk_source != release
+
+
+

@@ -1,0 +1,14 @@
+---
+- name: Include Edit Vhosts
+  include: edit-vhosts.yml
+  when: (vhosts == "edit") or
+        (vhosts == "both")
+
+
+- name: Include Public Vhosts
+  include: public-vhosts.yml
+  when: (vhosts == "public") or
+        (vhosts == "both")
+
+
+

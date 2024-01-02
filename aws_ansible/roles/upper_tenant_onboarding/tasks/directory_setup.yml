@@ -1,0 +1,119 @@
+---
+- name: Create the tenant directory (if it doesnt already exist)
+  file:
+    path: /etc/httpd/conf.d/tenants
+    state: directory
+    mode: 0700
+    group: root
+    owner: root
+  delegate_to: web_server_group
+
+#Non-Prod
+- name: Create tenant docroots (non-prod)
+  file:
+    path: /var/www/html/wwwroot/{{ env }}.{{ tenant_alias }}/dummy
+    owner: apache
+    group: apache
+    mode: 0770
+    state: directory
+  delegate_to: web_server_group
+  when: env == "staging" or "testint"
+
+- name: Create docroot symlink (nonprod)
+  file:
+    src: /var/www/html/wwwroot/{{ env }}.{{ tenant_alias }}_gov_build/dummy
+    dest: /var/www/html/wwwroot/{{ env }}.{{ tenant_alias }}/docroot
+    state: link
+    owner: apache
+    group: apache
+    force: yes
+  delegate_to: web_server_group
+  when: env == "staging" or "testint"
+
+- name: Create files directory in sites-files (non-prod)
+  file:
+    path: /var/www/sites-files/{{ env }}.{{ tenant_alias }}_gov_build/files
+    owner: apache
+    group: apache
+    mode: 0770
+    state: directory
+  delegate_to: web_server_group
+  when: env == "staging" or "testint"
+
+
+- name: Create files/tmp directory
+  file:
+    path: /var/www/sites-files/{{ env }}.{{ tenant_alias }}_gov_build/tmp
+    state: directory
+    mode: 0700
+    owner: apache
+    group: apache
+  delegate_to: web_server_group
+  when: env == "staging" or "testint"
+
+- name: Create files/private directory
+  file:
+    path: /var/www/sites-files/{{ env }}.{{ tenant_alias }}_gov_build/private
+    state: directory
+    mode: 0700
+    owner: apache
+    group: apache
+  delegate_to: web_server_group
+  when: env == "staging" or "testint"
+
+
+#Prod
+- name: Create tenant docroots (prod)
+  file:
+    path: /var/www/html/wwwroot/{{ tenant_alias }}/dummy
+    owner: apache
+    group: apache
+    mode: 0770
+    state: directory
+  delegate_to: web_server_group
+  when: env == "production" or "prod"
+
+- name: Create docroot symlink (nonprod)
+  file:
+    src: /var/www/html/wwwroot/{{ tenant_alias }}_gov_build/dummy
+    dest: /var/www/html/wwwroot/{{ tenant_alias }}/docroot
+    state: link
+    owner: apache
+    group: apache
+    force: yes
+  delegate_to: web_server_group
+  when: env == "production" or "prod"
+
+
+- name: Create files directory in sites-files (non-prod)
+  file:
+    path: /var/www/sites-files/{{ tenant_alias }}_gov_build/files
+    owner: apache
+    group: apache
+    mode: 0770
+    state: directory
+  delegate_to: web_server_group
+  when: env == "production" or "prod"
+
+- name: Create files/tmp directory
+  file:
+    path: /var/www/sites-files/{{ tenant_alias }}_gov_build/tmp
+    state: directory
+    mode: 0700
+    owner: apache
+    group: apache
+  delegate_to: web_server_group
+  when: env == "production" or "prod"
+
+
+- name: Create files/private directory
+  file:
+    path: /var/www/sites-files/{{ tenant_alias }}_gov_build/private
+    state: directory
+    mode: 0700
+    owner: apache
+    group: apache
+  delegate_to: web_server_group
+  when: env == "production" or "prod"
+
+

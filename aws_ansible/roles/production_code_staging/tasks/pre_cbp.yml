@@ -1,0 +1,69 @@
+---
+
+#- name: Creates directory /home/bamboo/quan/cbp_gov_build/docroot/profiles/Rhel1000
+#  file:
+#    path: "/home/bamboo/quan/{{ tenant_name }}_gov_build/docroot/profiles/Rhel{{ code_release }}"
+#    state: directory
+#    owner: bamboo
+#    group: bamboo
+#    mode: 0775
+#    recurse: yes
+#
+#
+- name: Remove exisitng cpb_gov_build_pre and Copy clone cbp_gov_build to cbp_gov_build_pre
+  shell: |
+    (cd /home/bamboo/quan; rm -rf cbp_gov_build_pre)
+    cp -rpf /home/bamboo/quan/cbp_gov_build {{ cbp_gov_build_pre }}
+  register: shell_output
+- debug:
+    msg: "{{ shell_output }}"
+  become: no
+
+- name: Copy cbp_gov clone to cbp_gov_build_pre/docroot/profiles
+  shell: |
+    mv {{ cbp_gov_build_pre }}/docroot/profiles/cbp_gov {{ cbp_gov_build_pre}}/docroot/profiles/cbp_gov.bak
+    cp -rpf /home/bamboo/quan/cbp_gov {{ cbp_gov_build_pre }}/docroot/profiles/
+  register: shell_output
+- debug:
+    msg: "{{ shell_output }}"
+  become: no
+
+- name: Copy settings files to sites/default
+  shell: |
+    cp -rpf /home/bamboo/quan/cbp_settings/prod/setting* {{ cbp_gov_build_pre }}/docroot/sites/default/
+  register: shell_output
+- debug:
+    msg: "{{ shell_output }}"
+  become: no
+#
+- name: Remove .git directory and contents
+  file:
+    path: "{{ cbp_gov_build_pre }}/.git/"
+    path: "{{ cbp_gov_build_pre }}/docroot/profiles/{{ tenant_name }}_gov/.git/"
+    state: absent
+  register: shell_output
+  loop:
+    - .git/
+    - /docroot/profiles/{{ tenant_name }}_gov/.git/
+  
+- debug:
+    msg: "{{ shell_output }}"
+#
+
+- name: Remove .gitignore files
+  file:
+    path: "{{ cbp_gov_build_pre }}/{{ item | quote }}"
+    #path: "{{ cbp_gov_build_pre }}/.gitmodules"
+    #path: "{{ cbp_gov_build_pre }}/docroot/profiles/{{ tenant_name }}_gov/.gitignore"
+    #path: "{{ cbp_gov_build_pre }}/docroot/profiles/{{ tenant_name }}_gov/.gitmodules"
+    state: absent
+  register: shell_output
+  loop:
+    - .gitignore
+    - .gitmodules
+    - /docroot/profiles/{{ tenant_name }}_gov/.gitignore
+    - /docroot/profiles/{{ tenant_name }}_gov/.gitmodules
+  
+- debug:
+    msg: "{{ shell_output }}"
+#

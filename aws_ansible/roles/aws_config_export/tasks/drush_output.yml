@@ -1,0 +1,25 @@
+---
+- name: Show General Job Info
+  debug:
+    msg: "Export Config for {{ tenant }} Environment: {{ source_env }}"
+      
+#- name: Show Drush CR Output
+#  debug:
+#    msg: "{{ drush_cr_result.stderr_lines }}"
+
+- name: Show Drush Config Export Output
+  debug:
+    msg: "{{ drush_config_exp_result.stderr_lines }}"
+  when: 
+    - drush_config_exp_result.rc == 0
+    - task_status is defined
+    - task_status == "OK"
+  
+- name: Show Config Export Tar Path
+  debug:
+    msg: "{{ akamai_config_path }}/{{ tar_file }}"
+  when: 
+    - drush_config_exp_result.rc == 0
+    - task_status is defined
+    - task_status == "OK"
+

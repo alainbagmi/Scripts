@@ -1,0 +1,29 @@
+schoolsafety:
+  project_name: WSS
+  alias: schoolsafety
+  drupal_version: 8
+  akamai_group: 144852
+  akamai_path: /183946/schoolsafety
+  newrelic_id: 000000000
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint.schoolsafety.gov
+      public: testint.schoolsafety.gov
+    akamai_cpcode:
+      edit: 853544
+      public: 853542
+  staging:
+    site_urls:
+      edit: edit-staging.schoolsafety.gov
+      public: staging.schoolsafety.gov
+    akamai_cpcode:
+      edit: 853544
+      public: 853542
+  prod:
+    site_urls:
+      edit: edit.schoolsafety.gov
+      public: www.schoolsafety.gov
+    akamai_cpcode:
+      edit: 853543
+      public: 853541

@@ -1,0 +1,56 @@
+---
+- name: set wsrep_desync to one
+  mysql_variables:
+    variable: wsrep_desync
+    value: 1
+    login_host: "{{ source_db_ip }}"
+    login_password: "{{ db_pass }}"
+    login_user: "{{ db_user }}"
+  when: 
+    - source_env != "testint"
+    - target_env == "production" or target_env == "staging"    
+  ignore_errors: true
+
+# Typical DB Refresh Steps
+- name: Set Source DB File
+  set_fact:
+    source_db_file: "{{ source_db_name }}_{{ current_run_timestamp.stdout }}.sql"
+  when: netstorage_target_flag == 0
+
+- name: Dump Source Database
+  shell: "mysqldump --single-transaction -h{{ source_db_ip }} -u{{ db_user }} -p{{ db_pass }} {{ source_db_name }} > {{ db_refresh_path }}{{ source_db_file }}"
+  when: netstorage_target_flag == 0
+
+# To Netstorage DB Refresh Steps
+- name: Set Source DB File Netstorage
+  set_fact:
+    source_db_file: "{{ site_alias }}_{{ source_env }}_db_snapshot-{{ current_run_timestamp.stdout }}.sql.gz"
+  when: netstorage_target_flag == 1
+
+- name: Dump Source Database Netstorage
+  shell: "mysqldump --single-transaction -h{{ source_db_ip }} -u{{ db_user }} -p{{ db_pass }} {{ source_db_name }} | gzip > {{ db_refresh_path }}{{ source_db_file }}"
+  when: netstorage_target_flag == 1
+
+- name: Change the group and owner to bamboo
+  file:
+    path: "{{ db_refresh_path }}{{ source_db_file }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+
+- name: Sync SQL File to Netstorage
+  shell: "rsync -av -e 'ssh -i /home/bamboo/.ssh/id_rsa2 -p 8002' {{ db_refresh_path }}{{ source_db_file }} sshacs@172.22.84.11:{{ akamai_path }}"
+  become: no
+  when:  netstorage_target_flag == 1
+
+- name: set wsrep_desync to zero
+  mysql_variables:
+    variable: wsrep_desync
+    value: 0
+    login_host: "{{ source_db_ip }}"
+    login_password: "{{ db_pass }}"
+    login_user: "{{ db_user }}"
+  when:
+    - source_env != "testint"
+    - target_env == "production" or target_env == "staging"
+  tags: skip

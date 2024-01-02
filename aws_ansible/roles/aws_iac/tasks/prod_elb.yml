@@ -1,0 +1,70 @@
+---
+- name: Create a target group for Production
+  elb_target_group:
+    name: production-asg-target
+    protocol: https
+    port: 443
+    vpc_id: vpc-6668f802
+    health_check_path: /
+    health_check_timeout: 10
+    healthy_threshold_count: 3
+    health_check_interval: 15
+    deregistration_delay_timeout: 60
+    successful_response_codes: "200-299"
+    unhealthy_threshold_count: 10
+    state: present
+
+
+- name: Create an ELB for Production
+  elb_application_lb:
+    name: "production-elb"
+    state: present
+    security_groups:
+      - sg-0dab6357aee26225d
+    subnets:
+      - subnet-53f7a525
+      - subnet-d59ccfb1
+      - subnet-bf7cc8e6
+    listeners:
+      - Protocol: HTTPS
+        Port: 443
+        SslPolicy: ELBSecurityPolicy-2016-08
+        Certificates: 
+          - CertificateArn: arn:aws-us-gov:iam::626894281569:server-certificate/wcm_cert
+        DefaultActions:
+          - Type: forward
+            TargetGroupName: production-asg-target
+
+
+#Need to create initial prod ami
+#Add name tag to propogate to snapshots 
+#Setting block devices is currently bugged, per https://github.com/ansible-collections/community.aws/issues/251
+#and https://github.com/ansible-collections/community.aws/issues/230
+- name: Create Launch Template for Production
+  ec2_launch_template:
+    name: "production-asg-template"
+    state: present
+    image_id: "ami-0305b3a4c4259fde0"
+    instance_type: c5.xlarge
+    key_name: wcm-user
+    security_groups: 
+      - Private Subnet Access
+      - EFS
+      - ELB_access
+    user_data: "IyEvYmluL2Jhc2gKZXhlYyA+ID4odGVlIC92YXIvbG9nL3dlYi11c2VyLWRhdGEubG9nfGxvZ2dlciAtdCB1c2VyLWRhdGEgKSAyPiYxCmV4cG9ydCBBV1NfQ09ORklHX0ZJTEU9Ii9ldGMvYXdzL2NvbmZpZyIKc3VkbyBzeXN0ZW1jdGwgc3RhcnQgY2FjaGVmaWxlc2QgbmZzCnN1ZG8gbW91bnQgLXQgbmZzIC1vIG5mc3ZlcnM9NC4xLHJzaXplPTEwNDg1NzYsd3NpemU9MTA0ODU3NixoYXJkLHRpbWVvPTYwMCxyZXRyYW5zPTIsbm9yZXN2cG9ydCxmc2Mgc3RhZ2luZy1hc3NldHMud2NtLmNvbTovIC92YXIvd3d3L3NpdGVzLWZpbGVzCnN1ZG8gbW91bnQgL2Rldi9udm1lMm4xIC92YXIvd3d3L2h0bWwKc3VkbyBtb3VudCAtdCBuZnMgLW8gbmZzdmVycz00LjEscnNpemU9MTA0ODU3Nix3c2l6ZT0xMDQ4NTc2LGhhcmQsdGltZW89NjAwLHJldHJhbnM9Mixub3Jlc3Zwb3J0LGZzYyBzdGFnaW5nLXZob3N0cy53Y20uY29tOi8gL2V0Yy9odHRwZC9jb25mLmQKY2F0ID4vZXRjL3N5c2NvbmZpZy9odHRwZCA8PEVPTApMQU5HPUMKZGJfc2VydmVyPXN0YWdpbmctZGIud2NtLmNvbSAKZGJfcG9ydD0zMzA2Cm1lbWNhY2hlX3NlcnZlcjE9c3RhZ2luZy1jYWNoZS53Y20uY29tOjExMjExCnNvbHJfc2VydmVyPXN0YWdpbmctc29sci53Y20uY29tCkVPTAplY2hvICJuZXdyZWxpYy5hcHBuYW1lID0gc3RhZ2luZyBkcnVwYWwgc2l0ZXMiID4+IC9ldGMvcGhwLmQvbmV3cmVsaWMuaW5pCnN1ZG8gc3dhcG9uIC9yb290L3N3YXBmaWxlCmNkIC92YXIvd3d3L2h0bWwvd3d3cm9vdC8gJiYgbHMgfCB4YXJncyAtUDE1IC1Je30gZ2l0IC0tZ2l0LWRpciB7fS8uZ2l0IC0td29yay10cmVlPSRQV0Qve30gcHVsbApjYXQgPj4vZXRjL2hvc3RzIDw8RU9MCjEwLjAuNC45NyAgICAgIHRzYS10aWUtZHRhYXMKMTAuMC40Ljk3ICAgICAgdHNhLXRpZS1wcm9kCkVPTApzdWRvIHNlcnZpY2UgY2FjaGVmaWxlc2QgcmVzdGFydCAmJiBzZXRlbmZvcmNlIDAgJiYgc2VydmljZSBodHRwZCBzdGFydA=="
+#    block_device_mappings:
+#      device_name: /dev/sdc
+#      ebs:
+#        delete_on_termination: yes
+#        snapshot_id: snap-09b3111a8f0d78238
+#        volume_type: gp3
+    
+    iam_instance_profile: ec2_get_IAM_user_sshkey
+    tags:
+      Name: production-WebApp-ASG
+      tower_managed: "true"
+      environment: production
+   
+#https://github.com/ansible-collections/community.aws/issues/251
+#https://github.com/ansible-collections/community.aws/issues/230
+

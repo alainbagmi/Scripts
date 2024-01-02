@@ -1,0 +1,45 @@
+---
+# tasks file for roles/db_mgmt
+
+- name: Install epel and mysql repos
+  yum:
+    name: "{{ repos }}"
+    state: present
+  vars:
+    repos:
+    - https://dl.fedoraproject.org/pub/epel/{{ EPEL_REPO }}
+    - https://dev.mysql.com/get/{{ MYSQL_REPO }}
+
+- name: Install dependency packages
+  package:
+    name: "{{ DEPENDENCY_PACKAGES }}"
+
+- name: Create mysql database
+  mysql_db:
+    name: foo
+
+- name: Removes anonymous user account for localhost
+  mysql_user:
+    name: ''
+    host: localhost
+    state: absent
+  no_log: yes
+
+- name: Remove all anonymous user accounts
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+  no_log: yes
+    
+- name: Specify grants composed of more than one word
+  mysql_user:
+    name: replication
+    password: "{{ BAMBOO_DB_PASS }}"
+    #password: '*093780C5844C5A791353FD865F4004032131BCBB'
+    priv: 'jira.*:ALL'
+    state: present
+    append_privs: yes
+  no_log: yes
+
+

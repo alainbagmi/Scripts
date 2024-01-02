@@ -1,0 +1,149 @@
+---
+#--------------- Set Jump IPs ---------------
+- name: Set Jump IP as Fact
+  set_fact:
+    jump_ip: "{{ groups['tower'][0] }}"
+    docking_path: "/data/bamboo_scripts/deploy/test/docking_bay/{{ site_alias }}_files/files/"
+    target_site_alias: ""
+
+- name: Set Target Site Alias
+  set_fact:
+    target_site_alias: "{{ site_alias }}"
+  when:
+    - target_site is defined
+    - target_site == "default"
+
+- name: Set Target Site Alias alternative
+  set_fact:
+    target_site_alias: "{{ related_alias }}"
+  when:
+    - target_site is defined
+    - target_site == "alternative"
+
+- name: Set Netstorage Flags (Default is False)
+  set_fact:
+    netstorage_source_flag: 0
+    netstorage_target_flag: 0
+
+- name: Set AWS Flags (Default is False)
+  set_fact:
+    aws_target_flag: 0
+
+- name: Set NetStorage Source Flag to True
+  set_fact:
+    netstorage_source_flag: 1
+    source_web_ip: "{{ groups['tower'][0] }}"
+    asset_prefix_source: ""
+  when:
+    - source_env is defined 
+    - source_env == "netstorage" or source_env == "netstorage_raw"
+
+- name: Set Netstorage Target Flag True
+  set_fact:
+    netstorage_target_flag: 1
+    target_web_ip: "{{ groups['tower'][0] }}"
+    asset_prefix_target: ""
+  when:
+    - target_env is defined 
+    - target_env == "netstorage" or target_env == "netstorage_split"
+
+#--------------- Set Testint IPs ---------------
+- name: Set testint web/db IP, docroot prefix (source env) as Fact
+  set_fact:
+    source_web_ip: "{{ groups['testint_web'] }}"
+    source_db_ip: "{{ groups['testint_database'][0] }}"
+    docroot_prefix_source: "/var/www/html/wwwroot/testint."
+    asset_prefix_source: "/var/www/sites-files/testint."
+  when:
+    - source_env is defined
+    - source_env == "testint"
+
+- name: Set testint web/db IP, docroot prefix (target env) as Fact
+  set_fact:
+    target_web_ip: "{{ groups['testint_web'] }}"
+    target_db_ip: "{{ groups['testint_database'][0] }}"
+    docroot_prefix_target: "/var/www/html/wwwroot/testint."
+    asset_prefix_target: "/var/www/sites-files/testint."
+  when:
+    - target_env is defined
+    - target_env == "testint"
+
+#--------------- Set Staging IPs ---------------
+- name: Set staging web/db IP, docroot prefix (source env) as Fact
+  set_fact:
+    source_web_ip: "{{ groups['staging_web'] }}"
+    source_db_ip: "{{ groups['staging_database'][1] }}"
+    docroot_prefix_source: "/var/www/html/wwwroot/staging."
+    asset_prefix_source: "/var/www/sites-files/staging."
+  when:
+    - source_env is defined
+    - source_env == "staging"
+
+- name: Set staging web/db IP, docroot prefix (target env) as Fact
+  set_fact:
+    target_web_ip: "{{ groups['staging_web'] }}"    
+    target_db_ip: "{{ groups['staging_database'][1] }}"
+    docroot_prefix_target: "/var/www/html/wwwroot/staging."
+    asset_prefix_target: "/var/www/sites-files/staging."
+  when:
+    - target_env is defined
+    - target_env == "staging"
+
+#--------------- Set Prod IPs ---------------
+- name: Set production web/db IP, docroot prefix (source env) as Fact
+  set_fact:
+    source_web_ip: "{{ groups['prod_web'] }}"
+    source_db_ip: "{{ groups['prod_database'][1] }}"
+    docroot_prefix_source: "/var/www/html/wwwroot/"
+    asset_prefix_source: "/var/www/sites-files/"
+  when:
+    - source_env is defined
+    - source_env == "production" or source_env == "Production" or source_env == "prod"
+
+- name: Set production web/db IP, docroot prefix (target env) as Fact
+  set_fact:
+    target_web_ip: "{{ groups['prod_web'] }}"
+    target_db_ip: "{{ groups['prod_database'][1] }}"
+    docroot_prefix_target: "/var/www/html/wwwroot/"
+    asset_prefix_target: "/var/www/sites-files/"
+  when:
+    - prod_password is defined
+    - prod_password == "PullThePin"
+    - target_env is defined
+    - target_env == "production" or target_env == "Production"
+
+- name: Refresh Failed With Errors
+  fail:
+    msg: "Target Environment was Prod, but the correct password was not provided"
+  when:
+    - target_env == "production" or target_env == "Production"
+    - prod_password != "PullThePin"
+
+#--------------- Set Refresh Specific Facts ---------------
+- name: Set Source Path
+  set_fact:
+    sitesfiles_path_source: "{{ asset_prefix_source }}{{ site_alias }}_gov_build/"
+    asset_source_path: "{{ asset_prefix_source }}{{ site_alias }}_gov_build/files/"
+    docroot_source: "{{ docroot_prefix_source }}{{ site_alias }}_gov_build/docroot/"
+  when:
+    - source_env != "netstorage"
+    - source_env != "netstorage_raw"
+
+
+
+- name: Set Target path
+  set_fact:
+    asset_target_path: "{{ asset_prefix_target }}{{ target_site_alias }}_gov_build/files/"
+    docroot_target: "{{ docroot_prefix_target }}{{ site_alias }}_gov_build/docroot/"
+    sitesfiles_path: "{{ asset_prefix_target }}{{ target_site_alias }}_gov_build/"
+  when: 
+    - target_env != "netstorage"
+    - target_env != "netstorage_split"
+
+- name: Show Source Web IP
+  debug:
+    msg: "{{ source_web_ip }}"
+
+- name: Show Target Web IP
+  debug:
+    msg: "{{ target_web_ip }}"

@@ -1,0 +1,108 @@
+---
+- name: Show Job ID
+  debug:
+    msg: "{{ tower_job_id }}"
+
+- name: Set empty Email Message
+  set_fact:
+    email_message: []
+    email_status: []
+    email_clear: []
+    email_updb: []
+    email_dl: []
+
+- name: Email Message For PreTask Status
+  set_fact:
+    email_pretask: "{{ pretask_status }}"
+    email_task: "{{ task_status }}"
+
+- name: Send Error Email
+  mail:
+    host: 10.0.10.87
+    port: 25
+    to:
+      - <{{ email_address }}>
+    from: esdowcmmonitoring@hq.dhs.gov
+    subject: "Self-Service Drush Commands Result for Job: {{ tower_job_id }}"
+    body: "{{ lookup('template', 'roles/aws_drush_adhoc/templates/email_error.j2') }}"
+  when:
+    - pretask_status == "Ansible Pre-Task Failed" or task_status == "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+
+#----------------D7 Commands---------------------------------
+- name: Email Message for Drush Status D7
+  set_fact: 
+    email_status: "{{ email_status + drush7_status_result.stdout_lines }}"
+  when: 
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully"
+    - drush_status == "Yes" or drush_status == "yes"
+    - drupal_version == "7"
+
+- name: Email Drush DL D7
+  set_fact:
+    email_dl: "{{ email_dl + drush_dl_result.stderr_lines }}"
+  when:
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully" 
+    - drush_clear == "Yes" or drush_clear == "yes"
+    - drupal_version == "7"
+
+- name: Email Drush Clear D7
+  set_fact:
+    email_clear: "{{ email_clear + drush7_clear_result.stderr_lines }}"
+  when:
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully" 
+    - drush_clear == "Yes" or drush_clear == "yes"
+    - drupal_version == "7"
+
+- name: Email Drush UPDB D7
+  set_fact:
+    email_updb: "{{ email_updb + drush7_updb_result.stderr_lines }}"
+  when:
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully"
+    - drush_updb == "Yes" or drush_updb == "yes"
+    - drupal_version == "7"
+
+#----------------D8 Commands---------------------------------
+- name: Email Message for Drush Status
+  set_fact: 
+    email_status: "{{ email_status + drush_status_result.stdout_lines }}"
+  when: 
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully"
+    - drush_status == "Yes" or drush_status == "yes"
+    - drupal_version == "8"
+
+- name: Email Drush Clear
+  set_fact:
+    email_clear: "{{ email_clear + drush_clear_result.stderr_lines }}"
+  when:
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully" 
+    - drush_clear == "Yes" or drush_clear == "yes"
+    - drupal_version == "8"
+
+- name: Email Drush UPDB
+  set_fact:
+    email_updb: "{{ email_updb + drush_updb_result.stderr_lines }}"
+  when:
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully"
+    - drush_updb == "Yes" or drush_updb == "yes"
+    - drupal_version == "8"
+
+- name: Send an email
+  mail:
+    host: 10.0.10.87
+    port: 25
+    to:
+      - <{{ email_address }}>
+    from: esdowcmmonitoring@hq.dhs.gov
+    subject: "AdHoc Drush Commit Results for Job: {{ tower_job_id }}"
+    body: "{{ lookup('template', 'roles/aws_drush_adhoc/templates/email_template.j2') }}"
+  when:
+    - pretask_status == "OK"
+    - task_status == "Ansible Task Finished Successfully" 
+    - email_address is defined

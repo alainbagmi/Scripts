@@ -1,0 +1,70 @@
+---
+- name: Set git remote for gov repo
+  shell: "cd {{ working_dir }}/initial_repos/{{ gov_repo }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git init
+    - git remote add origin https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ gov_repo }}.git
+    - git add -A
+    - git commit -m 'Initial Profile commit'
+    - git push origin master
+    - git branch -l develop
+    - git push origin develop
+    - git branch -l security
+    - git push origin security
+    - git branch -l live
+    - git push origin live
+  when: '"gov_absent" in repo_status'
+
+#stashprofile = tenant_gov
+#stashbuild = 
+- name: Set git for gov_build repo
+  shell: "cd {{ working_dir }}/initial_repos/{{ govbuild_repo }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git init
+    - git remote add origin https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ govbuild_repo }}.git
+    - cd docroot/profiles/
+    - git submodule add https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ gov_repo }}.git
+    - cd {{ working_dir }}/initial_repos/{{ govbuild_repo }}
+    - git add -A
+    - git commit -m 'Initial Profile commit'
+    - git push origin master
+    - git branch -l develop
+    - git push origin develop
+    - git branch -l security
+    - git push origin security
+    - git branch -l live
+    - git push origin live
+  when: '"govbuild_absent" in repo_status'
+
+- name: Set git for settings repo
+  shell: "cd {{ working_dir }}/initial_repos/settingstemplates && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git init
+    - git remote add origin https://maestro.dhs.gov/stash/scm/{{ stash_project }}/{{ settings_repo }}.git
+    - git add -A
+    - git commit -m 'Initial Profile commit'
+    - git push origin master
+  when: '"settings_absent" in repo_status'
+
+- name: Set git for combo repo
+  shell: "cd {{ working_dir }}/initial_repos/combotemplate/{{ combo_repo }} && {{ item }}"
+  become: yes
+  become_user: awx
+  with_items:
+    - git init
+    - git remote add origin https://maestro.dhs.gov/stash/scm/wcmaws/{{ combo_repo }}.git
+    - git commit --allow-empty -m 'Initial Profile commit'
+    - git push origin master
+    - git branch -l develop
+    - git push origin develop
+    - git branch -l security
+    - git push origin security
+    - git branch -l live
+    - git push origin live
+  when: '"combo_absent" in repo_status'

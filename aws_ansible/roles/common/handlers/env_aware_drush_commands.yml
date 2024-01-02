@@ -1,0 +1,34 @@
+---
+# Drush Commands: to get the correct drush cc/rr commands, notify: "drush cache registry {{ drupal_version }}" ansible is so fun :)
+
+- name: Drush Update Database
+  command: "/usr/local/bin/drush --root={{ tenant_path }} updb -y"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush update database"
+  become: yes
+  become_user: apache
+
+
+- name: Drush Clear Cache and cr (8)
+  command: "/usr/local/bin/drush --root={{ tenant_path }} {{ item }}"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush cache registry 8"
+  become: yes
+  become_user: apache
+  with_items:
+    - cr
+
+- name: Drush Clear Cache and Rebuild Registry 7
+  command: "/usr/local/bin/drush --root={{ tenant_path }} {{ item }}"
+  with_items:
+    - "@none dl registry_rebuild -y"
+    - cc all
+    - rr
+  become: yes
+  become_user: apache
+  ignore_errors: yes
+  run_once: true
+  listen: "drush cache registry 7"
+

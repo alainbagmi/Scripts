@@ -1,0 +1,39 @@
+---
+
+yum_packages:
+  - mysql
+  - wget
+  - vim
+  - httpd24u-mod_ssl
+  - httpd24u-filesystem
+  - httpd24u-tools
+  - php74-opcache
+  - php74-pecl-imagick
+  - php74-pdo
+  - php74-tidy
+  - mod_php74
+  - php74-dba
+  - php74-pecl-msgpack
+  - php74-soap
+  - php74-mbstring
+  - php74-pecl-memcached
+  - php74-ldap
+  - php74-gd
+  - php74-common
+  - php74-xmlrpc
+  - php74-bcmath
+  - php74-xml
+  - php74-sodium
+  - php74-pecl-igbinary
+  - php74-devel
+  - php74-json
+  - php74-process
+  - php74-cli
+  - php74-pecl-zip
+  - elinks
+  - php74-mysqlnd
+  - nfs-utils
+  - cachefilesd
+  - perl-devel
+  - newrelic-infra
+  - newrelic-php5

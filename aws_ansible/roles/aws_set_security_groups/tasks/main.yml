@@ -1,0 +1,18 @@
+- name: create security groups
+  ec2_group:
+    name: "Ansible Created"
+    description: sg with rule descriptions
+    vpc_id: vpc-6668f802
+    region: us-gov-west-1
+    state: present
+    rules:
+      - proto: tcp
+        ports:
+          - 80
+        cidr_ip: 0.0.0.0/0
+        rule_desc: allow all on port 80
+    rules_egress:
+      - proto: tcp
+        from_port: 80
+        to_port: 80
+        group_id: 626894281569/sg-07652b3dd9224b929/Akamai SiteShield Testint

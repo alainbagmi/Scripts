@@ -1,0 +1,2 @@
+Could not execute Write_rows_v1 event on table femad8_prod.search_index; Duplicate entry 'cross-218497-en-node_search' for key 'PRIMARY', Error_code: 1062; handler error HA_ERR_FOUND_DUPP_KEY; the event's master log mysql-bin.010680, end_log_pos 555629175
+Could not execute Write_rows_v1 event on table femad8_prod.search_index; Duplicate entry 'reference-218497-en-node_search' for key 'PRIMARY', Error_code: 1062; handler error HA_ERR_FOUND_DUPP_KEY; the event's master log mysql-bin.010680, end_log_pos 555629543

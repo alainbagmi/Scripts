@@ -1,0 +1,29 @@
+uscisd8:
+  project_name: USCIS
+  alias: uscisd8
+  drupal_version: 8
+  akamai_group: 4935
+  akamai_path: /183946/uscis
+  newrelic_id: 137833368
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit.testint.uscis.gov
+      public: testint.uscis.gov
+    akamai_cpcode:
+      edit: 201750
+      public: 201749
+  staging:
+    site_urls:
+      edit: edit.staging.uscis.gov
+      public: taging.uscis.gov
+    akamai_cpcode:
+      edit: 201750
+      public: 201749
+  prod:
+    site_urls:
+      edit: edit.uscis.gov
+      public: www.uscis.gov
+    akamai_cpcode:
+      edit: 245648
+      public: 34357

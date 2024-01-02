@@ -1,0 +1,3 @@
+{
+    "Expression": "SELECT configuration.alarmName WHERE resourceType = \'AWS::CloudWatch::Alarm\' AND configuration.dimensions.name = \'InstanceId\' AND configuration.dimensions.value = \'{{ ec2_id }}\'"
+}

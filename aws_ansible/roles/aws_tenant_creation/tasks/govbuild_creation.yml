@@ -1,0 +1,65 @@
+---
+- name: Create Gov build and run drush make
+  block:
+    - name: Create the govbuild directory
+      file:
+        path: "{{ working_dir }}/initial_repos/{{ govbuild_repo }}/"
+        state: directory
+        owner: awx
+        group: awx
+        mode: 0700
+        recurse: yes
+
+    - name: Reregister the newly created directory
+      stat:
+        path: "{{ working_dir }}/initial_repos/{{ govbuild_repo }}/"
+      register: govbuild_repo_reg
+
+    - name: Run Drush Make
+      shell: "/usr/local/bin/drush make {{ working_dir }}/initial_repos/{{ gov_repo }}/{{ gov_repo }}.make.yml {{ working_dir }}/initial_repos/{{ govbuild_repo }}/docroot --force-complete --concurrency=1 --force-gitinfofile -y"
+      register: drush_make_result
+
+    - name: Show the output of drush make
+      debug:
+        msg: "{{ drush_make_result.stdout }}"
+
+    - name: Remove the .git files inside _gov_build
+      find:
+        paths: "{{ working_dir }}/initial_repos/{{ govbuild_repo }}/docroot/"
+        hidden: yes
+        patterns: "*.git"
+        file_type: directory
+        recurse: yes
+      register: gitbuild_to_delete
+
+    - name: Delete the .git stuff
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ gitbuild_to_delete.files }}"
+      become: yes
+
+    - name: Files to Ansible_Tower
+      file:
+        path: "{{ working_dir }}/initial_repos/{{ govbuild_repo }}/"
+        owner: awx
+        group: awx
+        mode: 0700
+        recurse: yes
+
+    - name: Create the config sync directory
+      file:
+        path: "{{ working_dir }}/initial_repos/{{ gov_repo }}/config/sync/"
+        owner: awx
+        group: awx
+        mode: 0700
+        state: directory
+
+    - name: Create config sync htaccess file
+      template:
+        src: '../files/.htaccess'
+        dest: '{{ working_dir }}/initial_repos/{{ gov_repo }}/config/sync/.htaccess'
+        owner: awx
+        group: awx
+        
+      

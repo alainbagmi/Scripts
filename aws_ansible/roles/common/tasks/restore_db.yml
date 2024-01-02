@@ -1,0 +1,55 @@
+---
+- include: get_database_name.yml
+  when: database is not defined
+
+
+- name: Sync Pre-Deployment Database from Jumpbox to DB Host
+  synchronize:
+    src: "/data/bamboo_scripts/deploy/test/autodumps/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+    dest: "/home/bamboo/"
+  delegate_to: 172.22.58.21
+  when: 
+    - 'dbhosts in group_names'
+    - deployment is defined
+    - rollback is defined
+
+
+- name: Gunzip Database Backup
+  command: "gunzip -f /home/bamboo/{{ tenant }}{{ timestamp.stdout }}.sql.gz"
+  when: 'dbhosts in group_names'
+
+    
+- name: Drop Database
+  mysql_db:
+    state: absent
+    name: "{{ database }}"
+    name: testdb
+    login_user: root
+    login_password: "{{ root_pass }}"
+    login_host: localhost
+  tags:
+    - real
+  when: 'dbhosts in group_names'
+  
+- name: Recreate Database
+  mysql_db:
+    state: present
+    name: "{{ database }}"
+#    name: testdb
+    login_user: root
+    login_password: "{{ root_pass }}"
+    login_host: localhost
+  when: 'dbhosts in group_names'
+
+- name: Import Database File
+  mysql_db:
+    state: import
+    name: "{{ database }}"
+#    name: testdb
+    login_user: root
+    login_password: "{{ root_pass }}"
+    login_host: localhost
+    target: "/home/bamboo/{{ tenant }}{{ timestamp.stdout }}.sql"
+#    target: "/home/bamboo/testdb.sql"
+  when: 'dbhosts in group_names'  
+#  notify: "drush commands" 

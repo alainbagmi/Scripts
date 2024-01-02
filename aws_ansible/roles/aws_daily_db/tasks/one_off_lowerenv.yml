@@ -1,0 +1,25 @@
+---
+- name: Do one offs
+  block:
+    - name: Set facts
+      set_fact:
+        tmp_file_name: "daily_dhsd8_testint_{{ current_run_timestamp.stdout }}.sql.gz"
+        tmp_path: "/data/backup/db/daily/lower_one_offs"
+        akamai_db_tmp_path: "/183946/dhs/daily_db_backups/dhsd8_test"
+    
+    - name: Dump SQL Database
+      mysql_db:
+        name: "dhsd8_test"
+        state: dump
+        single_transaction: yes
+        target: "{{ tmp_path }}/{{ tmp_file_name }}"
+        login_host: "testint-db-reader.wcm.com"
+        login_user: root
+        login_password: "My%qL3sd0"
+
+    - name: Rsync DB data to Netstorage
+      shell: "rsync -avz --delete -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ tmp_path }}/{{ tmp_file_name }} sshacs@dhswcms.upload.akamai.com:{{ akamai_db_tmp_path }}"
+      become: yes
+      become_method: sudo
+      register: rsync_command
+

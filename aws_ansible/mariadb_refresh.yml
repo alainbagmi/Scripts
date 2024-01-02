@@ -1,0 +1,37 @@
+---
+- hosts: tower
+  become: yes
+  become_method: sudo
+  remote_user: bamboo
+
+  vars_files:
+    - group_vars/mysql_user_creds.yml
+
+  vars: 
+    db_refresh: true
+    in_progress: "0"
+    pretask_status: ""
+    task_status: ""
+    target_backup: ""
+
+  pre_tasks:
+    - name: Attempt to Perform PreTasks
+      block:
+        - include: roles/common/tasks/get_tenant_vars.yml
+        - include: roles/common_refresh/tasks/main.yml
+        - shell: 'date +%Y-%m-%d-%Hh%Mm%Ss'
+          register: current_run_timestamp
+        - set_fact:
+            pretask_status: "OK"
+      rescue:
+        - set_fact:
+            pretask_status: "Ansible Pre-Task Failed"
+            task_status: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/db_refresh/tasks/email_tenant.yml
+          when: email_address is defined
+        - name: Fail Task because of Pre-Task Errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+  
+  roles:
+    - db_refresh

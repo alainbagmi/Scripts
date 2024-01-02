@@ -1,0 +1,54 @@
+---
+- name: "Cleaning up directories"
+  debug:
+    msg: "The caadi form script moves emptied form submission directories to the /path-to-forms/completed/ directory. This creates a log called /path-to-forms/completed/year/month/completed_submissions and updates it with a list of those completed directories from the day before, along with their creation timestamps. It then removes them to prevent clutter."
+
+
+- name: "Get list of yestereday's empty submission directories"
+  find:
+    paths: "{{ formpath }}"
+#    patterns: "{{ yesterday.stdout }}_*"
+    age: -1d
+    file_type: directory
+    age_stamp: mtime
+    excludes: 'logs'
+  register: yesterdays_completed
+
+- debug: 
+    msg: "{{ yesterdays_completed.matched }} and {{ formpath }}"
+
+- name: Send an email
+  mail:
+    host: 10.0.10.87
+    port: 25
+    to:
+      - Ryan Tackett <ryan.tackett@associates.hq.dhs.gov>
+      - Eric Fisher <eric.fisher@associates.hq.dhs.gov>
+      - Michael Blackburn <michael.blackburn@associates.hq.dhs.gov>
+      - Chan Ha <chan.ha@associates.hq.dhs.gov>
+      - Paul Lofthus <paul.lofthus@associates.hq.dhs.gov>
+      - Kyle Day <kyle.day@associates.hq.dhs.gov>
+    from: esdowcmmonitoring@hq.dhs.gov
+    subject: "Number of CAADI 7001 forms submitted"
+    body: There were {{ yesterdays_completed.matched }} 7001 submissions yesterday.
+  when: formversion == "7001" and env == "prod" 
+
+- name: "Log the names of these empty directories into a file before they are removed"
+  lineinfile:
+    path: "{{ formpath }}/completed/{{ yesterday.stdout[:4] }}/{{ yesterday.stdout[4] }}{{ yesterday.stdout[5] }}/completed_submissions"
+    create: yes
+    owner: apache
+    group: apache
+    mode: 0770
+    state: present
+    line: "{{ '%Y-%m-%d %H:%M:%S' | strftime(item.mtime) }} {{ item.path }}"
+  loop: "{{ yesterdays_completed.files }}"
+
+
+- name: "Remove yesterday's empty directories once they've been logged"
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ yesterdays_completed.files }}"
+
+

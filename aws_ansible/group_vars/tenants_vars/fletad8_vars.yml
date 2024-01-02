@@ -1,0 +1,29 @@
+fletad8:
+  project_name: FLETC
+  alias: fletad8
+  drupal_version: 8
+  akamai_group: 49644
+  akamai_path: /183946/fletc
+  newrelic_id: 140457853
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit.testint.fleta.gov
+      public: testint.fleta.gov
+    akamai_cpcode:
+      edit: 265341
+      public: 265340
+  staging:
+    site_urls:
+      edit: edit.staging.fleta.gov
+      public: staging.fleta.gov
+    akamai_cpcode:
+      edit: 265341
+      public: 265340
+  prod:
+    site_urls:
+      edit: edit.fleta.gov
+      public: www.fleta.gov
+    akamai_cpcode:
+      edit: 265342
+      public: 117257

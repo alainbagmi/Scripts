@@ -1,0 +1,11 @@
+---
+- name: Add the files symlink
+  file:
+    src: "/var/www/sites-files/{{ tenant_name }}_gov_build/files"
+    dest: "/var/www/html/wwwroot/quan_gov_build/Rel{{ code_release }}/sites/default/files" 
+    owner: apache
+    group: apache
+    state: link
+
+#- name: Clean up
+  

@@ -1,0 +1,24 @@
+---
+##################################################################################################
+# Creating the EC2 istance to use for ami 
+# ################################################################################################
+- hosts: localhost
+  remote_user: ansible_tower
+  gather_facts: yes
+  any_errors_fatal: true
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: False
+
+  roles:
+    - aws_createinstance
+
+  vars:
+    region: "us-gov-west-1"
+    aws_owner_id: "626894281569"
+    ami_name: "platinum*"
+    vpc_id: "vpc-6668f802"
+    inst_type: "t2.medium"
+    ami_subnet: "subnet-b88cdfdc"
+    s_grp: "sg-dac291bc"
+    inst_name: "patching_server"
+    new_ami: "platinum"

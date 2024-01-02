@@ -1,0 +1,63 @@
+---
+- name: Adding settings.php for Staging 
+     copy:
+       src: roles/reference_configs/files/settings.master.staging.php
+       dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/settings.php
+       owner: apache
+       group: apache
+       mode: 0600
+       backup: yes 
+     when: drupalver == 7 and hostgroup == "staging"
+
+   - name: Adding settings.php for staging if website is D8
+     copy:
+       src: roles/reference_configs/files/d8_settings_master.php
+       dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/settings.php
+       owner: apache
+       group: apache
+       mode: 0600
+       backup: yes 
+     when: drupalver == 8 and hostgroup == "staging"
+     
+
+   - name: Adding services.yml for staging if website is D8
+     copy:
+       src: roles/reference_configs/files/d8_services_master.yml
+       dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/services.yml
+       owner: apache
+       group: apache
+       mode: 0700
+       backup: yes 
+     when: drupalver == 8 and hostgroup == "staging"
+
+#Start of testint settings plans
+   - name: Adding settings.php for Testint in D7
+     copy:
+       src: roles/reference_configs/files/settings.master.testint.php
+       dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/settings.php
+       owner: apache
+       group: apache
+       mode: 0600
+       backup: yes 
+     when: drupalver == 7 and hostgroup == "testint"
+
+
+   - name: Adding settings.php for Testint if website is D8
+     copy:
+       src: roles/reference_configs/files/d8_settings_master.php
+       dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/settings.php
+       owner: apache
+       group: apache
+       mode: 0600
+       backup: yes 
+     when: drupalver == 8 and hostgroup == "testint"
+
+   - name: Adding services.yml for Testint if website is D8
+     copy:
+       src: roles/reference_configs/files/d8_services_master.yml
+       dest: /var/www/html/wwwroot/{{ tenantdocroot }}_gov_build/docroot/sites/default/services.yml
+       owner: apache
+       group: apache
+       mode: 0700
+       backup: yes 
+     when: drupalver == 8 and hostgroup == "testint"

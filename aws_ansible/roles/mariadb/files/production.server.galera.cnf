@@ -1,0 +1,104 @@
+#
+# These groups are read by MariaDB server.
+# Use it for options that only the server (but not clients) should see
+#
+# See the examples of server my.cnf files in /usr/share/mysql/
+#
+
+# this is read by the standalone daemon and embedded servers
+[server]
+
+# this is only for the mysqld standalone daemon
+[mysqld]
+port            = 3306
+socket          = /var/lib/mysql/mysql.sock
+datadir=/data/mysql
+log-error=/var/log/mysql/mysqld.log
+pid-file=/data/mysql/mysql.pid
+skip-external-locking
+max_allowed_packet = 64M
+table_open_cache = 512
+thread_cache_size = 50
+log-bin=mysql-bin
+binlog_format=ROW
+server-id       =  {{ hostvars[inventory_hostname]['ansible_hostname'] | regex_replace('.*?(..)$', '\\1') }} 
+safe-user-create=TRUE
+symbolic-links=FALSE
+allow-suspicious-udfs=FALSE
+transaction-isolation = READ-COMMITTED
+bind-address = {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+skip-name-resolve
+max_connections=500
+innodb_buffer_pool_size = 6G
+expire_logs_days=7
+tmpdir=/data/temp
+gtid_domain_id=100
+log-slave-updates=true
+report-host=  {{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+report-port=3306
+open_files_limit=1000000
+#for emoji character set
+innodb_large_prefix = on
+innodb_file_format = barracuda
+innodb_file_per_table = on
+
+#CACHES AND LIMITS#
+tmp-table-size                 = 32M
+max-heap-table-size            = 32M
+query-cache-size               = 8M
+max-connections                = 500
+thread-cache-size              = 50
+open-files-limit               = 65535
+table-definition-cache         = 4096
+table-open-cache               = 10240
+
+#INNODB#
+innodb-flush-method            = O_DIRECT
+innodb-log-files-in-group      = 2
+innodb-log-file-size           = 256M
+innodb-flush-log-at-trx-commit = 0
+innodb-file-per-table          = 1
+#innodb-buffer-pool-size        = 6G
+
+#
+# * Galera-related settings
+#
+# Mandatory settings
+wsrep_on=ON
+wsrep_provider=/usr/lib64/galera/libgalera_smm.so
+wsrep_cluster_address="gcomm://172.22.86.11,172.22.86.14,172.22.86.15"
+default_storage_engine=InnoDB
+innodb_autoinc_lock_mode=2
+log_slave_updates=1
+## Below was added
+sync_binlog=1
+innodb_doublewrite=1
+query_cache_size=0
+wsrep_node_name={{ hostvars[inventory_hostname]['ansible_hostname'] | regex_replace('.*?(..)$', '\'db\\1\'') }}
+wsrep_provider_options="gcache.size = 5G"
+wsrep_cluster_name="wcm_cluster"
+# From http://galeracluster.com/documentation-webpages/dealingwithmultimasterconflicts.html
+# Setting to prevent deadlock issues
+wsrep_retry_autocommit=4
+
+binlog_row_image=minimal
+
+#
+#
+# Optional setting
+#wsrep_slave_threads=1
+#innodb_flush_log_at_trx_commit=0
+
+# this is only for embedded server
+[embedded]
+
+# This group is only read by MariaDB servers, not by MySQL.
+# If you use the same .cnf file for MySQL and MariaDB,
+# you can put MariaDB-only options here
+[mariadb]
+
+# This group is only read by MariaDB-10.1 servers.
+# If you use the same .cnf file for MariaDB of different versions,
+# use this group for options that older servers don't understand
+[mariadb-10.1]
+

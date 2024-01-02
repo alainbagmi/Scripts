@@ -1,0 +1,158 @@
+---
+- name: Create Elasticache for prod
+  elasticache:
+    name: "production-elastic-wcm"
+    state: present
+    engine: memcached
+    cache_engine_version: 1.6.6
+    node_type: cache.m5.large
+    num_nodes: 3
+    cache_port: 11211
+    cache_subnet_group: memcached-wcm
+    security_group_ids:
+      - sg-dac291bc
+#    zone: us-gov-west-1c
+
+
+#Checks if RDS cluster already exists.  Since Ansible doesnt support this, you have to build in a bunch of wrappers and crap to make the cli more script friendly.
+
+- name: check for Aurora DB cluster
+  command: >
+    aws rds describe-db-clusters 
+      --filters Name=db-cluster-id,Values=production-db 
+      --region us-gov-west-1
+  changed_when: false
+  register: aurora_cluster_existence_query
+
+
+#We need to parse the output to see if the cluster exists (AWS retuns json even when when it doesnt exist)
+- name: Parse query so that we can reference if the DB exists later
+  set_fact:
+    aurora_cluster: "{{ aurora_cluster_existence_query.stdout | from_json | json_query('DBClusters[0]')}}"
+
+
+#Check if cluster parameter group already exists.  NOTE - "filters" are not supported in this API
+
+- name: check for Parameter group
+  command: >
+    aws rds describe-db-cluster-parameter-groups 
+      --query DBClusterParameterGroups[].DBClusterParameterGroupName
+  changed_when: false
+  register: parameter_group_existence_query
+
+
+- name: Parse query so we can reference if the parameter group exists later
+  set_fact:
+    parameter_group: "{{ parameter_group_existence_query.stdout | regex_search('(wcm-cluster-parameter-group)')}}"
+
+
+#We cannot use the rds_parameter_group, as it does not support "Cluster Parameter groups", which is what we use.  Thanks Ansible.
+
+- name: Create the Cluster Parameter group
+  command: >
+    aws rds create-db-cluster-parameter-group 
+      --db-cluster-parameter-group-name wcm-cluster-parameter-group
+      --db-parameter-group-family aurora-mysql5.7 
+      --description wcm-cluster-parameter-group
+  when: parameter_group == ''
+
+
+- name: Check values of parameter group.  Retry as it as sometimes there is a delay when creating.
+  command:
+    aws rds modify-db-cluster-parameter-group
+      --db-cluster-parameter-group-name wcm-cluster-parameter-group
+      --parameters "ParameterName='max_allowed_packet',ParameterValue=75000000,ApplyMethod=immediate"
+  register: result
+  until: result is not failed
+  retries: 3
+  delay: 10
+
+
+- name: From https://docs.aws.amazon.com/cli/latest/reference/rds/create-db-cluster-parameter-group.html.  Wait at least five mins for cluster_group to propagate.  This allows Amazon RDS to fully complete the create action before the DB cluster parameter group is used as the default for a new DB cluster.
+  pause:
+    minutes: 5
+  when: parameter_group == ''
+
+#NOTE - Currently, Ansible does not support creating an RDS cluster in the official documentation.  This may change in the future.
+- name: Create the DB cluster
+  command: >
+    aws rds create-db-cluster 
+      --db-cluster-identifier production-db
+      --engine aurora-mysql
+      --db-subnet-group-name webserver-connections 
+      --vpc-security-group-ids sg-dac291bc
+      --storage-encrypted
+      --db-cluster-parameter-group-name wcm-cluster-parameter-group
+      --master-username "root"
+      --master-user-password "My%qL3sd0"
+      --backup-retention-period 7
+      --availability-zones us-gov-west-1a us-gov-west-1b us-gov-west-1c
+      --db-cluster-parameter-group-name wcm-cluster-parameter-group
+      --preferred-maintenance-window Sat:09:00-Sat:09:30
+      --deletion-protection
+  when: aurora_cluster == ''
+
+
+#Check if the clutser have finished creating
+- name: Check if the cluster is still in process creating
+  command: >
+    aws rds describe-db-clusters 
+      --output json 
+      --db-cluster-identifier production-db 
+      --query 'DBClusters[0].Status' 
+  register: cluster_availability
+  until: cluster_availability.stdout == "\"available\""
+  retries: 50
+  delay: 5
+  when: aurora_cluster == ''
+
+
+#- name: Manage the DB cluster settings
+#  rds_instance:
+#    state: present
+#    cluster_id: "production-db"
+#    instance_id: "production-db-instance"
+#    subnet_group: webserver-connections
+#    storage_encrypted: yes
+#    backup_retention_period: 7
+#    vpc_security_group_ids:
+#      - sg-dac291bc
+#    engine: aurora-mysql
+#    instance_type: db.r4.2xlarge
+#    multi_az: yes
+#    username: "root"
+#    password: "My%qL3sd0"
+#    force_update_password: yes
+#    apply_immediately: yes
+#    read_replica: true
+#    db_parameter_group_name: wcm-cluster-parameter-group
+#    auto_minor_version_upgrade: yes
+#    tags:
+#      Environment: Production
+
+- name: Create one db instance
+  rds_instance:
+    engine: aurora-mysql
+    engine_version: "5.7.mysql_aurora.2.07.2"
+    db_instance_identifier: production-db-instance-1
+    instance_type: db.t2.small
+    cluster_id: production-db
+    availability_zone: "us-gov-west-1a"
+    storage_encrypted: yes
+    auto_minor_version_upgrade: yes
+    tags:
+      Environment: "Production"    
+
+- name: Create second db instance
+  rds_instance:
+    engine: aurora-mysql
+    engine_version: "5.7.mysql_aurora.2.07.2"
+    db_instance_identifier: production-db-instance-2
+    instance_type: db.t2.small
+    cluster_id: production-db
+    availability_zone: "us-gov-west-1b"
+    storage_encrypted: yes
+    auto_minor_version_upgrade: yes
+    tags:
+      Environment: "Production"
+

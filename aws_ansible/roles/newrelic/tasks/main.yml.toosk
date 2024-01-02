@@ -1,0 +1,70 @@
+- hosts: 172.22.81.18
+  vars:
+    proxy_env:
+      http_proxy: http://172.22.84.11:80
+      https_proxy: http://172.22.84.11:80
+    install_env:
+      NR_INSTALL_SILENT: 1
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+
+  tasks:
+
+  - name: Install repositories packages
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - http://yum.newrelic.com/pub/newrelic/el5/x86_64/newrelic-repo-5-3.noarch.rpm
+      - https://yum.newrelic.com/pub/newrelic/el5/x86_64/newrelic-repo-5-3.noarch.rpm
+    environment: "{{ proxy_env }}"
+
+  - name: Install the New Relic packages
+    yum:
+      name: "{{ item }}"
+      state: present
+    with_items:
+      - newrelic-sysmond
+      - newrelic-php5
+    environment: "{{ proxy_env }}"
+
+  - name: Run New Relic install command
+    command: newrelic-install install
+    environment: "{{ install_env }}"
+
+  - name: Copy testint ini file
+    copy:
+      src: ../files/newrelic_testint.ini
+      dest: /etc/php.d/newrelic.ini
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Copy PHX newrelic.cfg file
+    copy:
+      src: ../files/newrelic_phx.cfg
+      dest: /etc/newrelic/newrelic.cfg
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Copy PHX nrsysmond.cfg file
+    copy:
+      src: ../files/nrsysmond_phx.cfg
+      dest: /etc/newrelic/nrsysmond.cfg
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Start and register the newrelic-daemon service
+    service:
+      name: newrelic-daemon
+      state: started
+      enabled: yes
+
+  - name: Start and register the newrelic-sysmond service
+    service:
+      name: newrelic-sysmond
+      state: started
+      enabled: yes

@@ -1,0 +1,76 @@
+---
+- name: Create Appliance Alarms
+  block:
+  - name: Create Appliance Alarm
+    command: aws cloudwatch put-metric-alarm --cli-input-json '{{ lookup('template', '../templates/app_alarms.json.j2') | to_json }}'
+    register: app_alarm_out
+    retries: 3
+    until: app_alarm_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      app_dict:
+        ERROR_NAME: "appliance_alarm_error"
+        COMMAND_ATTEMPTS: "{{ app_alarm_out.attempts }}"
+        ERROR_MESSAGE: "{{ app_alarm_out.stderr }}"
+        RC: "{{ app_alarm_out.rc }}"
+    when: app_alarm_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ app_dict ] }}"
+    when: app_alarm_out.rc != 0
+  
+  - name: Get AWS time stamp
+    command: date '+%Y-%m-%dT%H:%M:%SZ'
+    register: aws_time_stamp
+
+  - name: Create Appliance NameSpace
+    command: aws cloudwatch put-metric-data --metric-name applianceHeartBeat --namespace ApplianceStatus --value 1 --timestamp  "{{ aws_time_stamp.stdout }}" --dimensions InstanceId="{{ ec2_id }}",Purpose="{{ ec2_purpose|upper }}"
+    register: app_namespace_out
+    retries: 3
+    until: app_namespace_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      app_dict:
+        ERROR_NAME: "appliance_alarm_error"
+        COMMAND_ATTEMPTS: "{{ app_namespace_out.attempts }}"
+        ERROR_MESSAGE: "{{ app_namespace_out.stderr }}"
+        RC: "{{ app_namespace_out.rc }}"
+    when: app_namespace_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ app_dict ] }}"
+    when: app_namespace_out.rc != 0
+
+  - name: Set Alarm Name
+    set_fact:
+      alarm_name: "{{ ec2_id }}-{{ name }}-appliance-heartBeat"
+
+  - name: Set Alarm to OK
+    command: 'aws cloudwatch set-alarm-state --alarm-name {{ alarm_name| to_json }} --state-value OK --state-reason "Initial State"'
+    register: alarm_set_out
+    retries: 3
+    until: alarm_set_out.rc == 0
+    ignore_errors: yes
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_status: "ERROR"
+      set_dict:
+        ERROR_NAME: "appliance_alarm_error"
+        COMMAND_ATTEMPTS: "{{ alarm_set_out.attempts }}"
+        ERROR_MESSAGE: "{{ alarm_set_out.stderr }}"
+        RC: "{{ alarm_set_out.rc }}"
+    when: alarm_set_out.rc != 0
+
+  - name: Set fact if alarm failed
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ set_dict ] }}"
+    when: alarm_set_out.rc != 0

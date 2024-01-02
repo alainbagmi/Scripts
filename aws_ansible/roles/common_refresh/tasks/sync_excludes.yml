@@ -1,0 +1,92 @@
+---
+- name: Start of Task
+  debug: 
+    msg: "Role: asset_management; Task: sync_excludes.yml"
+
+- name: Set Max Excludes as Fact
+  set_fact:
+    sync_exclude:
+      - "--exclude=/err/*"
+      - "--exclude=/ilink/*"
+      - "--exclude=/css/*"
+      - "--exclude=/webform/*"
+      - "--exclude=/js/*"
+      - "--exclude=/cache/*"
+      - "--exclude=/tmp/*"
+      - "--exclude=/static-backup/*"
+      - "--exclude=/php/twig/*"
+      - "--archive"
+      - "--compress"
+      - "--verbose"
+  when:
+    - exclude_files == "max"
+
+- name: Set FLETC Excludes as Fact
+  set_fact:
+    sync_exclude:
+      - "--exclude=/css/*"
+      - "--exclude=/webform/*"
+      - "--exclude=/js/*"
+      - "--exclude=/cache/*"
+      - "--exclude=/tmp/*"
+      - "--exclude=/static-backup/*"
+      - "--exclude=/php/twig/*"
+      - "--archive"
+      - "--compress"
+      - "--verbose"
+  when:
+    - exclude_files == "fletc"
+
+- name: Set Default Excludes as Fact
+  set_fact:
+    sync_exclude:
+      - "--exclude=/err/*"
+      - "--exclude=/css/*"
+      - "--exclude=/js/*"
+      - "--exclude=/cache/*"
+      - "--exclude=/tmp/*"
+      - "--exclude=/static-backup/*"
+      - "--exclude=/php/twig/*"
+      - "--archive"
+      - "--compress"
+      - "--verbose"
+  when:
+    - exclude_files == "uscis"
+
+- name: Set Default Excludes as Fact
+  set_fact:
+    sync_exclude:
+      - "--exclude=/css/*"
+      - "--exclude=/js/*"
+      - "--exclude=/cache/*"
+      - "--exclude=/tmp/*"
+      - "--exclude=/static-backup/*"
+      - "--exclude=/php/twig/*"
+      - "--archive"
+      - "--compress"
+      - "--verbose"
+  when:
+    - exclude_files == "default"
+
+- name: Set Excludes for Minimum Exclude as Fact
+  set_fact: 
+    sync_exclude:
+      - "--exclude=/php/twig/*"
+      - "--exclude=/cache/*"
+      - "--archive"
+      - "--compress"
+      - "--verbose"
+  when:
+    - exclude_files == "no" or exclude_files == "No" 
+
+- name: Set Sync Options Push for Asset Refresh
+  set_fact:
+    sync_options:
+      - "--links"
+      - "--times"
+      - "--compress"
+      - "--verbose"
+      - "--from0"
+  when:
+    - netstorage_target_flag == 0
+    - target_env is defined

@@ -1,0 +1,29 @@
+precheckd8:
+  project_name: DHS
+  alias: precheckd8
+  drupal_version: 8
+  akamai_group: 116981
+  akamai_path: /183946/precheck
+  newrelic_id: 18793252
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint.dhsprecheck.dhs.gov
+      public: testint.dhsprecheck.dhs.gov
+    akamai_cpcode:
+      edit: 425296
+      public: 425296
+  staging:
+    site_urls:
+      edit: edit-staging.dhsprecheck.dhs.gov
+      public: staging.dhsprecheck.dhs.gov
+    akamai_cpcode:
+      edit: 425296
+      public: 425296
+  prod:
+    site_urls:
+      edit: edit-dhsprecheck.dhs.gov
+      public: dhsprecheck.dhs.gov
+    akamai_cpcode:
+      edit: 425295
+      public: 425295

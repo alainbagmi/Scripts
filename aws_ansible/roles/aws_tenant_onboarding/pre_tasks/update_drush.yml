@@ -1,0 +1,93 @@
+---
+- name: Update Testint URL if preview moved and edit-testint is switching
+  block:
+    - name: Replace Testint url if moving preview to staging
+      replace:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        regexp: "EDIT_PREVIEW_MIGRATED_TO_STAGING"
+        replace: "{{ edit_url }}"
+  when: env == "testint"
+
+# Deal With Drush Alias Files
+- name: Deal with Drush Alias Files
+  block:
+    - name: Search for Testint Replace
+      shell: "cat {{ drush_alias_path }}/{{ drush_alias_file }}"
+      register: testint_replace
+
+    - name: Replace Testint url if moving preview to staging
+      replace:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        regexp: '{{ edit_url }}'
+        replace: "EDIT_PREVIEW_MIGRATED_TO_STAGING"
+      when: '"#$REPLACEINITIAL" in testint_replace.stdout'
+ 
+    - name: Remove Testint last line
+      lineinfile:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        line: "{{ item }}"
+        state: absent
+      with_items:
+        - "    $aliases['d8_testint'] = $aliases['testint'];"
+      when: '"#$REPLACEINITIAL" in testint_replace.stdout'
+
+    - name: Update the Drush Alias File when onboarding to staging
+      blockinfile:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        block: "{{ lookup('template', '../templates/alias_staging.j2') }}"
+        insertafter: "#$REPLACEINITIAL"
+      when: '"#$REPLACEINITIAL" in testint_replace.stdout'
+
+    - name: Remove blockinfile Markers and Old Replace Flag
+      lineinfile:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        line: "{{ item }}"
+        state: absent
+      with_items:
+        - "# BEGIN ANSIBLE MANAGED BLOCK"
+        - "# END ANSIBLE MANAGED BLOCK"
+        - "    #$REPLACEINITIAL"
+      when: '"#$REPLACEINITIAL" in testint_replace.stdout'
+  when: env == "staging"
+
+#Deal With Drush Alias Files
+- name: Deal with Drush Alias Files for production
+  block:
+    - name: Search for STAGING Replace
+      shell: "cat {{ drush_alias_path }}/{{ drush_alias_file }}"
+      register: staging_replace
+
+    - name: Replace Staging url if moving preview to Prod
+      replace:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        regexp: "{{ edit_url }}"
+        replace: "EDIT_PREVIEW_MIGRATED_TO_PROD"
+      when: '"#$REPLACESTAGE" in staging_replace.stdout'
+ 
+    - name: Remove Staging last line
+      lineinfile:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        line: "{{ item }}"
+        state: absent
+      with_items:
+        - "    $aliases['d8_staging'] = $aliases['staging'];"
+      when: '"#$REPLACESTAGE" in staging_replace.stdout'
+
+    - name: Update the Drush Alias File when onboarding to Prod
+      blockinfile:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        block: "{{ lookup('template', 'roles/aws_onboarding_vars/templates/alias_production.j2') }}"
+        insertafter: "#$REPLACESTAGE"
+      when: '"#$REPLACESTAGE" in staging_replace.stdout'
+
+    - name: Remove blockinfile Markers and Old Replace Flag
+      lineinfile:
+        path: "{{ drush_alias_path }}/{{ drush_alias_file }}"
+        line: "{{ item }}"
+        state: absent
+      with_items:
+        - "# BEGIN ANSIBLE MANAGED BLOCK"
+        - "# END ANSIBLE MANAGED BLOCK"
+        - "    #$REPLACESTAGE"
+      when: '"#$REPLACESTAGE" in staging_replace.stdout'
+  when: env == "production"

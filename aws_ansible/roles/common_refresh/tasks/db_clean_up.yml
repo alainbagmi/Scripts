@@ -1,0 +1,45 @@
+---
+- name: Set Paths as fact
+  set_fact:
+    db_refresh_path: "/data/db_refresh/{{ site_alias }}/"
+    
+- name: Set Source File as Fact
+  set_fact:
+    source_db_file: "{{ source_db_name }}_{{ current_run_timestamp.stdout }}.sql"
+  when: netstorage_source_flag == 0
+
+- name: Set Netstorage Source Paths as Fact
+  set_fact:
+    netstorage_source_path: "/data/transit_files/db_refresh/from_netstorage/{{ site_alias }}/"
+  when: netstorage_source_flag == 1
+
+- name: Set Target File as Facts
+  set_fact:
+    target_db_file: "{{ target_env }}.{{ target_db_name }}_{{ current_run_timestamp.stdout }}.sql"
+  when: netstorage_target_flag == 0
+
+- name: Set Netstorage Target Path
+  set_fact:
+    netstorage_target_path: "/data/transit_files/db_refresh/to_netstorage/{{ site_alias }}/"
+  when: netstorage_target_flag == 1 or target_backup == "yes"
+
+#--------------- Clean Tower ---------------
+
+    
+#--------------- Clean ---------------
+
+- name: Check if Source Exists
+  stat:
+    path: "{{ db_refresh_path }}"
+  register: db_refresh
+
+- name: Remove Source Path
+  file:
+    path: "{{ db_refresh_path }}"
+    state: absent
+  when: 
+    - db_refresh.stat.isdir is defined and db_refresh.stat.isdir
+
+
+
+

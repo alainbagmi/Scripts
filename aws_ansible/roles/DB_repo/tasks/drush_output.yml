@@ -1,0 +1,17 @@
+---
+
+- name: Edit the make.yml file with the bitbucket url
+  shell: sed -i 's,ssh://git@172.22.58.11:7999,https://maestro.dhs.gov/stash/scm,g' {{ dir_name }}/{{ stashprofile }}/{{ tenant_alias }}_gov.make.yml
+
+
+- name: Run Drush command to make directories
+  command: /usr/local/bin/drush make {{ dir_name }}/{{ stashprofile }}/{{ tenant_alias }}_gov.make.yml {{ dir_name }}/{{ stashbuildrepo }}/docroot --force-complete --concurrency=1 --force-gitinfofile
+
+- name: Removing the .git files inside of the _gov_build directory
+  file:
+    path: "{{ dir_name }}/{{ stashbuildrepo }}/docroot/.git"
+    owner: bamboo
+    group: bamboo
+    mode: 0700
+    state: absent
+

@@ -1,0 +1,29 @@
+niemd8:
+  project_name: NIEM
+  alias: niemd8
+  drupal_version: 8
+  akamai_group: 116982
+  akamai_path: /183946/niem
+  newrelic_id: 140457686
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint.niem.gov
+      public: testint.niem.gov
+    akamai_cpcode:
+      edit: 506341
+      public: 506341
+  staging:
+    site_urls:
+      edit: edit-staging.niem.gov
+      public: staging.niem.gov
+    akamai_cpcode:
+      edit: 506341
+      public: 506341
+  prod:
+    site_urls:
+      edit: edit.neim.gov
+      public: www.niem.gov
+    akamai_cpcode:
+      edit: 506340
+      public: 506340

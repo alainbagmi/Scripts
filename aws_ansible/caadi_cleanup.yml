@@ -1,0 +1,35 @@
+---
+- hosts: "tag_aws_autoscaling_groupName_production_as_group[0]"
+  become: yes
+  become_method: sudo
+  remote_user: ansible_tower
+
+  vars:
+    formversions: ['7001', '7003']
+    demo_sitefiles: 'testint.caadi_gov_build'
+    testint_sitefiles: 'testint.dhs_gov_build'
+    staging_sitefiles: 'staging.dhs_gov_build'
+    prod_sitefiles: 'production.dhs_gov_build'
+    formpath: '/var/www/sites-files/{{ prod_sitefiles }}/files-private/webform/CAADI_{{ formversion }}/{{ formversion }}FormSubmissions'
+#    rsync_crontime_7001: '*/3'
+#    rsync_crontime_7003: '*/3'
+#    error_crontime_7001: ['*/3', '*/4']
+#    error_crontime_7003: ['2', '*/4']
+    #Note that this is set to run every 1 hour instead of 4 in prod, modify this time inside of the cronjob check tasks of the caadi_cleanup role 
+
+  pre_tasks:
+
+    - name: "Get Yesterday's date"
+      shell: 'date +%Y%m%d -d "{{ days_ago | default(1) }} day ago"'
+      register: yesterday
+
+  tasks:
+    - name: "Include CAADI role"
+      include_role:
+        name: caadi_cleanup
+      vars:
+        formversion: '{{ formversion }}'
+      loop: '{{ formversions }}'
+      loop_control:
+        loop_var: formversion
+

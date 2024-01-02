@@ -1,0 +1,28 @@
+---
+- name: Stop instance.
+  ec2:
+    region: "{{ region }}"
+    instance_id: "{{ ec2.tagged_instances.0.id }}"
+    state: "stopped"
+    wait: "yes"
+  tags:
+    - instance
+
+- name: Get a timestamp
+  debug:
+    var: ansible_date_time
+
+ 
+- name: DEBUG.
+  debug:
+    msg: timestamp = "{{ ansible_date_time.date }}-{{ ansible_date_time.epoch }}"
+
+- name: Create AMI.
+  ec2_ami:
+    region: "{{ region }}"
+    instance_id: "{{ ec2.tagged_instances.0.id }}"
+    name: "{{ web_new_ami }}-{{ ansible_date_time.date }}-{{ ansible_date_time.epoch }}"
+    tags:
+      Name: "{{ web_new_ami }}-{{ ansible_date_time.date }}-{{ ansible_date_time.epoch }}"
+    wait: "yes"
+    wait_timeout: 900

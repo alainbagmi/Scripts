@@ -1,0 +1,24 @@
+---
+- name: Sync settings to sites/default
+  synchronize:
+    dest: "{{ site_root }}{{ env }}.{{ tenant }}_gov_build/Rel{{ release_number }}/sites/default"
+    src: "{{ local_settings }}{{ env }}/"
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+#      - "--exclude=.git"
+#      - "--include=settings.22.local.inc"
+#      - "--exclude=settings.22.local.inc"
+#      - "--exclude=settings.23.local.inc"
+      - "--no-motd"
+#      - "--include=settings.*"
+#      - "--include=drushrc.php"
+      - "--quiet"
+      - "--log-file=/home/bamboo/settings_sync_log"
+      - "--chown=apache:apache"
+  become: no
+
+
+
+                       

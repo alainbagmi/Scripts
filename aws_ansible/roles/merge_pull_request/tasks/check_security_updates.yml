@@ -1,0 +1,57 @@
+---
+#Drush 10 doesn't have drush ups --check-disabled --security-only, plan must be run with ignore until a fix is found
+- name: Set count to 0 if special flag provide
+  set_fact:
+    update_num: 0
+  when: 
+    - check_updates == "ignore"
+
+- name: Check Security Updates
+  command: /usr/bin/sudo su - apache -c "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root={{ docroot_path }} ups --check-disabled --security-only"
+  register: security_update_result
+  ignore_errors: yes
+
+- name: Output of Security Results
+  debug:
+    var: security_update_result
+
+- name: Output Results
+  debug:
+    msg: "{{ security_update_result.stdout_lines }}"
+
+- name: Set Security Results as Fact
+  set_fact:
+    security_updates_final: "{{ security_updates_final|default([]) + [ item ] }}"
+  with_items: "{{ security_update_result.stdout_lines }}"
+  when: '"SECURITY" in item'
+
+
+- name: Get count of updates
+  set_fact:
+    update_num: "{{ security_updates_final|length }}"
+  when: security_updates_final is defined
+
+- name: Show List
+  debug:
+    msg: "{{ security_updates_final }}"
+  when: security_updates_final is defined
+
+- name: Show count of updates
+  debug:
+    msg: "{{ update_num|int }}"
+  when: security_updates_final is defined
+
+- name: Set count to 0 if no security updates found
+  set_fact:
+    update_num: 0
+  when: update_num is not defined
+  
+- name: Set count to 0 if special flag provide and security updates found
+  set_fact:
+    update_num: 0
+  when: 
+    - check_updates is defined and check_updates == "ignore"
+
+- name: Set flag for successful Run check
+  set_fact:
+    security_update_flag: "SUCCESS"

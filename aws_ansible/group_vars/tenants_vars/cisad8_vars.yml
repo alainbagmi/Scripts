@@ -1,0 +1,29 @@
+cisad8:
+  project_name: CISA
+  alias: cisad8
+  drupal_version: 8
+  akamai_group: 0000
+  akamai_path: /183946/cisa
+  newrelic_id: 409260587
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint.cisa.gov
+      public: testint.cisa.gov
+    akamai_cpcode:
+      edit: 849791
+      public: 823687
+  staging:
+    site_urls:
+      edit: edit-staging.cisa.gov
+      public: staging.cisa.gov
+    akamai_cpcode:
+      edit: 849791
+      public: 823687
+  prod:
+    site_urls:
+      edit: edit.cisa.gov
+      public: www.cisa.gov
+    akamai_cpcode:
+      edit: 849790
+      public: 800654

@@ -1,0 +1,219 @@
+---
+# - name: Depoying code in try/catch
+#   block:
+
+- name: get user
+  shell: whoami
+  register: who_raw
+  
+- set_fact:
+    who: "{{who_raw.stdout_lines}}"
+
+- debug:
+    var: who
+
+- name: make sure awscli is there
+  shell: pip install --upgrade awscli && pip3 install --upgrade awscli
+  ignore_errors: True
+  
+- name: get aws binary
+  shell: echo $PATH
+  register: aws_raw
+
+- set_fact:
+    aws_bin: "{{aws_raw.stdout_lines}}"
+
+- debug:
+    var: aws_bin
+  
+#- name: testing for kyle
+#  shell: aws autoscaling suspend-processes --auto-scaling-group-name testint-as-group --scaling-processes Terminate
+#  become: no
+
+- name: get iam users with keys
+  shell: aws iam get-group --group-name 'Administrators' --query 'Users[].[UserName]' --output text
+  register: users
+  become: no
+
+- set_fact:
+    iam_users: "{{users.stdout_lines}}"
+
+- name: get iam keys
+  shell: aws iam list-ssh-public-keys --user-name {{ item }} --query "SSHPublicKeys[?Status == 'Active'].[SSHPublicKeyId]" --max-items 1 --output text --no-paginate
+  register: key_list
+  with_items: "{{ iam_users }}"
+  become: no
+
+- set_fact:
+    iam_key_list: "{{ iam_key_list|default({}) | combine( {item.item: item.stdout} ) }}"
+  when: item.stdout != ""
+  with_items: "{{ key_list.results }}"
+
+- debug:
+    var: iam_key_list
+
+- name: get SSH keys
+  command: aws iam get-ssh-public-key --user-name {{ item.key }} --ssh-public-key-id {{ item.value }} --encoding SSH --query 'SSHPublicKey.SSHPublicKeyBody' --output text
+  register: raw_ssh_list
+  with_dict: "{{ iam_key_list }}"
+  become: no
+
+- set_fact:
+    user_ssh_list: "{{ user_ssh_list|default({}) | combine( {item.item.key: item.stdout} ) }}"
+  with_items: "{{ raw_ssh_list.results }}"
+
+- name: get Linux Users on the Machine
+  shell: "sudo getent passwd | awk -F: '$3 > 1000 {print $1}'"
+  register: raw_linux_list
+
+- set_fact:
+    linux_list: "{{ raw_linux_list.stdout_lines }}"
+
+- copy:
+    content: "{{ linux_list }}"
+    dest: "linux_list.data"
+
+- copy:
+    content: "{{ user_ssh_list }}"
+    dest: "ssh_list.data"
+
+- copy:
+    src: "{{ role_path }}/files/user_manager.py"
+    dest: "user_manager.py"
+    owner: ansible_tower
+    group: ansible_tower
+    mode: '0770'
+
+# - debug:
+#     var: linux_list
+# - debug:
+#     var: user_ssh_list
+
+- name: run user manager python
+  command: python user_manager.py
+  #shell: "pwd && ls -lrta"
+#   register: ps
+
+# - debug: var=ps.stdout_lines
+
+- name: Fetch Delete Users
+  fetch:
+    src: delete_users.yml
+    dest: "{{ role_path }}/vars/"
+    flat: yes
+
+- name: Fetch Create Users
+  fetch:
+    src: create_users.yml
+    dest: "{{ role_path }}/vars/"
+    flat: yes
+
+- name: Fetch Data
+  fetch:
+    src: update_users.yml
+    dest: "{{ role_path }}/vars/"
+    flat: yes
+
+- name: load the delete data
+  include_vars:
+    file: "delete_users.yml"
+    name: delete_users
+
+- name: load the create data
+  include_vars:
+    file: "create_users.yml"
+    name: create_users
+
+- name: load the update data
+  include_vars:
+    file: "update_users.yml"
+    name: update_users
+
+# - debug:
+#     var: create_users
+# - debug:
+#     var: update_users
+
+- name: Create users
+  user:
+    name: "{{ item.key }}"
+    state: present
+    expires: -1
+    shell: /bin/bash
+    groups: adm, wheel, systemd-journal, root
+    #gid: 0
+    comment: "IAM User"
+  with_dict: "{{ create_users }}"
+  become: true
+
+- name: create user keys
+  authorized_key:
+    user: "{{ item.key }}"
+    state: present
+    key: "{{ item.value }}"
+  with_dict: "{{ create_users }}"
+  become: true
+
+- name: get current linux users
+  shell: "getent passwd | awk -F: '$3 > 1000 {print $1}'"
+  register: temp_username_list
+
+- name: get current linux user ids
+  shell: "getent passwd | awk -F: '$3 > 1000 {print $3}'"
+  register: temp_userid_list
+
+- set_fact:
+    linux_user_and_id_list: "{{ linux_user_and_id_list | default([]) | combine( {item[0]: item[1]} ) }}"
+  loop: "{{ temp_username_list.stdout_lines | zip(temp_userid_list.stdout_lines) | list }}"
+
+- debug:
+    var: linux_user_and_id_list
+
+- name: sudo without password for new user
+  blockinfile:
+    create: yes
+    path: "/etc/sudoers.d/{{ item.value }}-{{ item.key }}"
+    block: |
+
+      {{ item.key }}         ALL=(ALL)       NOPASSWD: ALL
+    mode: 0440
+  with_dict: "{{ linux_user_and_id_list }}"
+  become: true
+
+- name: Remove users
+  user:
+    name: "{{ item.value }}"
+    state: absent
+    remove: yes
+  with_dict: "{{ delete_users }}"
+  become: true
+
+- name:  delete remote files that were created
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+  - user_manager.py
+  - update_users.yml
+  - ssh_list.data
+  - linux_list.data
+  - delete_users.yml
+  - create_users.yml
+
+- local_action: file path="{{ role_path }}/vars/update_users.yml" state=absent
+  become: false
+- local_action: file path="{{ role_path }}/vars/create_users.yml" state=absent
+  become: false
+- local_action: file path="{{ role_path }}/vars/delete_users.yml" state=absent
+  become: false
+
+- debug:
+    var: linux_user_and_id_list
+- debug:
+    var: create_users
+- debug:
+    var: delete_users
+
+  # rescue:
+  #   - debug:
+  #       msg: "We failed on an IP"

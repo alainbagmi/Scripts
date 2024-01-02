@@ -1,0 +1,13 @@
+---
+
+- name: Site Alias
+  debug: 
+    msg: "{{ site_alias }}"
+
+- include: email_user.yml
+
+- include: d7_update_module_settings.yml
+  when: drupal_version == "7" and env == "staging"
+
+- include: d8_update_module_settings.yml
+  when: drupal_version == "8" and env == "staging"

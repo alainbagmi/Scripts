@@ -1,0 +1,19 @@
+<VirtualHost *:80>
+    DocumentRoot /var/www/html/wwwroot/default
+    ServerName defualt
+    ErrorLog logs/defualt-error_log
+    CustomLog logs/defualt-access_log common
+</VirtualHost>
+
+<VirtualHost {{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}:443>
+    SSLEngine on
+    SSLProtocol -ALL +TLSv1.1 +TLSv1.2
+    SSLCipherSuite HIGH:!aNULL:!MD5:!EXP:!EDH
+    SSLCertificateFile      /etc/pki/tls/certs/server.crt
+    SSLCertificateKeyFile   /etc/pki/tls/certs/server.key
+    DocumentRoot /var/www/html/wwwroot/default
+    ServerName default
+    ErrorLog logs/default-error_log
+    CustomLog logs/default-access_log common
+</VirtualHost>
+

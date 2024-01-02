@@ -1,0 +1,14 @@
+---
+- name: Run Site Audit reports
+  hosts: localhost
+  become: yes
+  become_user: ansible_tower
+  remote_user: ansible_tower
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+
+  roles:
+    - aws_siteaudit

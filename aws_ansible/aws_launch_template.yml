@@ -1,0 +1,10 @@
+---
+- hosts: "localhost"
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+
+  roles:
+    - aws_update_launch_template

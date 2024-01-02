@@ -1,0 +1,5 @@
+---
+
+- include: directory_setup.yml
+- include: vhost_deploy.yml
+- include: drushrc_create.yml

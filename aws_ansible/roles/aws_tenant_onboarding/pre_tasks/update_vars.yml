@@ -1,0 +1,121 @@
+---
+- name: Try to update the var file if updating testint
+  block:
+    - name: Replace edit urls
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ testint_edit }}"
+        replace: "{{ edit_url }}"
+      when: testint_edit != edit_url
+      
+    - name: Replace public urls
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ testint_public }}"
+        replace: "{{ site_url }}"
+      when: testint_public != site_url
+  when: env == "testint"
+
+- name: Try to update the var file if updating staging
+  block:
+    - name: Replace Edit Testint urls if preview is migrating
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ edit_url }}"
+        replace: "{{ edit_migration }}"
+      when: 
+        - testint_edit == edit_url
+        - staging_edit == stage_edit_holder
+        - testint_edit != edit_migration
+    
+    - name: Replace Testint public urls if preview is migrating
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ site_url }}"
+        replace: "{{ public_migration }}"
+      when: 
+        - testint_public == site_url
+        - staging_public == stage_public_holder
+        - testint_public != public_migration
+
+    - name: Replace edit urls for staging
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ staging_edit }}"
+        replace: "{{ edit_url }}"
+      when: staging_edit != edit_url
+    
+    - name: Replace public urls for staging
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ staging_public }}"
+        replace: "{{ site_url }}"
+      when: staging_public != site_url
+
+    - name: Replace the daily db backup environment
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ daily_db_backup_full }}"
+        replace: "daily_db: stage"
+      when: 
+        - daily_db_backup != "stage"
+        - daily_db_backup != "prod"
+
+    - name: Replace Temp string in staging drush.yml
+      replace:
+        path: "{{ settings_onboard }}/staging/drush.yml"
+        regexp: "{{ drush_holder }}"
+        replace: "uri: {{ edit_url }}"
+
+  when: env == "staging"
+
+- name: Try to update the var file if updating production
+  block:
+    - name: Replace Edit Staging urls if preview is migrating
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ edit_url }}"
+        replace: "{{ edit_migration }}"
+      when: 
+        - staging_edit == edit_url
+        - prod_edit == prod_edit_holder
+        - staging_edit != edit_migration
+    
+    - name: Replace Staging public urls if preview is migrating
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ site_url }}"
+        replace: "{{ public_migration }}"
+      when: 
+        - staging_public == site_url
+        - prod_public == prod_public_holder
+        - staging_public != public_migration
+
+    - name: Replace edit urls for prod
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ prod_edit }}"
+        replace: "{{ edit_url }}"
+      when: prod_edit != edit_url
+    
+    - name: Replace public urls for prod
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ prod_public }}"
+        replace: "{{ site_url }}"
+      when: prod_public != site_url
+
+    - name: Replace the daily db backup environment
+      replace:
+        path: "{{ tenant_vars_path }}/{{ tenant }}_vars.yml"
+        regexp: "{{ daily_db_backup_full }}"
+        replace: "{{ env }}"
+      when: daily_db_backup != "prod"
+    
+    - name: Replace Temp string in prod drush.yml
+      replace:
+        path: "{{ settings_onboard }}/prod/drush.yml"
+        regexp: "{{ drush_holder }}"
+        replace: "uri: {{ edit_url }}"
+
+  when: env == "production"

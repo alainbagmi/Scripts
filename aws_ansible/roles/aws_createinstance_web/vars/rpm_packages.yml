@@ -1,0 +1,4 @@
+---
+rpm_packages:
+  - /var/tmp/yum-root-*/epel-release-latest-7.noarch.rpm
+  - /var/tmp/yum-root-*/ius-release-el7.rpm

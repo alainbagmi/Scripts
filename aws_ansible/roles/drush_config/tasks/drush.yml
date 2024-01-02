@@ -1,0 +1,20 @@
+- name: ensure the /home/bamboo/bin/ directory
+  file:
+    state: directory
+    path: /home/bamboo/bin/
+    owner: bamboo
+
+- name: Adding drush.sh
+  copy:
+    src: /home/bamboo/ansible/roles/wcm/files/drush.sh
+    dest: /home/bamboo/bin/drush.sh
+    mode: 0700
+    owner: bamboo
+
+- name: Add a  ~/.drush/drushrc.php  for apahce
+  copy:
+    src: /home/bamboo/ansible/roles/wcm/files/drushrc.php
+    dest: /usr/share/httpd/.drush/drushrc.php
+    mode: 0700
+    owner: apache
+

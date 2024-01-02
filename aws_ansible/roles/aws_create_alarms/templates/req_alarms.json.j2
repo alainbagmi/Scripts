@@ -1,0 +1,49 @@
+{   
+    "AlarmName": "{{ ec2_id }}-{{ name }}-{{ alarm_type }}",
+    "AlarmDescription": "High-{{ alarm_type }}-80pct",
+    "ActionsEnabled": true,
+    "AlarmActions": [
+        "arn:aws-us-gov:sns:us-gov-west-1:626894281569:WCMMonitoring"
+    ],
+    "MetricName": "{{ alarm_metric }}",
+    "Namespace": "{{ name_space }}",
+    "Statistic": "{{ alarm_stat }}",
+{% if alarm_cat == "cpu_utilization" %}
+    "Dimensions": [
+        {"Name": "InstanceId", "Value": "{{ ec2_id }}"},
+        {"Name": "ImageId", "Value": "{{ image_id }}"},
+        {"Name": "InstanceType", "Value": "{{ instance_type }}"},
+        {"Name": "cpu", "Value": "cpu-total"},
+    ],
+{% elif alarm_cat == "disk_utilization" %}
+    "Dimensions": [
+        {"Name": "InstanceId", "Value": "{{ ec2_id }}"},
+        {"Name": "ImageId", "Value": "{{ image_id }}"},
+        {"Name": "InstanceType", "Value": "{{ instance_type }}"},
+        {"Name": "path", "Value": "{{ alarm_path }}"},
+        {"Name": "fstype", "Value": "xfs"}
+    ],
+{% else %}
+    "Dimensions": [
+        {"Name": "InstanceId", "Value": "{{ ec2_id }}"},
+        {"Name": "ImageId", "Value": "{{ image_id }}"},
+        {"Name": "InstanceType", "Value": "{{ instance_type }}"}
+    ],
+{% endif %}
+    "Period": 60,
+    "Unit": "Percent",
+    "EvaluationPeriods": 4,
+    "DatapointsToAlarm": 4,
+    "Threshold": 80.0,
+    "ComparisonOperator": "GreaterThanThreshold",
+    "TreatMissingData": "missing",
+    "Tags": [
+        {"Key": "ec2_name", "Value": "{{ name }}"},
+        {"Key": "ec2_id", "Value": "{{ ec2_id }}"},
+        {"Key": "image_id", "Value": "{{ image_id }}"},
+        {"Key": "Purpose", "Value": "{{ ec2_purpose }}"},
+        {"Key": "environment", "Value": "{{ env }}"},
+        {"Key": "fisma_id", "Value": "{{ fisma_id }}"},
+        {"Key": "project", "Value": "{{ project }}"}
+    ],
+}

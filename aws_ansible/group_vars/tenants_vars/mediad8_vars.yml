@@ -1,0 +1,29 @@
+mediad8:
+  project_name: MEDIA
+  alias: mediad8
+  drupal_version: 8
+  akamai_group: 43551
+  akamai_path: /183946/media
+  newrelic_id: 0000000000
+  daily_db: test
+  testint:
+    site_urls: 
+      edit: edit-preview-media.dhs.gov 
+      public: preview-media.dhs.gov
+    akamai_cpcode:
+      edit: 406338
+      public: 406246
+  staging:
+    site_urls:
+      edit: MEDIAD8_EDIT_STAGE_URL
+      public: MEDIAD8_PUBLIC_STAGE_URL
+    akamai_cpcode:
+      edit: 406338
+      public: 406246
+  prod:
+    site_urls: 
+      edit: MEDIAD8_EDIT_PROD_URL
+      public: MEDIAD8_PUBLIC_PROD_URL
+    akamai_cpcode:
+      edit: 406337
+      public: 406245

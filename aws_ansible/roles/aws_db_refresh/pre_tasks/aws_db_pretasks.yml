@@ -1,0 +1,149 @@
+---
+- name: Create and Clean Directories and Get DB Names
+  block:
+    - name: Set DB refresh Path
+      set_fact:
+        empty_path: "/data/adhoc_tasks/ansible_empty"
+
+    - name: Set Source Index Upper
+      set_fact:
+        source_index: "upper_env"
+      when: source_env == "production" or source_env == "prod"
+
+    - name: Set Source Index Lower
+      set_fact:
+        source_index: "lower_env"
+      when: source_env == "staging" or source_env == "testint"
+
+    - name: Set Target Index Lower
+      set_fact:
+        target_index: "lower_env"
+      when: target_env == "staging" or target_env == "testint"
+    
+    
+
+    - name: Get Empty Path Stats
+      stat:
+        path: "{{ empty_path }}"
+      register: empty_path_stat
+
+    - name: Get {{ aws_db_path }} path Stats
+      stat:
+        path: "{{ aws_db_path }}/"
+      register: aws_db_stats
+
+
+    - name: Cleaning Pre-Task if directory exists
+      synchronize:
+        src: "{{ empty_path }}/"
+        dest: "{{ aws_db_path }}/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ inventory_hostname }}"
+      when: aws_db_stats.stat.isdir is defined
+
+    - name: Cleaning Pre-Task if directory exists
+      synchronize:
+        src: "{{ empty_path }}/"
+        dest: "{{ target_db_backup_path }}/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ inventory_hostname }}"
+      when: aws_db_stats.stat.isdir is defined
+
+
+    - name: Set Source DB Fact Testint
+      set_fact:
+        source_db: "test"
+      when: source_env == "testint"
+
+    - name: Set Target DB Fact Testint
+      set_fact:
+        target_db: "test"
+      when: target_env == "testint"
+
+    - name: Set Source DB Fact Staging
+      set_fact:
+        source_db: "stage"
+      when: source_env == "staging"
+
+    - name: Set Target DB Fact Staging
+      set_fact:
+        target_db: "stage"
+      when: target_env == "staging"
+
+    - name: Set Source DB Fact Production
+      set_fact:
+        source_db: "prod"
+      when: source_env == "production"
+
+    - name: Set DB Names
+      set_fact:
+        source_db_name: "{{ tenant }}_{{ source_db }}"
+        target_db_name: "{{ tenant }}_{{ target_db }}"
+
+
+  rescue:
+    
+    - name: Get Empty Path Stats
+      stat:
+        path: "{{ empty_path }}"
+      register: empty_path_stat
+
+    - name: Cleaning Pre-Task if directory exists
+      synchronize:
+        src: "{{ empty_path }}/"
+        dest: "{{ aws_db_path }}/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ inventory_hostname }}"
+      when: empty_path_stat.stat.isdir is defined
+
+    - name: Cleaning Pre-Task if directory exists
+      synchronize:
+        src: "{{ empty_path }}/"
+        dest: "{{ target_db_backup_path }}/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ inventory_hostname }}"
+      when: empty_path_stat.stat.isdir is defined
+
+- name: Attempt to Backup Target DB and Rsync to Netstorage
+  block:
+    - name: Set Target SQL file Name
+      set_fact:
+        sql_backup_file: "{{ tenant }}_{{ target_env }}_db_backup-{{ current_run_timestamp.stdout }}.sql.gz"
+      
+
+    - name: Dump {{ target_env }} SQL Database 
+      mysql_db:
+        name: "{{ target_db_name }}"
+        state: dump
+        single_transaction: yes
+        target: "{{ target_db_backup_path }}/{{ sql_backup_file }}"
+        login_host: "{{ target_env }}-db.wcm.com"
+        login_user: "{{ aws_dbuser  }}"
+        login_password: "{{ aws_dbpass }}"
+      
+    - name: Change Owner and Group to ansible_tower
+      file:
+        path: "{{ target_db_backup_path }}/{{ sql_backup_file }}"
+        owner: ansible_tower
+        group: ansible_tower
+        mode: 0776
+        
+    - name: Rysnc Target DB to Netstorage
+      shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ target_db_backup_path }}/{{ sql_backup_file }} sshacs@dhswcms.upload.akamai.com:{{ akamai_db_path }}/{{ sql_backup_file }}"
+
+    - name: Clean up directory
+      synchronize:
+        src: "{{ empty_path }}/"
+        dest: "{{ target_db_backup_path }}/"
+        recursive: yes
+        delete: yes
+      delegate_to: "{{ inventory_hostname }}"
+      when: empty_path_stat.stat.isdir is defined
+  when: 
+    - target_backup == "yes"
+    - target_index == "lower_env"
+  

@@ -1,0 +1,24 @@
+- hosts: localhost
+  gather_facts: no
+  remote_user: ansible_tower
+  become: yes
+  become_method: sudo
+
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+
+  vars:
+#    production_web_server: "production-webapp-01.wcm.com"
+#    staging_web_server: "staging-webapp-01.wcm.com"
+#    testint_web_server: "testint-webapp-01.wcm.com"
+    
+    production_server: "{{ groups['tag_aws_autoscaling_groupName_production_as_group'][0] }}"
+    staging_server: "{{ groups['tag_aws_autoscaling_groupName_staging_as_group'][0] }}"
+    testint_server: "{{ groups['tag_aws_autoscaling_groupName_testint_as_group'][0] }}"
+
+  roles:
+    - aws_caadi_rsync
+

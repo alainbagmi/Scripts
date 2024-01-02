@@ -1,0 +1,16 @@
+---
+- name: "Check Caadi Rsync script"
+  template:
+    src: caadi_rsync.sh.j2
+    dest: /data/caadi_rsync.sh
+    owner: apache
+    group: apache
+    mode: 0750
+
+- name: "Check Caadi Error checking script"
+  template:
+    src: caadi_errorcheck.sh.j2
+    dest: /data/caadi_errorcheck.sh
+    owner: root
+    group: root
+    mode: 0750

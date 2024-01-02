@@ -1,0 +1,16 @@
+---
+- name: Create initial DB profile 
+  hosts: 172.22.58.21
+  become: yes
+  become_user: bamboo
+  remote_user: bamboo
+
+  roles: 
+    - DB_repo
+  vars:
+    dir_name: /home/bamboo/TEST/d8site
+    stash_project: "{{ project }}"
+    tenant_alias: "{{ tenant }}" 
+    stashprofile: "{{ project }}_gov"
+    stashbuildrepo: "{{ project }}_gov_build"
+    repo_dt: "https://maestro.dhs.gov/stash/scm/wcmbase/myd8site.git" 

@@ -1,0 +1,54 @@
+---
+- name: Attemp DB Refresh
+  block:       
+    - include: aws_to_aws.yml
+      when:
+        - source_env != "netstorage"
+        - target_index == "lower_env"
+
+
+    - include: netstorage_to_db.yml
+      when:
+        - source_env == "netstorage" 
+        - target_index == "lower_env"
+
+  
+    - include: db_to_netstorage.yml
+      when:
+        - source_env != "netstorage"
+        - target_env == "netstorage"
+
+  
+    - include: d8_drush_commands.yml
+      when:
+        - drupal_version == "8"
+        - target_env != "netstorage"
+
+
+    - include: d7_drush_commands.yml
+      when:
+        - drupal_version == "7"
+        - target_env != "netstorage"
+
+
+    - name: Set Success Flag
+      set_fact:
+        task_status: "Ansible Task Finished Successfully"
+    
+
+  rescue:
+    - name: Overwrite Task Status if Fail
+      set_fact:
+        task_status: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+    
+    - include: clean_up.yml
+
+    - name: Fail Task 
+      fail:
+        msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+  always:
+    - include: clean_up.yml
+    - include: email_tenant.yml
+      when: email_address is defined
+
+    

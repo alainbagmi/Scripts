@@ -1,0 +1,13 @@
+---
+- hosts: tag_aws_autoscaling_groupName_wcmlab_as_group
+  serial: 1
+  #gather_facts: true
+  #become: yes
+  #become_method: ansible_tower
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+
+  roles:
+    - aws_update_IAM_keys

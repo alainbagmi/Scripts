@@ -1,0 +1,60 @@
+---
+
+- name: Get files in a folder
+  find:
+    paths: "{{ site_root }}{{ env }}.{{ tenant }}_gov_build/"
+    contains: "Rel"
+    file_type: directory
+  register: found_files
+  when: env == "testint" or env == "staging"
+
+
+- name: Make the release folder
+  file:
+    path: "{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}"
+    state: directory
+    mode: 0770
+    owner: apache
+    group: apache
+
+
+
+- name: keep newest 3 newrest Rel directories
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ (found_files.files | sort(attribute='ctime',reverse=true))[2:] }}"
+  when: env == "testint" or env == "staging"
+
+
+- name: Sync Repo to the Release directory or to the docroot if release not defined
+  synchronize:
+    #dest: "{{ site_root }}/{{ env }}.{{ tenant }}_gov_build/Rel{{ release_number }}"
+    dest: "{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}"
+    src: "{{ local_repo }}docroot/"
+    delete: yes
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+      - "--exclude=.git*"
+      - "--no-motd"
+      - "--quiet"
+      #- "--log-file=/home/bamboo/synctestlog"
+      - "--chown=apache:apache"
+      - "--chmod=F770,D770"
+  become: no
+
+#- name: Change Owner and Group
+#  shell: "sudo chown -R apache:apache {{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/"
+#  delegate_to: 172.22.81.18
+#  run_once: yes
+#  become: no
+#  when: env == "testint"
+
+#- name: Change Permissions
+#  shell: "sudo chmod -R 770 {{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/"
+#  delegate_to: 172.22.81.18
+#  run_once: yes
+#  become: no
+#  when: env == "testint"

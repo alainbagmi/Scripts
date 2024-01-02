@@ -1,0 +1,1019 @@
+cbpbiod8:
+  full_name: CBPBIO
+  project_name: CBPBIO
+  alias: cbpbiod8
+  drupal_version: 8
+  component: CBP
+  akamai_group: 220144
+  akamai_path: /183946/cbpbio
+  newrelic_id: 00000000
+  related_alias: cbpbiod8
+  daily_db: prod
+  testint:
+    asset_refresh: ['CBPBIO-YYYY.json', 'BB_AT']
+    database_refresh: ['CBPBIO-YYYY.json', 'BB_DT']
+    bamboo_deployment: ['CBPBIO-CBIOT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint-biometrics.cbp.gov
+      public: testint-biometrics.cbp.gov
+    akamai_cpcode:
+      edit: 1048807
+      public: 1048805
+  staging:
+    asset_refresh: ['CBPBIO-YYYY.json', 'BB_AS']
+    database_refresh: ['CBPBIO-YYYY.json', 'BB_DS']
+    bamboo_deployment: ['CBPBIO-CBIOS.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging-biometrics.cbp.gov
+      public: staging-biometrics.cbp.gov
+    akamai_cpcode:
+      edit: 1048807
+      public: 1048805
+  prod:
+    bamboo_deployment: ['CBPBIO-YYYY.json', 'BB_PD']
+    site_urls:
+      edit: edit-biometrics.cbp.gov
+      public: www.biometrics.cbp.gov
+    akamai_cpcode:
+      edit: 1048806
+      public: 1048804
+
+cbpd8:
+  full_name: CBP
+  project_name: CBP
+  alias: cbpd8
+  drupal_version: 8
+  component: CBP
+  akamai_group: 24976
+  akamai_path: /183946/cbp
+  newrelic_id: 140456411
+  related_alias: cbp
+  daily_db: test
+  testint:
+    bamboo_deployment: ['CBP-CT.json', 'BB_TD']
+    site_urls:
+      edit: edit-preview.cbp.gov
+      public: preview.cbp.gov
+    akamai_cpcode:
+      edit: 225351
+      public: 225156
+  staging:
+    bamboo_deployment: ['CBP-YYYY.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.cxx.gov
+      public: staging.cxx.gov
+    akamai_cpcode:
+      edit: 225351
+      public: 225156
+  prod:
+    bamboo_deployment: ['CBP-YYYY.json', 'BB_PD']
+    site_urls:
+      edit: edit.YYYY.cbp.gov
+      public: www.YYYY.cbp.gov
+    akamai_cpcode:
+      edit: 225352
+      public: 225158
+
+cbp:
+  full_name: CBP
+  project_name: CBP
+  alias: cbp
+  drupal_version: 7
+  component: CBP
+  akamai_group: 24976
+  akamai_path: /183946/cbp
+  newrelic_id: 140456411
+  related_alias: cbpd8
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['CBP-TESTINT.json', 'BB_TD']
+    site_urls:
+      edit: edit.testint.cbp.gov
+      public: testint.cbp.gov
+    akamai_cpcode:
+      edit: 225351
+      public: 225156
+  staging:
+    bamboo_deployment: ['CBP-CS.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.cbp.gov
+      public: staging.cbp.gov
+    akamai_cpcode:
+      edit: 225351
+      public: 225156
+  prod:
+    bamboo_deployment: ['CBP-CPCP.json', 'BB_PD']
+    site_urls:
+      edit: edit.cbp.gov
+      public: www.cbp.gov
+    akamai_cpcode:
+      edit: 225352
+      public: 225158
+
+cisad8:
+  full_name: CISA
+  project_name: CISA
+  alias: cisad8
+  drupal_version: 8
+  component: cisa
+  akamai_group: 0000
+  akamai_path: /183946/cisa
+  newrelic_id: 409260587
+  related_alias: cisa
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['CISA-CTD8.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint.cisa.gov
+      public: testint.cisa.gov
+    akamai_cpcode:
+      edit: 849791
+      public: 823687
+  staging:
+    bamboo_deployment: ['CISA-CSD8.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging.cisa.gov
+      public: staging.cisa.gov
+    akamai_cpcode:
+      edit: 849791
+      public: 823687
+  prod:
+    bamboo_deployment: ['CISA-CPCP.json', 'BB_PD']
+    site_urls:
+      edit: edit.cisa.gov
+      public: www.cisa.gov
+    akamai_cpcode:
+      edit: 849790
+      public: 800654
+
+cusssd8:
+  full_name: Career Secret Service
+  project_name: CUSSS
+  alias: cusssd8
+  drupal_version: 8
+  component: usss
+  akamai_group: 10629
+  akamai_path: /183946/cusss
+  newrelic_id: 000000000
+  related_alias: cusss
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['CUSSS-CUSD8T.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint-careers.secretservice.gov
+      public: testint-careers.secretservice.gov
+    akamai_cpcode:
+      edit: 1082448
+      public: 1082446
+  staging:
+    bamboo_deployment: ['CUSSS-CS.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging-careers.secretservice.gov
+      public: staging-careers.secretservice.gov
+    akamai_cpcode:
+      edit: 1082448
+      public: 1082446
+  prod:
+    bamboo_deployment: ['CUSSS-XXXXX.json', 'BB_PD']
+    site_urls:
+      edit: edit-careers.secretservice.gov
+      public: www.careers.secretservice.gov
+    akamai_cpcode:
+      edit: 1082447
+      public: 1082445
+
+dhsd8:
+  full_name: DHS
+  project_name: DHS
+  alias: dhsd8
+  drupal_version: 8
+  component: DHS
+  akamai_group: 4764
+  akamai_path: /183946/dhs
+  newrelic_id: 140456413
+  related_alias: dhs
+  daily_db: test
+  testint:
+    bamboo_deployment: ['DHS-DDT.json', 'BB_TD']
+    site_urls:
+      edit: edit-preview.dhs.gov
+      public: preview.dhs.gov
+    akamai_cpcode:
+      edit: 164064
+      public: 164064
+  staging:
+    bamboo_deployment: ['DHS-DDS.json', 'BB_SD']
+    site_urls:
+      edit: EDIT_STAGE_URL
+      public: PUBLIC_STAGE_URL
+    akamai_cpcode:
+      edit: 164064
+      public: 164064
+  prod:
+    bamboo_deployment: ['PROD_DEPLOYMENT.json', 'BB_PD']
+    site_urls:
+      edit: EDIT_PROD_URL
+      public: PUBLIC_PROD_URL
+    akamai_cpcode:
+      edit: 175354
+      public: 26930
+
+dhs:
+  full_name: DHS
+  project_name: DHS
+  alias: dhs
+  drupal_version: 7
+  component: DHS
+  akamai_group: 4764
+  akamai_path: /183946/dhs
+  newrelic_id: 140456413
+  related_alias: dhsd8
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['DHS-TESTINT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint.dhs.gov
+      public: testint.dhs.gov
+    akamai_cpcode:
+      edit: 164064
+      public: 164064
+  staging:
+    bamboo_deployment: ['DHS-DHSSTAGE.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging1.dhs.gov
+      public: staging1.dhs.gov
+    akamai_cpcode:
+      edit: 164064
+      public: 164064
+  prod:
+    bamboo_deployment: ['DHS-DPCP.json', 'BB_PD']
+    site_urls:
+      edit: edit.dhs.gov
+      public: www.dhs.gov
+    akamai_cpcode:
+      edit: 175354
+      public: 26930
+
+diamond:
+  full_name: Emerald
+  project_name: DIAMOND
+  alias: diamond
+  drupal_version: 7
+  component: DHS
+  akamai_group: 116983
+  akamai_path: /183946/emerald
+  newrelic_id: 26379964
+  related_alias: diamondd8
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['DIAMOND-DT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint-media.dhs.gov
+      public: testint-media.dhs.gov
+    akamai_cpcode:
+      edit: 406338
+      public: 406246
+  staging:
+    bamboo_deployment: ['DIAMOND-DS2.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging-media.dhs.gov
+      public: staging-media.dhs.gov
+    akamai_cpcode:
+      edit: 406338
+      public: 406246
+  prod:
+    bamboo_deployment: ['DIAMOND-DPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit-media.dhs.gov
+      public: www.media.dhs.gov
+    akamai_cpcode:
+      edit: 406337
+      public: 406245
+
+everify:
+  full_name: EVERIFY
+  project_name: USCIS
+  alias: everify
+  drupal_version: 8
+  component: USCIS
+  akamai_group: 4935
+  akamai_path: /183946/everify_gov
+  newrelic_id: 140456418
+  related_alias: everify
+  daily_db: prod
+  testint:
+    asset_refresh: ['USCIS-ERTF.json', 'BB_AT']
+    database_refresh: ['USCIS-ERTDA.json', 'BB_DT']
+    bamboo_deployment: ['USCIS-ET.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint.e-verify.gov
+      public: testint.e-verify.gov
+    akamai_cpcode:
+      edit: 582876
+      public: 582875
+  staging:
+    asset_refresh: ['USCIS-ERSF.json', 'BB_AS']
+    database_refresh: ['USCIS-ERSDA.json', 'BB_DS']
+    bamboo_deployment: ['USCIS-EBSS.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging.e-verify.gov
+      public: staging.e-verify.gov
+    akamai_cpcode:
+      edit: 582876
+      public: 582875
+  prod:
+    bamboo_deployment: ['USCIS-EPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit.e-verify.gov
+      public: www.e-verify.gov
+    akamai_cpcode:
+      edit: 582874
+      public: 582873
+
+femad8:
+  full_name: FEMA
+  project_name: FEMA_BASE
+  alias: femad8
+  drupal_version: 8
+  component: FEMA
+  akamai_group: 4750
+  akamai_path: /183946/fema
+  newrelic_id: 140456369
+  related_alias: fema
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['FEM-FT.json', 'BB_TD']
+    site_urls:
+      edit: edit.testint.fema.gov
+      public: testint.fema.gov
+    akamai_cpcode:
+      edit: 160132
+      public: 160132
+  staging:
+    bamboo_deployment: ['FEM-FS.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.fema.gov
+      public: staging.fema.gov
+    akamai_cpcode:
+      edit: 160132
+      public: 160132
+  prod:
+    bamboo_deployment: ['FEM-FPC.json', 'BB_PD']
+    site_urls:
+      edit: edit.fema.gov
+      public: www.fema.gov
+    akamai_cpcode:
+      edit: 170463
+      public: 7953
+
+fletad8:
+  full_name: FLETA
+  project_name: FLETC
+  alias: fletad8
+  drupal_version: 8
+  component: FLETC
+  akamai_group: 49644
+  akamai_path: /183946/fletc
+  newrelic_id: 140457853
+  related_alias: fleta
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['FLETC-FAT.json', 'BB_TD']
+    site_urls:
+      edit: edit.testint.fleta.gov
+      public: testint.fleta.gov
+    akamai_cpcode:
+      edit: 265341
+      public: 265340
+  staging:
+    bamboo_deployment: ['FLETC-F8S.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.fleta.gov
+      public: staging.fleta.gov
+    akamai_cpcode:
+      edit: 265341
+      public: 265340
+  prod:
+    bamboo_deployment: ['FLETC-FD8PCS.json', 'BB_PD']
+    site_urls:
+      edit: edit.fleta.gov
+      public: www.fleta.gov
+    akamai_cpcode:
+      edit: 265342
+      public: 117257
+
+fletcd8:
+  full_name: FLETC
+  project_name: FLETC
+  alias: fletcd8
+  drupal_version: 8
+  component: FLETC
+  akamai_group: 14108
+  akamai_path: /183946/fletc
+  newrelic_id: 140457347
+  related_alias: fletc
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['FLETC-FTD8.json', 'BB_TD']
+    site_urls:
+      edit: edit.testint.fletc.gov
+      public: testint.fletc.gov
+    akamai_cpcode:
+      edit: 232322
+      public: 232320
+  staging:
+    bamboo_deployment: ['FLETC-FSD8.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.fletc.gov
+      public: staging.fletc.gov
+    akamai_cpcode:
+      edit: 232322
+      public: 232320
+  prod:
+    bamboo_deployment: ['FLETC-FPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit.fletc.gov
+      public: www.fletc.gov
+    akamai_cpcode:
+      edit: 232323
+      public: 100945
+
+iced8:
+  full_name: ICE
+  project_name: ICE
+  alias: iced8
+  drupal_version: 8
+  component: ICE
+  akamai_group: 18765
+  akamai_path: /183946/ice
+  newrelic_id: 137935451
+  related_alias: ice
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['ICE-IT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testintd8.dhs.gov
+      public: testintd8.dhs.gov
+    akamai_cpcode:
+      edit: 237298
+      public: 237296
+  staging:
+    bamboo_deployment: ['ICE-IS.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.ice.gov
+      public: staging.ice.gov
+    akamai_cpcode:
+      edit: 237298
+      public: 237296
+  prod:
+    bamboo_deployment: ['ICE-IDPCS', 'BB_PD']
+    site_urls:
+      edit: edit.ice.gov
+      public: www.ice.gov
+    akamai_cpcode:
+      edit: 237299
+      public: 114414
+
+niccsd8:
+  full_name: NICCS
+  project_name: NICCS
+  alias: niccsd8
+  drupal_version: 8
+  component: CISA
+  newrelic_id: 140456577
+  akamai_group: 28689
+  akamai_path: /183946/nics
+  related_alias: niccs
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['NICCS-ND8T.json', 'BB_TD']
+    site_urls:
+      edit: edit.testint.niccs.us-cert.gov
+      public: testint.niccs.us-cert.gov
+    akamai_cpcode:
+      edit: 188484
+      public: 188485
+  staging:
+    bamboo_deployment: ['NICCS-ND8S.json', 'BB_SD']
+    site_urls:
+      edit: edit-preview.niccs.us-cert.gov
+      public: preview.niccs.us-cert.gov
+    akamai_cpcode:
+      edit: 188484
+      public: 188485
+  prod:
+    bamboo_deployment: ['NICCS-ND8PC.json', 'BB_PD']
+    site_urls:
+      edit: edit.niccs.us-cert.gov
+      public: niccs.us-cert.gov
+    akamai_cpcode:
+      edit: 197708
+      public: 199403
+
+niemd8:
+  full_name: NIEM
+  project_name: NIEM
+  alias: niemd8
+  drupal_version: 8
+  component: DHS
+  akamai_group: 116982
+  akamai_path: /183946/niem
+  newrelic_id: 140457686
+  related_alias: niem
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['NIEM-ND8T.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint.niem.gov
+      public: testint.niem.gov
+    akamai_cpcode:
+      edit: 506341
+      public: 506341
+  staging:
+    bamboo_deployment: ['NIEM-ND8S.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging.niem.gov
+      public: staging.niem.gov
+    akamai_cpcode:
+      edit: 506341
+      public: 506341
+  prod:
+    bamboo_deployment: ['NIEM-ND8PCS.json', 'BB_PD']
+    site_urls:
+      edit: edit-preview.niem.gov
+      public: preview.niem.gov
+    akamai_cpcode:
+      edit: 506340
+      public: 506340
+
+niem:
+  full_name: NIEM
+  project_name: NIEM
+  alias: niem
+  drupal_version: 7
+  component: DHS
+  newrelic_id: 140457686
+  akamai_group: 116982
+  akamai_path: /183946/niem
+  related_alias: niemd8
+  daily_db: test
+  testint:
+    bamboo_deployment: ['NIEM-NT.json', 'BB_TD']
+    site_urls:
+      edit: EDIT_TESTINT_URL
+      public: PUBLIC_TESTINT_URL
+    akamai_cpcode:
+      edit: 506341
+      public: 506341
+  staging:
+    bamboo_deployment: ['NIEM-NS.json', 'BB_SD']
+    site_urls:
+      edit: EDIT_STAGE_URL
+      public: PUBLIC_STAGE_URL
+    akamai_cpcode:
+      edit: 506341
+      public: 506341
+  prod:
+    bamboo_deployment: ['NIEM-NPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit.niem.gov
+      public: www.niem.gov
+    akamai_cpcode:
+      edit: 506340
+      public: 506340
+
+oigd8:
+  full_name: OIG
+  project_name: IG
+  alias: oigd8
+  drupal_version: 8
+  component: OIG
+  akamai_group: 116980
+  akamai_path: /183946/oig
+  newrelic_id: 140721150
+  related_alias: oig
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['OIG-OT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint-oig.dhs.gov
+      public: testint-oig.dhs.gov
+    akamai_cpcode:
+      edit: 464220
+      public: 464220
+  staging:
+    bamboo_deployment: ['OIG-OS.json', 'BB_TD']
+    site_urls:
+      edit: edit-staging-oig.dhs.gov
+      public: staging-oig.dhs.gov
+    akamai_cpcode:
+      edit: 464220
+      public: 464220
+  prod:
+    bamboo_deployment: ['OIG-OPCS.json', 'BB_TD']
+    site_urls:
+      edit: edit-oig.dhs.gov
+      public: oig.dhs.gov
+    akamai_cpcode:
+      edit: 464219
+      public: 464219
+
+precheckd8:
+  full_name: DHS Precheck
+  project_name: DHS
+  alias: precheckd8
+  drupal_version: 8
+  component: DHS
+  akamai_group: 116981
+  akamai_path: /183946/precheck
+  newrelic_id: 18793252
+  related_alias: precheck
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['DHS-PDT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint.dhsprecheck.dhs.gov
+      public: testint.dhsprecheck.dhs.gov
+    akamai_cpcode:
+      edit: 425296
+      public: 425296
+  staging:
+    bamboo_deployment: ['DHS-PD8S.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging.dhsprecheck.dhs.gov
+      public: staging.dhsprecheck.dhs.gov
+    akamai_cpcode:
+      edit: 425296
+      public: 425296
+  prod:
+    bamboo_deployment: ['DHS-PDPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit-dhsprecheck.dhs.gov
+      public: dhsprecheck.dhs.gov
+    akamai_cpcode:
+      edit: 425295
+      public: 425295
+
+readyd8:
+  full_name: Ready
+  project_name: FEMA_BASE
+  alias: readyd8
+  drupal_version: 8
+  component: FEMA
+  akamai_group: 4752
+  akamai_path: /183946/fema
+  newrelic_id: 140456439
+  related_alias: ready
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['FEM-RT.json', 'BB_TD']
+    site_urls:
+      edit: edit.testint.ready.gov
+      public: testint.ready.gov
+    akamai_cpcode:
+      edit: 159127
+      public: 159127
+  staging:
+    bamboo_deployment: ['FEM-RS.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.ready.gov
+      public: staging.ready.gov
+    akamai_cpcode:
+      edit: 159127
+      public: 159127
+  prod:
+    bamboo_deployment: ['FEM-RPD.json', 'BB_PD']
+    site_urls:
+      edit: edit.ready.gov
+      public: www.ready.gov
+    akamai_cpcode:
+      edit: 10651
+      public: 10651
+
+rfema:
+  full_name: Recovery FEMA
+  project_name: FEMA_BASE
+  alias: rfema
+  drupal_version: 8
+  component: FEMA
+  akamai_group: 194190
+  akamai_path: /183946/fema
+  newrelic_id: 140456369
+  related_alias: rfema
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['FEM-RFT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint-recovery.fema.gov
+      public: testint-recovery.fema.gov
+    akamai_cpcode:
+      edit: 724082
+      public: 724080
+  staging:
+    bamboo_deployment: ['FEM-RFS.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging-recovery.fema.gov
+      public: staging-recovery.fema.gov
+    akamai_cpcode:
+      edit: 724082
+      public: 724080
+  prod:
+    bamboo_deployment: ['FEM-RFP', 'BB_PD']
+    site_urls:
+      edit: edit-recovery.fema.gov
+      public: recovery.fema.gov
+    akamai_cpcode:
+      edit: 724081
+      public: 724079
+
+schoolsafety:
+  full_name: School Safety
+  project_name: WSS
+  alias: schoolsafety
+  drupal_version: 8
+  component: cisa
+  akamai_group: 144852
+  akamai_path: /183946/schoolsafety
+  newrelic_id: 000000000
+  related_alias: schoolsafety
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['SCHOOL-ST.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint.schoolsafety.gov
+      public: testint.schoolsafety.gov
+    akamai_cpcode:
+      edit: 853544
+      public: 853542
+  staging:
+    bamboo_deployment: ['SCHOOL-SS.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging.schoolsafety.gov
+      public: staging.schoolsafety.gov
+    akamai_cpcode:
+      edit: 853544
+      public: 853542
+  prod:
+    bamboo_deployment: ['SCHOOL-SPC.json', 'BB_PD']
+    site_urls:
+      edit: edit.schoolsafety.gov
+      public: www.schoolsafety.gov
+    akamai_cpcode:
+      edit: 853543
+      public: 853541
+
+sitsd8:
+  full_name: Study in the States
+  project_name: SITS
+  alias: sitsd8
+  drupal_version: 8
+  component: ICE
+  akamai_group: 20466
+  akamai_path: /183946/study_in_the_states
+  newrelic_id: 140720931
+  related_alias: sits
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['SITS-SDT.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint-studyinthestates.dhs.gov
+      public: testint-studyinthestates.dhs.gov
+    akamai_cpcode:
+      edit: 271386
+      public: 271388
+  staging:
+    bamboo_deployment: ['SITS-SDS.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging-studyinthestates.dhs.gov
+      public: staging-studyinthestates.dhs.gov
+    akamai_cpcode:
+      edit: 271386
+      public: 271388
+  prod:
+    bamboo_deployment: ['SITS-SD8PCS.json', 'BB_PD']
+    site_urls:
+      edit: edit-studyinthestates.dhs.gov
+      public: studyinthestates.dhs.gov
+    akamai_cpcode:
+      edit: 271385
+      public: 135567
+
+tsad8:
+  full_name: TSA
+  project_name: TSA
+  alias: tsad8
+  drupal_version: 8
+  component: TSA
+  akamai_group: 4767
+  akamai_path: /183946/tsa2
+  newrelic_id: 140456374
+  related_alias: tsa2
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['TSA-TT8.json', 'BB_TD']
+    site_urls:
+      edit: edit-testing.tsa.gov
+      public: testing.tsa.gov
+    akamai_cpcode:
+      edit: 177266
+      public: 177266
+  staging:
+    bamboo_deployment: ['TSA-TS.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging.tsa.gov
+      public: staging.tsa.gov
+    akamai_cpcode:
+      edit: 177266
+      public: 177266
+  prod:
+    bamboo_deployment: ['TSA-TD8PC.json', 'BB_PD']
+    site_urls:
+      edit: edit.tsa.gov
+      public: www.tsa.gov
+    akamai_cpcode:
+      edit: 183939
+      public: 25703
+
+tsanewsd8:
+  full_name: TSA News Mobile App
+  project_name: TSANEWS
+  alias: tsanewsd8
+  drupal_version: 8
+  component: TSA
+  akamai_group: 116984
+  akamai_path: /183946/tsa_news
+  newrelic_id: 140457814
+  related_alias: tsanews
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['TSAN-TT8.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint-mobile.tsa.gov
+      public: testint-mobile.tsa.gov
+    akamai_cpcode:
+      edit: 398306
+      public: 398306
+  staging:
+    bamboo_deployment: ['TSAN-TND8S.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging-mobile.tsa.gov
+      public: staging-mobile.tsa.gov
+    akamai_cpcode:
+      edit: 398306
+      public: 398306
+  prod:
+    bamboo_deployment: ['TSAN-TPPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit-mobile.tsa.gov
+      public: mobile.tsa.gov
+    akamai_cpcode:
+      edit: 398307
+      public: 398307
+
+uscertd8:
+  full_name: USCERT
+  project_name: USCERT
+  alias: uscertd8
+  drupal_version: 8
+  component: NPPD
+  akamai_group: 28392
+  akamai_path: /183946/uscert
+  newrelic_id: 140456368
+  related_alias: uscertd8
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['USCERT-UT.json', 'BB_TD']
+    site_urls:
+      edit: edit.test.us-cert.gov
+      public: test.us-cert.gov
+    akamai_cpcode:
+      edit: 188482
+      public: 188483
+  staging:
+    bamboo_deployment: ['USCERT-US.json', 'BB_TD']
+    site_urls:
+      edit: edit.qa.us-cert.gov
+      public: qa.us-cert.gov
+    akamai_cpcode:
+      edit: 188482
+      public: 188483
+  prod:
+    bamboo_deployment: ['USCERT-US8PCS.json', 'BB_TD']
+    site_urls:
+      edit: edit.us-cert.gov
+      public: www.us-cert.gov
+    akamai_cpcode:
+      edit: 209816
+      public: 188416
+
+uscisd8:
+  full_name: USCIS
+  project_name: USCIS
+  alias: uscisd8
+  drupal_version: 8
+  component: USCIS
+  akamai_group: 4935
+  akamai_path: /183946/uscis
+  newrelic_id: 137833368
+  related_alias: uscis
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['USCIS-UT.json', 'BB_TD']
+    site_urls:
+      edit: edit.testint.uscis.gov
+      public: testint.uscis.gov
+    akamai_cpcode:
+      edit: 201750
+      public: 201749
+  staging:
+    bamboo_deployment: ['USCIS-US.json', 'BB_SD']
+    site_urls:
+      edit: edit.staging.uscis.gov
+      public: taging.uscis.gov
+    akamai_cpcode:
+      edit: 201750
+      public: 201749
+  prod:
+    bamboo_deployment: ['USCIS-UDPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit.uscis.gov
+      public: www.uscis.gov
+    akamai_cpcode:
+      edit: 245648
+      public: 34357
+
+usssd8:
+  full_name: Secret Service
+  project_name: USSS
+  alias: usssd8
+  drupal_version: 8
+  component: usss
+  akamai_group: 10629
+  akamai_path: /183946/usss
+  newrelic_id: 000000000
+  related_alias: usss
+  daily_db: prod
+  testint:
+    bamboo_deployment: ['USSS-UUBD8.json', 'BB_TD']
+    site_urls:
+      edit: edit-testint.secretservice.gov
+      public: testint.secretservice.gov
+    akamai_cpcode:
+      edit: 894508
+      public: 861069
+  staging:
+    bamboo_deployment: ['USSS-UUBMD8.json', 'BB_SD']
+    site_urls:
+      edit: edit-staging.secretservice.gov
+      public: staging.secretservice.gov
+    akamai_cpcode:
+      edit: 894508
+      public: 861069
+  prod:
+    bamboo_deployment: ['USSS-UPCS.json', 'BB_PD']
+    site_urls:
+      edit: edit.secretservice.gov
+      public: www.secretservice.gov
+    akamai_cpcode:
+      edit: 894509
+      public: 85222
+
+wcmdemod8:
+  full_name: WCM DEMO
+  project_name: WIT
+  alias: wcmdemod8
+  drupal_version: 8
+  component: hq
+  akamai_group: 23306
+  akamai_path: /183946/wcmdemo
+  newrelic_id: 000000000
+  related_alias: wcmdemod8
+  daily_db: blank
+  testint:
+    asset_refresh:
+    database_refresh:
+    bamboo_deployment: ['WCMDEM-WT.json', 'BB_TD']
+    site_urls:
+      edit: edit-wcms-testint.dhs.gov
+      public: wcms-testint.dhs.gov
+    akamai_cpcode:
+      edit: 154913
+      public: 160692
+  staging:
+    asset_refresh:
+    database_refresh:
+    bamboo_deployment: ['WCMDEM-WS.json', 'BB_SD']
+    site_urls:
+      edit: edit-wcmsstg1-demo.dhs.gov
+      public: wcmsstg1-demo.dhs.gov
+    akamai_cpcode:
+      edit: 154913
+      public: 160692
+  prod:
+    bamboo_deployment: ['XXXXX-XXXX.json', 'BB_PD']
+    site_urls:
+      edit: edit-wcms-demo.dhs.gov
+      public: wcms-demo.dhs.gov
+    akamai_cpcode:
+      edit: 154913
+      public: 160692

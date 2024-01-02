@@ -1,0 +1,8 @@
+---
+- name: Testing Variable Bamboo plans
+  #hosts: 127.0.0.1
+  #connection: local
+  hosts: testint_web
+  become: yes
+  roles: 
+    - variable_test

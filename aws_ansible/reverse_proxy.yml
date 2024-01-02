@@ -1,0 +1,9 @@
+# manage reverse proxy on VM
+---
+- name: Manage reverse proxy 
+  hosts: all
+  become: yes 
+  #environment: "{{ PROXY_ENV }}"
+
+  roles: 
+    - reverse_proxy

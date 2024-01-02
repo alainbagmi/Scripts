@@ -1,0 +1,32 @@
+---
+# Drush Commands: to get the correct drush cc/rr commands, notify: "drush cache registry {{ drupal_version }}" ansible is so fun :)
+
+- name: Drush Update Database
+  command: "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ tenant }}_gov_build/docroot updb -y"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush update database"
+  become: yes
+  become_user: apache
+
+
+- name: Drush Clear Cache and Rebuild Registry 8
+  command: "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ tenant }}_gov_build/docroot cr"
+  ignore_errors: yes
+  run_once: true
+  listen: "drush cache registry 8"
+  become: yes
+  become_user: apache
+
+
+- name: Drush Clear Cache and Rebuild Registry 7
+  command: "/usr/local/bin/drush --alias-path=/data/bamboo_scripts/drush_aliases --root=/var/www/html/wwwroot/{{ tenant }}_gov_build/docroot {{ item }}"
+  with_items:
+    - cc all
+    - rr
+  ignore_errors: yes
+  run_once: true
+  listen: "drush cache registry 7"
+  become: yes
+  become_user: apache
+

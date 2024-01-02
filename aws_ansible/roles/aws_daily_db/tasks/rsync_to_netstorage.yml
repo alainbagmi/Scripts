@@ -1,0 +1,100 @@
+---
+- name: Get the vars
+  block:      
+
+    - name: Show where we are
+      debug:
+        msg: "Key is {{ first_item.key }}" 
+
+    - name: Show who we are
+      debug:
+        msg: "site_alias is  {{ first_item.value.alias }}"
+
+    - name: Show the environment
+      debug:
+        msg: "daily_db is {{ first_item.value.daily_db }}"
+
+    - name: Show the akamai path
+      debug:
+        msg: "akamai path is  {{ first_item.value.akamai_path }}"
+    
+    - name: Set facts
+      set_fact:
+        file_name: "daily_{{ first_item.value.alias }}_{{ first_item.value.daily_db }}_{{ current_run_timestamp.stdout }}"
+        backup_path: "/data/backup/db/daily/{{ first_item.value.alias }}_{{ first_item.value.daily_db }}"
+        akamai_db_path: "{{ first_item.value.akamai_path }}/daily_db_backups"
+
+    - name: Find any files with todays timestamp
+      find:
+        paths: "{{ backup_path }}"
+        patterns: "*.sql.gz"
+        age: "-23h"
+        file_type: file
+      register: current_file
+    
+    - name: Test appending a list 
+      set_fact:
+        prod_list: "{{ prod_list }} + [ '{{ first_item.key }}' ]"
+      when: current_file.matched | int == 0
+
+    - name: Show if a file exists
+      debug:
+        msg: "{{ current_file.files }}"
+
+
+    - name: Rsync DB data to Netstorage
+      shell: "rsync -avz --delete -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ backup_path }} sshacs@dhswcms.upload.akamai.com:{{ akamai_db_path }}"
+      become: yes
+      become_method: sudo
+      register: rsync_command
+  when: first_item.value.daily_db == "prod"
+
+# - name: Get the vars
+#   block:      
+
+#     - name: Show where we are
+#       debug:
+#         msg: "Key is {{ first_item.key }}" 
+
+#     - name: Show who we are
+#       debug:
+#         msg: "site_alias is  {{ first_item.value.alias }}"
+
+#     - name: Show the environment
+#       debug:
+#         msg: "daily_db is {{ first_item.value.daily_db }}"
+
+#     - name: Show the akamai path
+#       debug:
+#         msg: "akamai path is  {{ first_item.value.akamai_path }}"
+    
+#     - name: Set facts
+#       set_fact:
+#         file_name: "daily_{{ first_item.value.alias }}_{{ first_item.value.daily_db }}_{{ current_run_timestamp.stdout }}"
+#         backup_path: "/data/backup/db/daily/{{ first_item.value.alias }}_{{ first_item.value.daily_db }}"
+#         akamai_db_path: "{{ first_item.value.akamai_path }}/daily_db_backups"
+
+#     - name: Find any files with todays timestamp
+#       find:
+#         paths: "{{ backup_path }}"
+#         patterns: "*.sql.gz"
+#         age: "-23h"
+#         file_type: file
+#       register: current_file
+    
+#     - name: Append to Testint List 
+#       set_fact:
+#         test_list: "{{ test_list }} + [ '{{ first_item.key }}' ]"
+#       when: current_file.matched | int == 0
+
+#     - name: Show if a file exists
+#       debug:
+#         msg: "{{ current_file.files }}"
+
+
+#     - name: Rsync DB data to Netstorage
+#       shell: "rsync -avz --delete -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ backup_path }} sshacs@dhswcms.upload.akamai.com:{{ akamai_db_path }}"
+#       become: yes
+#       become_method: sudo
+#       register: rsync_command
+#   when: first_item.value.daily_db == "test"

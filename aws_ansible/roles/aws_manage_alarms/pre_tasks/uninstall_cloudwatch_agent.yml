@@ -1,0 +1,20 @@
+---
+- name: Uninstall the cloudwatch agent
+  block:
+  - name: Run yum remove command
+    yum:
+      name: amazon-cloudwatch-agent
+      state: absent
+    register: uninstall_out
+    retries: 2
+    until: uninstall_out.rc == 0
+    ignore_errors: yes
+
+  - name: Remove the efs specific files
+    file:
+      state: absent
+      path: "{{ item }}"
+    with_items:
+      - "/usr/local/bin/mount_efs.sh"
+      - "/usr/local/bin/efs_volume"
+    ignore_errors: yes

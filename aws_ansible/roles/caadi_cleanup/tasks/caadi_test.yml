@@ -1,0 +1,13 @@
+
+- name: "Get list of yestereday's empty submission directories"
+  find:
+    paths: "{{ formpath }}/completed"
+#      patterns: "{{ yesterday.stdout }}_*"
+    age: 24h
+    file_type: directory
+    age_stamp: mtime
+  register: yesterdays_completed
+
+- debug:
+    msg: "{{ yesterdays_completed.matched }}"
+

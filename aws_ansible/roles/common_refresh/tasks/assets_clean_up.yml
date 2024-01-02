@@ -1,0 +1,93 @@
+---
+
+- name: Set Facts
+  set_fact:
+    docking_path: "/data/bamboo_scripts/deploy/test/docking_bay/{{ site_alias }}_files/files/"
+    asset_to_netstorage: "/data/transit_files/assetrefresh/to_netstorage/{{ site_alias }}_files/files/"
+    asset_from_netstorage: "/data/transit_files/assetrefresh/from_netstorage/{{ site_alias }}_files/files/"
+    bz2_path: "/data/transit_files/assetrefresh/split_assets/{{ site_alias }}_split_assets/"
+
+- name: Get Docking Path Stats
+  stat:
+    path: "{{ docking_path }}"
+  register: docking_stats
+  delegate_to: "{{ jump_ip }}"
+
+- name: Return Docking Bay to original mode and owner
+  file:
+    path: "{{ docking_path }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+    recurse: yes
+  delegate_to: "{{ jump_ip }}"
+  when: docking_stats.stat.isdir is defined
+
+- name: Get Netstorage to Path Stats
+  stat:
+    path: "{{ asset_to_netstorage }}"
+  register: to_net_stats
+  delegate_to: "{{ jump_ip }}"
+
+- name: Return To Netstorage to original mode and owner
+  file:
+    path: "{{ asset_to_netstorage }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+    recurse: yes
+  delegate_to: "{{ jump_ip }}"
+  when: to_net_stats.stat.isdir is defined
+
+- name: Remove Directories/Files for Assets to Netstorage
+  file:
+    path: "{{ asset_to_netstorage }}"
+    state: absent
+  delegate_to: "{{ jump_ip }}"
+  when: to_net_stats.stat.isdir is defined
+
+- name: Get Netstorage from Path Stats
+  stat:
+    path: "{{ asset_from_netstorage }}"
+  register: from_net_stats
+  delegate_to: "{{ jump_ip }}"
+
+- name: Return From Netstorage to original mode and owner
+  file:
+    path: "{{ asset_from_netstorage }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+    recurse: yes
+  delegate_to: "{{ jump_ip }}"
+  when: from_net_stats.stat.isdir is defined
+
+- name: Remove Directories/Files for Assets from Netstorage
+  file:
+    path: "{{ asset_from_netstorage }}"
+    state: absent
+  delegate_to: "{{ jump_ip }}"
+  when: from_net_stats.stat.isdir is defined
+
+- name: Get Split Path Stats
+  stat:
+    path: "{{ bz2_path }}"
+  register: split_stats
+  delegate_to: "{{ jump_ip }}"
+
+- name: Return Split Assets to original mode and owner
+  file:
+    path: "{{ bz2_path }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0770
+    recurse: yes
+  delegate_to: "{{ jump_ip }}"
+  when: split_stats.stat.isdir is defined
+
+- name: Clear out split asset path
+  file:
+    path: "{{ bz2_path }}"
+    state: absent
+  delegate_to: "{{ jump_ip }}"
+  when: split_stats.stat.isdir is defined

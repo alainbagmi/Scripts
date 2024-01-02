@@ -1,0 +1,66 @@
+---
+- name: Run Environment specific tasks
+  block:
+    - name: Clone the empty combo repo to all WebApp Servers
+      include_tasks: clone_combo.yml
+      args:
+        apply:
+          delegate_to: "{{ host_ip }}"
+      with_inventory_hostnames:
+        - "tag_aws_autoscaling_groupName_{{ host_name }}_as_group"
+      loop_control:
+        loop_var: host_ip
+      when: adhoc_run == "all" or adhoc_run == "push_combo"
+
+    - include: env_onboard.yml
+      delegate_to: "{{ delegate_host }}"
+      
+    - include: tower_onboard.yml
+      when: adhoc_run == "all" or adhoc_run == "mk_dir"
+
+  always:
+
+    - name: Resume the ASG's
+      include_tasks: roles/aws_common/tasks/resume_asg.yml
+      run_once: yes
+      args:
+        apply:
+          delegate_to: 127.0.0.1
+
+    - name: Push code to branch
+      shell: "cd {{ aws_ansible_path }} && {{ item }}"
+      become: yes
+      become_user: awx
+      with_items:
+        - git add -A
+        - git commit -m "Updating branch with vars for {{ tenant }} {{ env }}"
+        - git push origin "{{ ansible_repo }}"
+      when: adhoc_run == "all" or adhoc_run == "push_vars"
+
+    
+
+# - name: Do the git stuff for tower repos
+#   block:
+#     - name: Push code to branch
+#       shell: "cd {{ aws_ansible_path }} && {{ item }}"
+#       become: yes
+#       become_user: awx
+#       with_items:
+#         - git add -A
+#         - git commit -m "Updating branch with vars for {{ tenant }} {{ env }}"
+#         - git push origin "{{ ansible_repo }}"
+#       when: 
+#         - target is defined
+#         - target == "wcmlab"
+
+  #- name: Push code to branch
+    #  shell: "cd {{ aws_script_path }} && {{ item }}"
+    #  become: yes
+    #  become_user: awx
+    #  with_items:
+    #    - git add -A
+    #    - git commit -m "Updating branch with vars for {{ site_alias }} {{ target_env }}"
+    #    - git push origin drush_alias_updates
+    #  when: run_task == "create" or run_task == "update"
+
+  

@@ -1,0 +1,73 @@
+---
+### This runs Asset Refresh Tasks
+- name: Start of Task Asset Refresh
+  debug:
+    msg: "Role: aws_asset_refresh; Task: perform_asset_refresh.yml"
+
+- name: Show info from Extra Vars
+  debug:
+    msg: >
+      "Site - {{ tenant }}, 
+      Source Env - {{ source_env }}, 
+      Target_Site - {{ target_tenant }}, 
+      Target Env - {{ target_env }}"
+- name: Set Source Facts
+  set_fact:
+    netstorage_source_path: "{{ akamai_path }}/refresh_files/{{ tenant }}/assets/*"
+
+- name: Overwrite Prod Path for Test
+  set_fact:
+    cgi_prod_path: "/var/www/sites-files/test_refresh/{{ tenant }}_gov_build/"
+
+#Netstorage Source to Target Environments
+- name: Sync Tar File from Netstorage
+  shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' sshacs@dhswcms.upload.akamai.com:{{ netstorage_source_path }} {{ netstorage_asset_tar_path }}/"
+  when: source_env == "netstorage"
+
+- name: Get Tar File Name
+  shell: "ls {{ netstorage_asset_tar_path }}/"
+  register: tar_file_name
+  when: source_env == "netstorage"
+
+- name: Show Tar File Name
+  debug:
+    msg: "Tar File Name: {{ tar_file_name.stdout }}"
+  when: source_env == "netstorage"
+
+- name: Set Tar File Name as Fact
+  set_fact:
+    source_tar_file: "{{ tar_file_name.stdout }}"
+  when: source_env == "netstorage"
+
+- name: Extract tar file
+  unarchive:
+    src: "{{ netstorage_asset_tar_path }}/{{ source_tar_file }}"
+    dest: "{{ aws_docking_assets }}/"
+    owner: apache
+    group: apache
+    recurse: yes
+  when: source_env == "netstorage"
+
+- name: Ensure Mode and Permissions are set
+  file:
+    path: "{{ aws_docking_assets }}/"
+    owner: apache
+    group: apache
+    mode: 0776
+    recurse: yes
+  when: source_env == "netstorage"
+
+- name: Remove The Tar file
+  file:
+    path: "{{ netstorage_source_tar_path }}"
+    state: absent
+  become: yes
+  when: source_env == "netstorage"
+
+# Synchronize Source to Target
+- name: Synchronize Source to Target (Netstorage to Target/AWS to AWS) 
+  shell: "rclone sync --checkers=8 --multi-thread-streams=8 {{ aws_source_path }} {{ target_path }} {{ sync_exclude }}"
+
+- name: Set asset refresh status
+  set_fact:
+    asset_refresh_status: "OK"

@@ -1,0 +1,11 @@
+- name: Pretasks for tenant create
+  block:
+    - include: aws_check_repos.yml
+    - include: aws_create_paths.yml
+
+    - include: aws_check_dbs.yml
+      when: adhoc_run == "all" or adhoc_run == "create_db"
+      with_items:
+        - {env: 'testint', db_name: '{{ tenant }}_test'}
+        - {env: 'staging', db_name: '{{ tenant }}_stage'}
+        - {env: 'production', db_name: '{{ tenant }}_prod'}

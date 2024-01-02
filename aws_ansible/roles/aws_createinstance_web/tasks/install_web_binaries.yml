@@ -1,0 +1,58 @@
+---
+- name: clone the aws_git_repo
+  git: 
+    repo: "{{ AWS_repo }}"
+    dest: /home/ansible_tower/web_script
+  become: yes
+  become_user: ansible_tower
+
+- name: Decrypt files
+  shell: cd /home/ansible_tower/web_script && git secret reveal -p hello123
+  become: yes
+  become_user: ansible_tower
+
+- name: SCP the files
+  shell: scp -o 'StrictHostKeyChecking no' -r /home/ansible_tower/web_script ansible_tower@"{{ ec2.tagged_instances.0.private_ip }}":/home/ansible_tower
+  become: yes
+  become_user: ansible_tower
+
+- name: Install Certs on Remote Server
+  shell: /usr/local/bin/aws s3 sync s3://tenant-apache-configs/CertAndKey /etc/pki/tls/certs/
+  become: yes
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Install Web Binaries on Remote Server
+  shell: cd /home/ansible_tower/web_script && /bin/bash install_web.sh
+  become: yes
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Unit File for Git Pulls
+  copy:
+    dest: "/etc/systemd/system/pulls.service"
+    content: |
+      [Service]
+      User=apache
+      Group=apache
+      ExecStart=/var/www/sites-files/scripts/mass_pull.sh
+  become: yes
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Enable the Service
+  shell: systemctl enable pulls.service
+  become: yes
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+ 
+- name: Yum Clear Cache
+  shell: yum clean all
+  become: yes
+  become_method: sudo
+  delegate_to: "{{ ec2.tagged_instances.0.private_ip }}"
+
+- name: Cleanup working directory 
+  file:
+    path: /home/ansible_tower/web_script
+    state: absent

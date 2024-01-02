@@ -1,0 +1,80 @@
+- name: Create /etc/newrelic-infra.yml 
+  lineinfile:
+    path: /etc/newrelic-infra.yml
+    create: yes
+    line: "{{ item }}"
+  with_items:
+    - "license_key: 33efd339013cca8ef9d0b9ca05e96a64be6aaee3"
+    - "proxy: http://172.22.84.11:80"
+
+- name: Download/Enable New Relic Infra Repository
+  yum_repository:
+    name: newrelic-infra
+    description: NewRelic Repository
+    file: newrelic-infra
+    baseurl: https://download.newrelic.com/infrastructure_agent/linux/yum/el/7/x86_64
+    gpgcheck: yes
+    repo_gpgcheck: yes
+    gpgkey: http://download.newrelic.com/infrastructure_agent/gpg/newrelic-infra.gpg
+    enabled: yes
+  environment: "{{ proxy_env }}"
+
+- name: Install and enable the New Relic APM Repo ( And yes, for some reason it points to a linux 5 repo for Rhel 7 b/c that's how New Relic Rolls. )
+  yum:
+    name: http://yum.newrelic.com/pub/newrelic/el5/x86_64/newrelic-repo-5-3.noarch.rpm
+  environment: "{{ proxy_env }}"
+
+- name: Install New Relic packages
+  yum:
+    name: "{{ item }}"
+    update_cache: yes
+    state: latest
+  environment: "{{ proxy_env }}"
+  with_items:
+     - newrelic-infra
+     - newrelic-php5
+  environment: "{{ proxy_env }}"
+
+- name: Disable New Relic Repos
+  command: yum-config-manager --disable "{{ item }}"
+  with_items:
+    - newrelic-infra
+    - newrelic
+
+- name: Run New Relic install command
+  command: newrelic-install install
+  environment: "{{ install_env }}"
+
+- name: Deploy ini file for php agent
+  copy:
+    src: newrelic.ini
+    dest: /etc/php.d/newrelic.ini
+
+#- name: Remove repository (and clean up left-over metadata)
+#  yum_repository:
+#    name: newrelic-infra
+#    state: absent
+#  notify: yum-clean-metadata
+
+- name: Start and register the newrelic services
+  service:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  with_items:
+    - newrelic-infra
+
+- name: Stop the newrelic services
+  service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  with_items:
+    - newrelic-daemon
+
+- name: Remove pid file b/c of perms
+  file:
+    path: /var/run/newrelic-daemon.pid
+    state: absent
+- name: Restart apache gracefully
+  command: service httpd graceful

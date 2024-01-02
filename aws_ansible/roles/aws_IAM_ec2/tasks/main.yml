@@ -1,0 +1,63 @@
+- name: Load variables
+  include_vars: "./vars/external_vars.yml"
+
+- name: Show JSON parameters
+  debug:
+    msg: "Host: {{ hostname }} IP: {{ ip_address }}"
+
+- name: Get EC2 users info
+  getent:
+    database: passwd
+
+- set_fact:
+    ec2_users: "{{ getent_passwd|dict2items|selectattr('value.1','match','^1...')|map(attribute='key')|list }}"
+
+- set_fact:
+    iam_users: "{{ users|map(attribute='username')|list }}"
+
+- name: Setup list of users to delete/deactivate (Phase I)
+  set_fact: 
+    tmp_delete: "{{ (ec2_users | difference(service_users)) }}"
+
+- name: Setup list of users to delete/deactivate (Phase II)
+  set_fact:
+    users_to_delete: "{{ (tmp_delete | difference(iam_users)) }}"
+
+- name: Create user profiles on newly launched EC2
+  user:
+    name: "{{ item.username }}"
+    state: present
+    expires: -1
+    shell: /bin/bash
+    groups: adm, wheel, systemd-journal, root
+    comment: "IAM User"
+  loop: "{{ users }}"
+
+- name: Add SSH Public keys
+  authorized_key:
+    user: "{{ item.username }}"
+    state: present
+    key: "{{ item.pkey_body }}"
+  loop: "{{ users }}"
+
+- name: Allow 'wheel' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%wheel'
+    line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+
+- name: Deactivate user profiles
+  user:
+    name: "{{ item }}"
+    state: present
+    shell: /sbin/nologin
+    comment: "Deactivated IAM User"
+  loop: "{{ users_to_delete }}"
+
+- name: Delete SSH Public keys
+  file:
+    path: "/home/{{ item }}/.ssh/authorized_keys"
+    state: absent
+  loop: "{{ users_to_delete }}"  

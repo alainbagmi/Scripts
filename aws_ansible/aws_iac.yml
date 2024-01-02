@@ -1,0 +1,19 @@
+---
+- hosts: localhost 
+  gather_facts: no
+  remote_user: ansible_tower
+  become: yes
+  become_method: sudo
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    AWS_REGION: "us-gov-west-1"
+#    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+#    TMPDIR: "/data/site_code/tmp"
+
+#  vars:
+
+  roles:
+    - aws_iac
+

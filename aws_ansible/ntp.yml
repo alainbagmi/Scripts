@@ -1,0 +1,6 @@
+---
+- name: Ensure CGI NTP is OK
+  hosts: wcm_production_db_galera:wcm_new_app_servers_phx:wcm_new_staging_webheads:wcm_new_prod_webheads:wcm_testint_db_galera:wcm_staging_db_galera:almss
+  become: yes
+  roles: 
+    - ntp

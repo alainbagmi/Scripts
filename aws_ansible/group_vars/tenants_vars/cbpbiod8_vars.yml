@@ -1,0 +1,29 @@
+cbpbiod8:
+  project_name: CBPBIO
+  alias: cbpbiod8
+  drupal_version: 8
+  akamai_group: 220144
+  akamai_path: /183946/cbpbio
+  newrelic_id: 00000000
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit-testint-biometrics.cbp.gov
+      public: testint-biometrics.cbp.gov
+    akamai_cpcode:
+      edit: 1048807
+      public: 1048805
+  staging:
+    site_urls:
+      edit: edit-staging-biometrics.cbp.gov
+      public: staging-biometrics.cbp.gov
+    akamai_cpcode:
+      edit: 1048807
+      public: 1048805
+  prod:
+    site_urls:
+      edit: edit-biometrics.cbp.gov
+      public: www.biometrics.cbp.gov
+    akamai_cpcode:
+      edit: 1048806
+      public: 1048804

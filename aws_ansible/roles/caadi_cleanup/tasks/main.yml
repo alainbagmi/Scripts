@@ -1,0 +1,8 @@
+---
+- include: caadi_scripts.yml
+
+- include: create_directories.yml
+- include: cleanup_directories.yml
+
+- include: cleanup_logs.yml
+

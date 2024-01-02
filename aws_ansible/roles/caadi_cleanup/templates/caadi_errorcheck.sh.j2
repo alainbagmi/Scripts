@@ -1,0 +1,39 @@
+#! /bin/bash
+#Set error handling
+set -eu -o pipefail
+
+echo $(hostname)
+#Get today's date as the caadi form directories start with this prefix
+today=$(date '+%Y%m%d')
+
+#Form version 7001 or 7003
+formversion=$1
+
+#Run this like './caadi_errorcheck.sh 7001 prod', './caadi_errorcheck.sh 7001 staging', './caadi_errorcheck.sh 7001 testint', you can specify demo or leave environment blank before go live
+
+prod_sitefiles=production.dhs_gov_build
+staging_sitefiles=staging.dhs_gov_build
+testint_sitefiles=testint.dhs_gov_build
+demo_sitefiles=testint.caadi_gov_build
+host=${2:-demo}
+sitefiles=$host'_sitefiles'
+
+
+mail_recipients="ryan.tackett@associates.hq.dhs.gov, christopher.anderson@associates.hq.dhs.gov, kyle.day@associates.hq.dhs.gov"
+
+
+caadi_path=/var/www/sites-files/${!sitefiles}/files-private/webform/CAADI_$formversion/$formversion'FormSubmissions'
+
+if [[ ! "$(ls -d $caadi_path/$today* 2>/dev/null)" ]]; then
+#  echo "$(date) no forms submittited today"
+   sleep .1
+else
+  todays_dirs=$caadi_path/$today*
+
+  if [  "$(find $todays_dirs -mmin +60 2>/dev/null)" ]; then
+      message="$(date): CAADI $formversion submission older than one hour found, please check rsync logs in $caadi_path/logs/ on the $host web server for errors, and ensure that CAADI rsync cron jobs are running." && echo $message >> caadi_errorfile_$today && echo $message | mail -s "CAADI Submission Errors" $mail_recipients 
+    else
+#      echo "no olds found"
+       sleep .1
+    fi
+fi

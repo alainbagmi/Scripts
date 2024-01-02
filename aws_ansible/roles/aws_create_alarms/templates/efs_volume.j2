@@ -1,0 +1,12 @@
+{% if ec2_purpose == "webApp" %}
+{{ efs_mount_command }}|{{ env }}-assets.wcm.com:/|{{ web_asset_path }}|{{ web_asset_metric }}|{{ env|upper }}
+{{ efs_mount_command }}|{{ env }}-vhosts.wcm.com:/|{{ web_vhost_path }}|{{ web_vhost_metric }}|{{ env|upper }}
+{% elif ec2_purpose== "tower" %}
+{{ efs_mount_command }}|{{ mgmt_prod_asset_mount }}|{{ mgmt_prod_asset_path }}|{{ web_asset_metric }}|PRODUCTION
+{{ efs_mount_command }}|{{ mgmt_stage_asset_mount }}|{{ mgmt_stage_asset_path }}|{{ web_asset_metric }}|STAGING
+{{ efs_mount_command }}|{{ mgmt_test_asset_mount }}|{{ mgmt_test_asset_path }}|{{ web_asset_metric }}|TESTINT
+{% elif ec2_purpose == "vpn" %}
+{{ efs_mount_command }}|{{ vpn_prod_asset_mount }}|{{ web_asset_path }}|{{ web_asset_metric }}|PRODUCTION
+{% else %}
+NO EFS TO MOUNT THIS FILE SHOULD NOT EXISTS !!!!!
+{% endif %}

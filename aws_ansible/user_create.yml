@@ -1,0 +1,11 @@
+---
+- hosts: phoenix:bamboo 
+  become: yes
+
+  roles:
+    - user_management
+
+#Job is either create or disable.  Create makes new users, disable disables users
+  vars:
+    job: create
+

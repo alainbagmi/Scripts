@@ -1,0 +1,13 @@
+- hosts: 172.22.84.21:172.22.84.22:172.22.84.23
+  vars:
+    proxy_env:
+      http_proxy: http://172.22.84.11:80
+      https_proxy: http://172.22.84.11:80
+    install_env:
+      NR_INSTALL_SILENT: 1
+  remote_user: bamboo
+  become: yes
+  become_method: sudo
+  roles:
+    - newrelic
+

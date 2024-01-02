@@ -1,0 +1,31 @@
+---
+- name: Install the settings repo in git
+  hosts: 172.22.58.21
+  roles: 
+    - SETTINGS_repo
+  vars_files:
+    - group_vars/mysql_user_creds.yml
+  vars:
+    url: "http://maestro.dhs.gov/stash/rest/api/1.0/projects/"
+#might need lates instead of the 1.0
+    stash_project: "{{ project }}"
+    tenant: "{{ tenant_alias }}"
+    drupal_version: "{{ drupal_version }}"
+    target_env: "{{ target_env }}"
+    test_db: "172.22.83.11"
+    stage_db: "172.22.83.14"
+    prod_db: "172.22.86.11"
+
+
+#Regex to add escaping \'s to all .'s and -'s inside of the URL's being passed.  Requirement for D8 settings
+#https://github.com/ansible/ansible/issues/10067
+    url_escaped: "{{ site_url | regex_replace('[^\\w]', '\\\\\\g<0>') }}"
+
+    dbpass: "{{ userpassword }}" 
+
+    proxy_env:
+      GIT_SSL_NO_VERIFY: true
+  remote_user: bamboo
+  become: yes 
+  become_method: sudo
+

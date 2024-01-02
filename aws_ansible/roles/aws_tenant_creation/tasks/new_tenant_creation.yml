@@ -1,0 +1,58 @@
+---    
+- name: Create the stash project if it doesn't exist
+  block:
+    - name: Create the Project if it doesn't exist
+      uri:
+        url: "{{ stash_create_project_url }}"
+        method: POST
+        body_format: json
+        body:
+          name: "WCM {{ stash_project|upper }}"
+          key: "{{ stash_project }}"
+          description: "WCM {{ stash_project|upper }}"
+        force_basic_auth: yes
+        validate_certs: no
+        status_code: 201, 409
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Basic YmFtYm9vOkJhbUIwMGklNTYyMg=="
+          Accept: "application/json"  
+  when: project_status == "absent"
+
+- name: Create the repos if they don't exist
+  block:
+    - name: Create the base repos
+      uri:
+        url: "{{ stash_url }}/repos"
+        method: POST
+        body_format: json
+        body:
+          name: "{{ item }}"
+        force_basic_auth: yes
+        validate_certs: no
+        status_code: 201, 409
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Basic YmFtYm9vOkJhbUIwMGklNTYyMg=="
+          Accept: "application/json"
+      when: '"gov_absent" in repo_status or "govbuild_absent" in repo_status'
+      with_items: "{{ create_repo_list }}"
+      
+    - name: Create the base combo repo
+      uri:
+        url: "{{ combo_stash_url }}/repos"
+        method: POST
+        body_format: json
+        body:
+          name: "{{ combo_repo }}"
+        force_basic_auth: yes
+        validate_certs: no
+        status_code: 201, 409
+        headers:
+          Content-Type: "application/json"
+          Authorization: "Basic YmFtYm9vOkJhbUIwMGklNTYyMg=="
+          Accept: "application/json"
+      when: '"combo_absent" in repo_status'
+
+
+

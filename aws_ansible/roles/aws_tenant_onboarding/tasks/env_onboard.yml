@@ -1,0 +1,58 @@
+---
+- name: Run single host items
+  block:
+    - name: Create vhost tenant directory (if it doesn't exist)
+      file:
+        path: "{{ vhost_path }}/tenants"
+        mode: 0700
+        group: root
+        owner: root
+        state: directory        
+      when: tenant_path.stat.isdir is not defined
+      #run_once: yes
+
+    - name: Deploy Public vhosts
+      template:
+        src: environment.public-vhost.conf
+        dest: "{{ vhost_path }}/tenants/{{ tenant }}-public.conf"
+        owner: root
+        group: root
+        mode: 0644
+      when: vhost_public.stat.exists == False
+      #run_once: yes
+
+    - name: Deploy Edit Vhosts
+      template:
+        src: environment.edit-vhost.conf
+        dest: "{{ vhost_path }}/tenants/{{ tenant }}-edit.conf"
+        owner: root
+        group: root
+        mode: 0644
+      when: vhost_edit.stat.exists == False
+      #run_once: yes
+
+- name: Link host and graceful
+  block:
+    - name: Setup Public Vhost Symlink
+      file:
+        src: "{{ vhost_path }}/tenants/{{ tenant }}-public.conf"
+        path: "{{ vhost_path }}/{{ tenant }}-public.conf"
+        state: link
+      when: public_link.islnk is not defined
+      #run_once: yes
+
+    - name: Setup Edit Vhost Symlink
+      file:
+        src: "{{ vhost_path }}/tenants/{{ tenant }}-edit.conf"
+        path: "{{ vhost_path }}/{{ tenant }}-edit.conf"
+        state: link
+      when: edit_link.islnk is not defined
+      #run_once: yes
+
+    - name: Do Graceful restart
+      command: "service httpd graceful"
+      become: yes
+      become_user: root
+      #run_once: yes
+
+  when: adhoc_run == "all" or adhoc_run == "link_vhosts"

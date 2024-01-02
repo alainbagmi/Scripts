@@ -1,0 +1,114 @@
+---
+####
+# Get EC2 instance info and tags
+# Set tags to = empty_set if none are found
+####
+
+- name: Get EC2 info
+  block:
+  - name: Get the details for an instance by ID
+    ec2_instance_info:
+      instance_ids: "{{ ec2_id }}"
+    register: ec2_facts
+  
+  - name: Set a fact
+    set_fact:
+      efs_run: "pass"
+      image_id: "{{ ec2_facts.instances[0]['image_id'] }}"
+      launch_time: "{{ ec2_facts.instances[0]['launch_time']}}"
+      instance_type: "{{ ec2_facts.instances[0]['instance_type']}}"
+      private_ip: "{{ ec2_facts.instances[0]['private_ip_address'] }}"
+
+  - name: Try to get tags
+    set_fact:
+      tags: "{{ ec2_facts.instances[0]['tags'] | default('empty_set') }}" 
+
+  - name: Get tags or set to default
+    set_fact:
+      name: "{{ ec2_facts.instances[0]['tags']['Name'] | default('default') }}"
+      ec2_purpose: "{{ ec2_facts.instances[0]['tags']['Purpose'] | default('wcmlab') }}"
+      backup_tag: "{{ ec2_facts.instances[0]['tags']['backup'] | default('false') }}"
+      env: "{{ ec2_facts.instances[0]['tags']['environment'] | default('wcmlab') }}"
+      fisma_id: "{{ ec2_facts.instances[0]['tags']['fisma_id'] | default('DHQ-06630-MAJ-06630') }}"
+      project:  "{{ ec2_facts.instances[0]['tags']['project'] | default('WCMaaS') }}"
+      tower_tag: "{{ ec2_facts.instances[0]['tags']['tower_managed'] | default('true') }}"
+
+  - name: Wait for SSH
+    wait_for:
+      port: 22
+      host: "{{ private_ip }}"
+    when: env != "appliance"
+
+
+- name: Set other flags and facts
+  block:
+  - name: Set Fact with ec2 intstance data
+    set_fact:
+      instance_data: "{{ ec2_facts.instances[0] }}"
+
+  - name: Get a timestamp
+    debug:
+      var: ansible_date_time
+        
+  - name: Set the arn
+    set_fact:
+      action_arn: "arn:aws-us-gov:sns:us-gov-west-1:62894281569:WCMMonitoring"
+
+  - name: Set NameSpace
+    set_fact:
+      namespace_log: "EC2DetailedMetrics"
+      name_space: "EC2 Detailed Metrics"
+    when:
+      - ec2_purpose == "wcmlab" 
+      - env == "wcmlab"
+
+  - name: Set facts for config MGMT
+    set_fact:
+      namespace_log: "MGMTMetrics"
+      name_space: "MGMT Metrics"
+      efs_env: ""
+    when: env == "management"
+  
+  - name: Set environment to appliance for uscert_redirect
+    set_fact:
+      env: "appliance"
+    when: ec2_purpose == "uscert_redirect"
+
+  - name: Set efs_env to env
+    set_fact:
+      efs_env: "{{ env }}"
+    when: ec2_purpose == "webApp"
+
+  - name: Set facts for config WCMLab
+    set_fact:
+      namespace_log: "WCMLabWebMetrics"
+      name_space: "WCM Lab Web Metrics"
+    when:
+      - ec2_purpose == "webApp" 
+      - env == "wcmlab"
+
+  - name: Set facts for config Lower env
+    set_fact:
+      namespace_log: "LowerEnvWebMetrics"
+      name_space: "Lower Env Web Metrics"
+    when: env == "staging" or env == "testint"
+
+  - name: Set facts for config Prod
+    set_fact:
+      namespace_log: "ProdWebMetrics"
+      name_space: "Production Web Metrics"
+    when: env == "production"
+
+  - name: Set a debug dict
+    set_fact:
+      debug_dict:
+        image_id: "{{ image_id }}"
+        launch_time: "{{ launch_time }}"
+        instance_type: "{{ instance_type }}"
+        instance_purpose: "{{ ec2_purpose }}"
+        private_ip: "{{ private_ip }}"
+        tower_managed: "{{ tower_tag }}"
+
+  - name: Show Debug
+    debug:
+      msg: "{{ debug_dict }}"

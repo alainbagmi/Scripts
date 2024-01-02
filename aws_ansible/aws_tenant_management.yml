@@ -1,0 +1,89 @@
+---
+- hosts: localhost
+  gather_facts: no
+  become: yes
+  remote_user: ansible_tower
+  become_method: sudo
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+    
+
+  vars_files:
+    - group_vars/mysql_user_creds.yml
+
+  vars:
+    #Defaults
+    adhoc_run: "all"
+    project_status: "default"
+    # link_hosts: "link"
+    vhost_file: "absent"
+    tenantvars: "{{ tenants[vars['tenant']] | default('empty_key')}}"
+    #Empty_Lists
+    clean_task: []     
+    create_repo_list: []
+    repo_status: []
+    #Template Holders
+    edit_migration: "{{ tenant|upper }}_EDIT_PREVIEW_TO_{{ env|upper }}"
+    public_migration: "{{ tenant|upper }}_PUBLIC_PREVIEW_TO_{{ env|upper }}" 
+    stage_edit_holder: "{{ tenant|upper }}_EDIT_STAGE_URL"
+    stage_public_holder: "{{ tenant|upper }}_PUBLIC_STAGE_URL"
+    prod_edit_holder: "{{ tenant|upper }}_EDIT_PROD_URL"
+    prod_public_holder: "{{ tenant|upper }}_PUBLIC_PROD_URL"
+    drush_holder: "#URITEMP: TEMPURL"
+    #URLs
+    base_repo_url: "https://maestro.dhs.gov/stash/scm/wcmbase/myd8site.git"
+    stash_create_project_url: "https://maestro.dhs.gov/stash/rest/api/latest/projects"
+    combo_stash_url: "https://maestro.dhs.gov/stash/rest/api/latest/projects/WCMAWS"
+    stash_url: "https://maestro.dhs.gov/stash/rest/api/latest/projects/{{ stash_project }}"
+    git_stash_url: "https://maestro.dhs.gov/stash/scm"
+    url_escaped: "{{ site_url | regex_replace('[^\\w]', '\\\\\\g<0>') }}"
+    #Tenant Project/Repos
+    project_description: "WCM {{ stash_project|upper }}"    
+    project_name: "WCM {{ stash_project|upper }}"
+    settings_repo: "{{ tenant }}_settings"
+    gov_repo: "{{ tenant }}_gov"
+    govbuild_repo: "{{ tenant }}_gov_build"
+    combo_repo: "{{ tenant }}_gov_build"
+    ansible_repo: "aws"
+    drush_repo: "drush_test"
+    #Paths
+    git_binary_path: "/opt/rh/rh-git29/root/usr/bin/git"   
+    working_dir: "/data/tenant_onboarding"
+    asset_path: "/mnt/{{ env }}/sites-files/{{ env }}.{{ tenant }}_gov_build"
+    wwwroot_path: "/var/www/html/wwwroot/{{ env }}.{{ tenant }}_gov_build"
+    vhost_path: "/etc/httpd/conf.d"
+    aws_ansible_path: "/data/tenant_onboarding/onboarding_repos/aws_ansible"
+    drush_repo_path: "/data/tenant_onboarding/onboarding_repos/aws_scipts"
+    drush_alias_path: "/data/tenant_onboarding/onboarding_repos/aws_scripts/drush_aliases"
+    drush_alias_file: "{{ tenant }}.aliases.drushrc.php"
+    settings_onboard: "/data/tenant_onboarding/onboarding_repos/{{ tenant }}_settings"
+    tenant_vars_path: "/data/tenant_onboarding/onboarding_repos/aws_ansible/group_vars/tenants_vars"
+    
+
+
+  pre_tasks:
+    - name: Load in tenant vars
+      include_vars:
+        dir: group_vars/tenants_vars
+        name: tenants
+      when: run_cmd == "onboard" or run_cmd == "onboard_test"
+      # when: '"tenant_onboard" in tag_list or "tenant_onboard_test" in tag_list'
+
+    - include: roles/aws_tenant_creation/pre_tasks/main.yml
+      when: run_cmd == "create"
+      # when: '"tenant_create" in tag_list'
+
+    - include: roles/aws_tenant_onboarding/pre_tasks/main.yml
+      when: run_cmd == "onboard" or run_cmd == "onboard_test"
+      # when: '"tenant_onboard" in tag_list or "tenant_onboard_test" in tag_list'
+
+  roles:
+    - role: aws_tenant_creation
+      when: run_cmd == "create"
+      # when: '"tenant_create" in tag_list'       
+    - role: aws_tenant_onboarding
+      when: run_cmd == "onboard" or run_cmd == "onboard_test"
+      # when: '"tenant_onboard" in tag_list or "tenant_onboard_test" in tag_list'

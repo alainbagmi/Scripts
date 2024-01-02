@@ -1,0 +1,4 @@
+---
+
+- include: update_module_config_d8.yml
+- include: update_module_config_d7.yml

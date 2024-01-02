@@ -1,0 +1,179 @@
+---
+
+- name: Print inputs variables
+  debug:
+     msg: "{{ project_name }} {{ tenant_name }} {{ code_release }}"
+
+- include: cbp_gov_git_clone.yml
+- include: cbp_gov_build_git_clone.yml
+- include: cbp_settings_git_clone.yml
+- include: pre_cbp.yml
+
+- name: Print uptime from localhost server
+  shell: uptime
+  register: shell_output
+
+- debug:
+    msg: "{{ shell_output }}"
+
+- name: Print uptime from remote server
+  shell: uptime
+  delegate_to: 172.22.84.20 
+  register: remote_output
+
+- debug:
+    msg: "{{ remote_output }}"
+
+#
+#
+- name: Creates directory /home/bamboo/quan/webroot
+  file:
+    path: /home/bamboo/quan/webroot
+    state: directory
+    owner: bamboo
+    group: bamboo
+    mode: 0775
+#    recurse: yes
+#
+
+- name: create a text file in $HOME with the /bin/sh shell
+  become: no
+  shell: hostname  > $HOME/webserver{{ item | quote }}.txt
+  #
+  args:
+    chdir: $HOME
+  environment:
+    HOME: "/home/bamboo/quan/webroot"
+  #
+  register: shell_output
+  loop:
+    - a
+    - b
+    - c
+    - d
+
+- debug:
+    msg: "{{ shell_output }}"
+#- debug: var=shell_output
+#
+#
+#
+- name: change permission for bamboo user
+  shell: sudo chmod ug+rwx $webroot/test_file*
+#  delegate_to: 172.22.84.20 
+  register: remote_output
+  args:
+    chdir: $webroot
+  environment:
+    webroot: /home/bamboo/quan/webroot
+
+- debug:
+    msg: "{{ remote_output }}"
+
+#
+#
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.php $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.php
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.env.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.env.inc
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.local.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.local.inc
+#
+- name: Rsync files over to prod webservers
+#  shell: rsync -rl --no-motd $webroot/$p_tn/prod/settings.php $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.php }}
+#  shell: rsync -rl --no-motd $webroot/$p_tn/prod/settings.env.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.env.inc }}
+#  shell: rsync -rl --no-motd $webroot/$p_tn/prod/settings.local.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.local.inc }}
+#  delegate_to: "{{ $webserver_ip }}"
+  #shell: hostname  > $HOME/webserver{{ item | quote }}.txt
+  become: no
+  shell: echo "rsync setting.php to production servers {{ code_release }} " > $webroot/{{ item | quote }}_{{ code_release}}.txt
+  environment:
+    webroot: "/home/bamboo/quan/webroot"
+  #
+  register: shell_output
+  args:
+    chdir: $webroot
+  loop:
+    - prod1_ip
+    - prod2_ip
+    - prod3_ip
+    - prod4_ip
+
+- debug:
+    msg: "{{ shell_output }}"
+
+#
+#
+#    #---- file permissions/owners
+#    ssh -q  $server sudo chmod -R ug+rwx $webroot/$p_tn/Rel"$p_rc"/sites/default
+#    ssh -q  $server sudo chown -R apache:apache $webroot/$p_tn/Rel"$p_rc"
+#    ssh -q  $server sudo -u apache ln -s $filesroot/$p_tn/files $webroot/$p_tn/Rel"$p_rc"/sites/default
+#
+- name: change file permission/owners 
+  become: no
+  shell: ssh -q {{ item | quote }} uname -a
+  environment:
+    webroot: "/home/bamboo/quan/webroot"
+  register: shell_output
+  args:
+    chdir: $webroot
+  loop:
+#  delegate_to: 172.22.84.20 
+    - 172.22.84.20
+    - 172.22.84.21
+- debug:
+    msg: "{{ shell_output }}"
+#
+#
+#
+#
+#function prod_cpcode()
+#{
+#    server=$1
+#    dbenv=$2
+#    echo $server "-> processing"
+
+#-- Checking if version already exists
+#         ssh -q  $server  sudo  test -d  $webroot/$p_tn/Rel"$p_rc"
+#         if [  $? -eq 0 ]
+#         then
+#         echo "This version already exists"
+#         exit
+#         fi
+
+
+
+
+
+##---- permissions for bamboo user
+##    ssh -q  $server sudo chmod    ug+rwx $webroot/$p_tn
+##    ssh -q  $server sudo chmod -R ug+rwx $webroot/$p_tn/docroot
+##
+#    #---- transfer code to web servers using rsync
+#    shopt -s dotglob ## this will help copy the hidden files like .htaccess etc
+#    rsync -rl --no-motd $p_dr/docroot/* $server:$webroot/$p_tn/Rel"$p_rc"
+
+#    #---- settings.php under git version control
+#    echo "settings.php -> git pull (master)"
+#    cd $settingsroot/$p_tn
+#    git checkout master
+#    git pull --progress
+#    chmod 440 */setting*
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.php $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.php
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.env.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.env.inc
+#    rsync -rl --no-motd $settingsroot/$p_tn/prod/settings.local.inc $server:$webroot/$p_tn/Rel"$p_rc"/sites/default/settings.local.inc
+#
+#    #---- file permissions/owners
+#    ssh -q  $server sudo chmod -R ug+rwx $webroot/$p_tn/Rel"$p_rc"/sites/default
+#    ssh -q  $server sudo chown -R apache:apache $webroot/$p_tn/Rel"$p_rc"
+#    ssh -q  $server sudo -u apache ln -s $filesroot/$p_tn/files $webroot/$p_tn/Rel"$p_rc"/sites/default
+#}
+#
+######################################
+##---- process each production server
+#prod_cpcode $bamboo_ProdWebServer1 22
+#prod_cpcode $bamboo_ProdWebServer2 22
+#prod_cpcode $bamboo_ProdWebServer3 22
+#prod_cpcode $bamboo_ProdWebServer4 22
+#######################################
+#
+#
+# Process Avalability HTML file
+##/data/bamboo_scripts/deploy/bin/availability_check_placement.sh prod_phoenix $p_tn Rel"$p_rc"

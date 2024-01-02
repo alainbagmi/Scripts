@@ -1,0 +1,11 @@
+---
+#Include whichever file that creates the users on the server you are looking for.
+- include: create_user.yml
+  when: job == "create"
+
+- include: disable_user.yml
+  when: job == "disable"
+
+- include: chage.yml
+  when: job == "age"
+

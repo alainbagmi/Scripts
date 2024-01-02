@@ -1,0 +1,39 @@
+---
+#- hosts: 172.22.81.16
+- hosts: localhost
+  become: yes
+  become_method: sudo
+  remote_user: ansible_tower
+  
+
+  roles:
+    - aws_merge_pull_request
+  
+  vars:
+    in_progress: "0"
+    pre_task_status: ""
+    task_status: ""
+    env: staging
+    proxy_env:
+      GIT_SSL_NO_VERIFY: true
+#    jump_ip:  "{{ groups['tower'][0] }}"
+
+  environment:
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/aws/venv/aws/lib64/python3.6/site-packages/"
+  pre_tasks:
+    - name: Print a debug for testing
+      debug:
+        msg: "I am printing this to test"
+    - name: Attempt to Perform PreTasks
+      block:
+        - include: roles/common/tasks/get_tenant_vars.yml
+      rescue:
+        - set_fact:
+            task_status: "FAILED"
+            task_message: "FATAL - ERROR OCCURED PRIOR TO MAIN TASK"
+        - include: roles/aws_merge_pull_request/tasks/email_tenant.yml
+        - name: Fail Task because of errors
+          fail:
+            msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"

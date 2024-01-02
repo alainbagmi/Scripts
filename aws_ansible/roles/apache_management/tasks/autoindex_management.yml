@@ -1,0 +1,10 @@
+- name: copy new conf.d file to the staging servers
+  copy:
+    src: /home/bamboo/ansible/roles/apache_management/files/autoindex.conf
+    dest: /etc/httpd/conf.d
+    owner: root
+    group: root
+    mode: 0644
+- name: Restart Apache gracefully
+  command: service httpd graceful
+

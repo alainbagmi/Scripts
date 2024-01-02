@@ -1,0 +1,53 @@
+---
+- name: Sync settings to sites/default
+  synchronize:
+    #dest: "{{ site_root }}{{ env }}.{{ tenant }}_gov_build/Rel{{ release_number }}/sites/default"
+    dest: "{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/sites/default"
+    src: "{{ local_settings }}{{ env }}/"
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+#      - "--exclude=.git"
+#      - "--include=settings.22.local.inc"
+#      - "--exclude=settings.22.local.inc"
+#      - "--exclude=settings.23.local.inc"
+      - "--no-motd"
+#      - "--include=settings.*"
+#      - "--include=drushrc.php"
+      - "--quiet"
+      - "--log-file=/home/bamboo/settings_sync_log"
+      - "--chown=apache:apache"
+  become: no
+
+
+- name: place sites.php in docroot/sites
+  synchronize:
+    dest: "{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/sites/"
+    src: "{{ local_settings }}multisite/sites.php"
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+      - "--no-motd"
+      - "--quiet"
+      - "--log-file=/home/bamboo/settings_sync_log"
+      - "--chown=apache:apache"
+  become: no
+  when: multisite|bool == True
+
+# copy settings for each site in the multisite
+- name: loop through all the directories and copy settings files
+  synchronize:
+    dest: "{{ site_root }}{{ tenant_prefix }}Rel{{ release_number }}/sites/{{ item.path | basename }}"
+    src: "{{ local_settings }}/multisite/{{ item.path | basename }}/{{ env }}/"
+    rsync_path: "sudo rsync"
+    recursive: true
+    links: yes
+    rsync_opts:
+      - "--no-motd"
+      - "--quiet"
+      - "--log-file=/home/bamboo/settings_sync_log"
+      - "--chown=apache:apache"
+  with_items: "{{ multisite_dirs.files }}"
+  when: multisite|bool == True

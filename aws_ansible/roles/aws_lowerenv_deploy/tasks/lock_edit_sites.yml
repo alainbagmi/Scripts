@@ -1,0 +1,20 @@
+---
+- name: Lock the edit sites if on production.  Run once due to EFS for vhosts
+  file:
+    path: /etc/httpd/conf.d/{{ tenant }}-edit.conf
+    state: absent
+  run_once: yes
+
+- name: Restart apache on all servers
+  command: "service httpd graceful"
+  become: yes
+  become_method: sudo
+
+#- name: Restart apache on all servers.  Dont do this in handler in above task since handler will only run on 1 server (using run_once).  Feel free to do this with command module.
+#  wait_for:
+#    timeout: 1
+#  notify:
+#    - restart apache
+
+#- name: Flush handlers to immidately restart apache
+#  meta: flush_handlers

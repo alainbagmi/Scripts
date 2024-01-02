@@ -1,0 +1,28 @@
+---
+#- name:  Change first = to +=
+#  lineinfile:
+#    path:  /tmp/sudo_test.tmp
+#    regexp:  '^(.*)env_keep = (.*)$'
+#    line:  '\1env_keep +=\2'
+#    backup:  yes
+#    backrefs:  yes
+
+- name:  Add port and db_server variables
+  lineinfile:
+    path:  /etc/sudoers
+    insertafter:  '^(.*)env_keep = (.*)$'
+    line:  "Defaults    env_keep += \"{{ item.split(':')[0] }}\""
+  with_items:
+    - "{{ MEMCACHED_SERVERS }}"
+    - "{{ DB_SERVER }}"
+    - "{{ PROXY_SERVER }}"
+    - "{{ SOLR_SERVER }}"
+
+- name: add db_port variable
+  lineinfile:
+    path:  /etc/sudoers
+    insertafter:  '^(.*)env_keep = (.*)$'
+    line:  "Defaults    env_keep += \"{{ item }}\""
+  with_items:
+    - db_port 
+  

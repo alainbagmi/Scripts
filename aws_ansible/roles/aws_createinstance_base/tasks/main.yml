@@ -1,0 +1,6 @@
+---
+- include: get_latest_ami.yml
+- include: create_ec2_instance.yml
+- include: patch_instance.yml 
+- include: create_ami.yml
+- include: delete_instance.yml

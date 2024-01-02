@@ -1,0 +1,15 @@
+---
+
+
+# Global Variables
+site_root: /var/www/html/wwwroot/
+sitefiles_root: /var/www/sites-files/
+
+#This is where the tenant code is put on the tower server
+local_checkouts: /data/site_code/
+
+# Holding Directory
+holding_dir: /opt/zenoss/backup/philly_replication/
+dr_destination_dir: /data/dr_data
+ansible_temp_dir: /opt/zenoss/backup/ansible_temp
+

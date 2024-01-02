@@ -1,0 +1,29 @@
+readyd8:
+  project_name: FEMA_BASE
+  alias: readyd8
+  drupal_version: 8
+  akamai_group: 4752
+  akamai_path: /183946/fema
+  newrelic_id: 140456439
+  daily_db: prod
+  testint:
+    site_urls:
+      edit: edit.testint.ready.gov
+      public: testint.ready.gov
+    akamai_cpcode:
+      edit: 159127
+      public: 159127
+  staging:
+    site_urls:
+      edit: edit.staging.ready.gov
+      public: staging.ready.gov
+    akamai_cpcode:
+      edit: 159127
+      public: 159127
+  prod:
+    site_urls:
+      edit: edit.ready.gov
+      public: www.ready.gov
+    akamai_cpcode:
+      edit: 10651
+      public: 10651

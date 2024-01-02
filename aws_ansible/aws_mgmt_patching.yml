@@ -1,0 +1,22 @@
+---
+##################################################################################################
+#                               Management PATCHING 
+# ################################################################################################
+
+- hosts: "tag_tower_backup"
+  # hosts: "tag_tower_managed"
+  remote_user: ansible_tower
+  gather_facts: yes
+  any_errors_fatal: true
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: False
+    AWS_SHARED_CREDENTIALS_FILE: "/etc/aws/credentials"
+    AWS_CONFIG_FILE: "/etc/aws/config"
+    PYTHONPATH: "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/"
+
+  roles:
+    - aws_management
+
+  vars:
+    region: "us-gov-west-1"
+    aws_owner_id: "626894281569"

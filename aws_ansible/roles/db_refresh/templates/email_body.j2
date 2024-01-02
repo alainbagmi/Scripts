@@ -1,0 +1,50 @@
+Task: Database Refresh Self-Service for {{ site_alias }}
+
+----------------------------------------------------------------------------------------------
+Job Runtime Variables:
+    site_alias={{ site_alias }}
+    source_env={{ source_env }}
+    target_env={{ target_env }}
+    backup_target_db={{ target_backup }}
+
+----------------------------------------------------------------------------------------------
+Pretask Status: {{ pretask_status }}
+Job Status: {{ task_status }}
+
+----------------------------------------------------------------------------------------------
+Database Info:
+{% if source_env == "netstorage" %}
+Refresh From Netstorage File Name: 
+{{ from_netstorage_file }}
+
+{% else %}
+Source DB Name: {{ source_db_name }}
+
+{% endif %}
+{% if target_env == "netstorage" %}
+Refresh Dump to Netstorage File Name: 
+{{ email_netstorage }}
+
+{% else %}
+Target DB Name: {{ target_db_name }}
+
+{% endif %}
+{% if target_env != "netstorage" and target_backup == "yes" %}
+Database {{ target_db_name }} Backup to Netstorage Path/File Name:
+{{ akamai_path }}/{{ target_netstorage_file }}
+
+{% endif %}
+----------------------------------------------------------------------------------------------
+{% if target_env != "netstorage" %}
+Drush Clear Results:
+{% for item in email_clear %}
+  {{ item }}
+{% endfor %}
+
+----------------------------------------------------------------------------------------------
+Drush UPDB Results:
+{% for item in email_updb %}
+  {{ item }}
+{% endfor %}
+{% endif %}
+----------------------------------------------------------------------------------------------

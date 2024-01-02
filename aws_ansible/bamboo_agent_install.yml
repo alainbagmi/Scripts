@@ -1,0 +1,10 @@
+# bamboo agent install playbook
+---
+- name: Install bamboo agent
+  hosts: myhost
+  become: yes
+  #environment: "{{ PROXY_ENV }}"
+
+  roles:
+    - bamboo_agent_install
+

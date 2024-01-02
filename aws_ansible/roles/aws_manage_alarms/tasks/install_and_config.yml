@@ -1,0 +1,116 @@
+---
+- name: Install cloudwatch
+  block:
+  - name: Run the yum install command
+    yum:
+      disable_gpg_check: yes
+      name: https://s3.amazonaws.com/amazoncloudwatch-agent/redhat/amd64/latest/amazon-cloudwatch-agent.rpm 
+      state: present
+    #shell: "sudo yum install --nogpgcheck https://s3.amazonaws.com/amazoncloudwatch-agent/redhat/amd64/latest/amazon-cloudwatch-agent.rpm -y"
+    register: install_out
+    retries: 2
+    until: install_out.rc == 0
+    ignore_errors: yes
+
+  - name: Show output from the install
+    debug:
+      var: install_out
+  
+  - name: Set fact if install failed
+    set_fact:
+      alarm_status: "ERROR"
+      install_dict:
+        ERROR_NAME: "cloudwatch_install_error"
+        COMMAND_ATTEMPTS: "{{ install_out.attempts }}"
+        ERROR_MESSAGE: "{{ install_out.stderr }}"
+        RC: "{{ install_out.rc }}"
+    when: install_out.rc != 0
+
+  - name: Set fact if install had an error
+    set_fact:
+      alarm_error: "{{ alarm_errors|default([]) + [ install_dict ] }}"
+    when: install_out.rc != 0
+
+  - name: Set a run flag
+    set_fact:
+      efs_run: "continue"
+    when: (install_out.rc == 0 and ec2_purpose == "webApp") or
+          (install_out.rc == 0 and ec2_purpose == "tower") or
+          (install_out.rc == 0 and ec2_purpose == "vpn")
+    
+- name: Configure The Agent
+  block:
+    - name: Check if efs mount shell script exists
+      stat:
+        path: "/usr/local/bin/mount_efs.sh"
+      register: efs_script
+    
+    - name: Check if efs volume exists
+      stat:
+        path: "/usr/local/bin/efs_volume"
+      register: efs_vol
+    
+    - name: Write the config file
+      template: 
+        src: '../files/config.json'
+        dest: '/opt/aws/amazon-cloudwatch-agent/bin/config.json'
+        owner: root
+        group: root
+      become: yes
+
+    - name: Run the configuration 
+      shell: "/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json"
+      register: aws_config
+      retries: 2
+      until: aws_config.rc == 0
+      ignore_errors: yes
+    
+    - name: Set fact if config failed
+      set_fact:
+        alarm_status: "ERROR"
+        config_dict:
+          ERROR_NAME: "cloudwatch_config_error"
+          COMMAND_ATTEMPTS: "{{ aws_config.attempts }}"
+          ERROR_MESSAGE: "{{ aws_config.stderr }}"
+          RC: "{{ aws_config.rc }}"
+      when: aws_config.rc != 0
+
+    - name: Set fact if install had an error
+      set_fact:
+        alarm_error: "{{ alarm_errors|default([]) + [ config_dict ] }}"
+      when: aws_config.rc != 0
+
+    - name: Create the efs mount shell script if it doesn't exist
+      template:
+        src: '../files/mount_efs.sh'
+        dest: '/usr/local/bin/mount_efs.sh'
+        owner: root
+        group: root
+        mode: 0755
+      become: yes
+      when: 
+        - not efs_script.stat.exists
+        - efs_run == "continue"
+        - aws_config.rc == 0
+
+    - name: Create the efs volume file if it doesn't exist
+      template:
+        src: '../templates/efs_volume.j2'
+        dest: '/usr/local/bin/efs_volume'
+        owner: root
+        group: root
+        mode: 0755
+      become: yes
+      when: 
+        - not efs_vol.stat.exists
+        - efs_run == "continue"
+        - aws_config.rc == 0
+    
+    - name: Set up the Cron Job
+      shell: 
+        cmd: |
+          crontab -l | { cat; echo "*/5 * * * * /usr/local/bin/mount_efs.sh >> /var/log/mycron.log 2>&1"; } | crontab -
+      when:
+        - efs_run == "continue" 
+        - aws_config.rc == 0       
+  when: install_out.rc == 0

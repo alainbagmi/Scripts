@@ -1,0 +1,39 @@
+---
+# DB-to-Netstorage DB Refresh Steps
+- name: DB to Netstorage
+  debug:
+    msg:
+      - "Site: {{ tenant }}, Source Env: {{ source_env }}, Target Env: {{ target_env }}"
+
+- name: Set Target SQL file name
+  set_fact:
+    sql_snap_file: "{{ tenant }}_{{ source_env }}_db_snapshot-{{ current_run_timestamp.stdout }}.sql.gz"
+
+#- name: Dump Production SQL Database 
+#  shell: "ssh -i /home/ansible_tower/.ssh/cgi_bamboo_idrsa -A bamboo@10.0.4.97 -p 8008 'mysqldump --single-transaction -h 172.22.86.11 -u{{ cgi_dbuser }} -p{{ cgi_dbpass }} {{ db_source_name }} | gzip ' > {{ netstorage_db_tar_path }}/{{ sql_snap_file }}"
+#  when:
+#    - source_index == "upper_env"
+#    - target_env == "netstorage"
+
+- name: Dump SQL Database
+  mysql_db:
+    name: "{{ source_db_name }}"
+    state: dump
+    single_transaction: yes
+    target: "{{ netstorage_db_tar_path }}/{{ sql_snap_file }}"
+    login_host: "{{ source_env }}-db-reader.wcm.com"
+    login_user: "{{ aws_dbuser  }}"
+    login_password: "{{ aws_dbpass }}"
+  when:
+    - target_env == "netstorage"
+    
+- name: Change Owner and Group to ansible_tower
+  file:
+    path: "{{ netstorage_db_tar_path }}/{{ sql_snap_file }}"
+    owner: ansible_tower
+    group: ansible_tower
+    mode: 0776
+
+
+- name: Rsync DB data to Netstorage
+  shell: "rsync -avz -e 'ssh -i /home/ansible_tower/.ssh/bamboo_idrsa -o HostKeyAlgorithms=+ssh-dss' {{ netstorage_db_tar_path }}/{{ sql_snap_file }} sshacs@dhswcms.upload.akamai.com:{{ akamai_db_path }}/{{ sql_snap_file }}"

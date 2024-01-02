@@ -1,0 +1,118 @@
+---
+- name: Get Pull Requests from Stash URL
+  uri:
+    url:  "{{ url }}"
+    method: GET
+    return_content: yes
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: no
+    headers:
+      Authorization: "Basic YmFtYm9vOkJhbUIwMGklNTYyMg=="
+  register: stash_json
+
+- name: Show Content
+  debug:
+    msg: "{{ stash_json.json }}"
+
+
+- name: Set Values as Facts
+  set_fact:
+    id: "{{ stash_json.json | json_query(id) }}"
+    state: "{{ stash_json.json | json_query(state) }}"
+    version: "{{ stash_json.json | json_query(version) }}"
+    to_commit: "{{ stash_json.json | json_query(to_commit) }}"
+    from_commit: "{{ stash_json.json | json_query(from_commit) }}"
+    branch: "{{ stash_json.json | json_query(branch) }}"
+    email_address: "{{ stash_json.json | json_query(email_address) }}"
+  vars:
+    id: "values[?toRef.displayId == 'security'].id"
+    state: "values[?toRef.displayId == 'security'].state"
+    version: "values[?toRef.displayId == 'security'].version"
+    to_commit: "values[?toRef.displayId == 'security'].toRef.latestCommit"
+    from_commit: "values[?toRef.displayId == 'security'].fromRef.latestCommit"
+    branch: "values[?toRef.displayId == 'security'].toRef.displayId"
+    email_address: "values[?toRef.displayId == 'security'].author.user.emailAddress"
+
+- name: Fail Task No Pull Request Found
+  fail:
+    msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+  when: branch[0] is not defined
+
+- name: Extract Values from List form
+  set_fact:
+    id: "{{ id[0] }}"
+    state: "{{ state[0] }}"
+    version: "{{ version[0] }}"
+    to_commit: "{{ to_commit[0] }}"
+    from_commit: "{{ from_commit[0] }}"
+    branch: "{{ branch[0] }}"
+    email_address: "{{ email_address[0] }}"
+  when: 
+    - branch[0] is defined
+    - branch[0] == "security"
+
+- name: Show Branch
+  debug:
+    msg: "{{ branch }}"
+  when: branch[0] is defined
+
+- name: Set Merge URL
+  set_fact:
+    merge_url: "{{ url }}/{{ id }}/merge?version={{ version }}"
+  when: branch[0] is defined
+
+- name: Show Merge URL
+  debug:
+    msg: "{{ merge_url }}"
+  when: branch[0] is defined
+
+#- name: Fail Task Security Updates Needed
+#  fail:
+#    msg: "FATAL - ERROR OCCURED CAUSING PLAYBOOK TO FAIL"
+#  when: update_num > 0
+
+- name: Merge Pull Requests from Stash URL
+  uri:
+    url:  "{{ merge_url }}"
+    method: POST
+    return_content: yes
+    body_format: json
+    force_basic_auth: yes
+    validate_certs: no
+    headers:
+      Authorization: "Basic YmFtYm9vOkJhbUIwMGklNTYyMg=="
+      Content-Type: "application/json"
+  register: merge_json
+
+- name: Show Content
+  debug:
+    msg: "{{ merge_json.json }}"
+
+- name: Set Values as Facts
+  set_fact:
+    merge_id: "{{ merge_json.json | json_query(merge_id) }}"
+    merge_commit: "{{ merge_json.json | json_query(merge_commit) }}"
+    merge_state: "{{ merge_json.json | json_query(merge_state) }}"
+    closed: "{{ merge_json.json | json_query(closed) }}"
+  vars:
+    merge_id: "id"
+    merge_commit: "properties.mergeCommit.id"
+    merge_state: "state"    
+    closed: "closed"
+
+- name: Show Merge Commit
+  debug:
+    msg: "{{ merge_commit }}"
+
+- name: Show Merge State
+  debug:
+    msg: "{{ merge_state }}"
+
+- name: Show Closed Value
+  debug:
+    msg: "{{ closed }}"
+
+- name: Set flag for successful Run check
+  set_fact:
+    merge_flag: "SUCCESS"

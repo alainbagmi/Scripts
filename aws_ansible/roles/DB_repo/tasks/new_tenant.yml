@@ -1,0 +1,60 @@
+---
+- name: Empty the tenant folder to avoid duplicates  
+  become: yes
+  become_method: sudo 
+  file: 
+    path: "{{ dir_name }}"
+    owner: bamboo
+    group: bamboo
+    mode: 0700
+    state: absent
+  
+- name: Run the python script to create new tenants
+  become: yes
+  become_method: sudo
+  shell: "/usr/bin/python /data/bamboo_scripts/pythonScripts/new_tenant_creation.py {{ stash_project }}  {{ stash_project }} {{ stash_project }} {{ tenant_alias }}" 
+
+- name: create the folder for tenant creation 
+  become: yes
+  become_method: sudo 
+  file: 
+    path: "{{ item }}" 
+    owner: bamboo
+    group: bamboo
+    mode: 0700
+    state: directory
+  with_items: 
+  - "{{ dir_name }}/{{ stashprofile }}"
+  - "{{ dir_name }}/{{ stashbuildrepo }}"
+
+
+- name: Clone the git repo for the new tenant  
+  environment:
+    TMPDIR: "/data/site_code/tmp"
+  git:
+    accept_hostkey: yes
+    repo: "{{ repo_dt }}"
+    dest: "{{ dir_name }}/{{ stashprofile }}"
+    version: "master"
+    track_submodules: yes
+    force: yes
+    depth: 1
+  become: no
+  run_once: yes  
+
+
+- name: delete the extra git folder from the tenant directory
+  file:
+    path:  "{{ dir_name }}/{{ stashprofile }}/.git"
+    owner: bamboo
+    group: bamboo
+    mode: 0700
+    state: absent
+
+
+- name: Rename all files to the new tenant name
+  shell: for i in  "{{ dir_name }}/{{ stashprofile }}"/myd8site* ; do mv "$i" "$(echo "$i"| sed s/myd8site/{{ tenant_alias }}/)"; done
+
+- name: Rename all contents of a files to new tenant 
+  shell: find   "{{ dir_name }}/{{ stashprofile }}"/ -type f -exec sed -i 's/myd8site/{{ tenant_alias }}/g' {} +
+
